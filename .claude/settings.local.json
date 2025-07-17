@@ -56,7 +56,8 @@
       "Bash(./gh_2.40.1_linux_amd64/bin/gh repo view ktg0215/Management --web)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(export PATH=\"$PWD/gh_2.40.1_linux_amd64/bin:$PATH\")"
+      "Bash(export PATH=\"$PWD/gh_2.40.1_linux_amd64/bin:$PATH\")",
+      "Bash(git config:*)"
     ],
     "deny": []
   }
