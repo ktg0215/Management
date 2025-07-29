@@ -4,6 +4,7 @@ import { Store, TrendingUp, Calendar, BarChart3, PieChart, CreditCard, FileText 
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
+import { formatStoreName } from '@/utils/storeDisplay';
 import Information from '@/components/Information';
 import AppLayout from '@/app/appLayout/layout';
 
@@ -29,7 +30,11 @@ function AdminDashboard() {
   }, []);
 
   // 所属店舗名を取得
-  const storeName = user?.storeId ? stores.find(store => store.id === user.storeId)?.name || '' : '';
+  const storeName = user?.storeId ? 
+    (stores.find(store => store.id === user.storeId) ? 
+      formatStoreName(stores.find(store => store.id === user.storeId)!) : 
+      '') : 
+    '';
 
   const handleShiftManagement = () => {
     router.push('/admin/shifts');
@@ -41,6 +46,18 @@ function AdminDashboard() {
 
   const handlePaymentManagement = () => {
     router.push('/admin/payments');
+  };
+
+  const handleMonthlySalesManagement = () => {
+    router.push('/admin/monthly-sales');
+  };
+
+  const handleSalesManagement = () => {
+    router.push('/admin/sales-management'); // 売上管理ページにリダイレクト
+  };
+
+  const handleReportManagement = () => {
+    router.push('/admin/yearly-progress'); // 損益管理と同じページにリダイレクト（レポート系）
   };
 
   // 未実装ページ用のハンドラー（ダッシュボードにリダイレクト）
@@ -79,7 +96,7 @@ function AdminDashboard() {
         {/* Main Navigation Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
           {/* Sales Management Card */}
-          <div className="group cursor-pointer" onClick={handleComingSoon}>
+          <div className="group cursor-pointer" onClick={handleSalesManagement}>
             <div className="bg-green-500 rounded-lg p-8 text-white hover:shadow-lg transition-shadow duration-200 h-[320px] relative">
               <div className="h-full flex flex-col">
                 <div className="flex items-center justify-between mb-6">
@@ -131,7 +148,7 @@ function AdminDashboard() {
           </div>
 
           {/* Monthly Sales Management Card */}
-          <div className="group cursor-pointer" onClick={handleComingSoon}>
+          <div className="group cursor-pointer" onClick={handleMonthlySalesManagement}>
             <div className="bg-orange-500 rounded-lg p-8 text-white hover:shadow-lg transition-shadow duration-200 h-[320px] relative">
               <div className="h-full flex flex-col">
                 <div className="flex items-center justify-between mb-6">
@@ -209,7 +226,7 @@ function AdminDashboard() {
           </div>
 
           {/* Report Management Card */}
-          <div className="group cursor-pointer" onClick={handleComingSoon}>
+          <div className="group cursor-pointer" onClick={handleReportManagement}>
             <div className="bg-indigo-600 rounded-lg p-8 text-white hover:shadow-lg transition-shadow duration-200 h-[320px] relative">
               <div className="h-full flex flex-col">
                 <div className="flex items-center justify-between mb-6">

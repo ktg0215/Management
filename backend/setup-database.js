@@ -126,6 +126,87 @@ async function setupDatabase() {
       CREATE INDEX IF NOT EXISTS idx_pl_items_sort_order ON pl_items(sort_order);
     `);
 
+    // shift_submissionsテーブル作成
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS shift_submissions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        employee_id UUID REFERENCES employees(id) ON DELETE CASCADE,
+        period_id UUID REFERENCES shift_periods(id) ON DELETE CASCADE,
+        status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'submitted')),
+        submitted_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(employee_id, period_id)
+      );
+    `);
+
+    // shift_submissionsのインデックス作成
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_shift_submissions_employee_id ON shift_submissions(employee_id);
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_shift_submissions_period_id ON shift_submissions(period_id);
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_shift_submissions_status ON shift_submissions(status);
+    `);
+
+    // shift_entriesテーブル作成
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS shift_entries (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        submission_id UUID REFERENCES shift_submissions(id) ON DELETE CASCADE,
+        work_date DATE NOT NULL,
+        start_time VARCHAR(10),
+        end_time VARCHAR(10),
+        is_holiday BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(submission_id, work_date)
+      );
+    `);
+
+    // shift_entriesのインデックス作成
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_shift_entries_submission_id ON shift_entries(submission_id);
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_shift_entries_work_date ON shift_entries(work_date);
+    `);
+
+    // 更新時刻を自動で更新するトリガー関数（存在しない場合のみ作成）
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION update_updated_at_column()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        NEW.updated_at = CURRENT_TIMESTAMP;
+        RETURN NEW;
+      END;
+      $$ language 'plpgsql';
+    `);
+
+    // shift_submissionsの更新トリガー
+    await pool.query(`
+      DROP TRIGGER IF EXISTS update_shift_submissions_updated_at ON shift_submissions;
+    `);
+    await pool.query(`
+      CREATE TRIGGER update_shift_submissions_updated_at
+        BEFORE UPDATE ON shift_submissions
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    `);
+
+    // shift_entriesの更新トリガー
+    await pool.query(`
+      DROP TRIGGER IF EXISTS update_shift_entries_updated_at ON shift_entries;
+    `);
+    await pool.query(`
+      CREATE TRIGGER update_shift_entries_updated_at
+        BEFORE UPDATE ON shift_entries
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    `);
+
     console.log('テーブル作成完了');
 
     // デモデータの挿入
@@ -141,16 +222,37 @@ async function setupDatabase() {
       ('Fast Food', 'ファーストフード')
       ON CONFLICT (name) DO NOTHING;
     `);
+    
+    // 必須業態（説明文なし）を追加
+    await pool.query(`
+      INSERT INTO business_types (name) VALUES 
+      ('温野菜'),
+      ('ピザーラ'),
+      ('EDW')
+      ON CONFLICT (name) DO NOTHING;
+    `);
 
     // 業態IDを取得
     const businessTypesResult = await pool.query('SELECT id, name FROM business_types ORDER BY name');
     const businessTypes = businessTypesResult.rows;
     console.log(`${businessTypes.length}業態のデータを確認しました`);
 
+    // 必須業態のIDを取得
+    const onyanasaiTypeId = businessTypes.find(bt => bt.name === '温野菜')?.id;
+    const pizzalaTypeId = businessTypes.find(bt => bt.name === 'ピザーラ')?.id;
+    const edwTypeId = businessTypes.find(bt => bt.name === 'EDW')?.id;
+    
+    // その他の業態ID
     const yakinikyuTypeId = businessTypes.find(bt => bt.name === 'Yakiniku')?.id;
     const izakayaTypeId = businessTypes.find(bt => bt.name === 'Izakaya')?.id;
     const ramenTypeId = businessTypes.find(bt => bt.name === 'Ramen')?.id;
     const cafeTypeId = businessTypes.find(bt => bt.name === 'Cafe')?.id;
+    
+    // 必須業態が存在することを確認
+    console.log('必須業態の確認:');
+    console.log(`温野菜: ${onyanasaiTypeId ? '✓' : '✗'}`);
+    console.log(`ピザーラ: ${pizzalaTypeId ? '✓' : '✗'}`);
+    console.log(`EDW: ${edwTypeId ? '✓' : '✗'}`);
 
     // 2. 店舗データ
     console.log('2. 店舗データを挿入中...');

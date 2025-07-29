@@ -65,7 +65,47 @@ const BusinessTypesPage = () => {
       return;
     }
 
-    if (confirm(`「${businessType.name}」を削除しますか？`)) {
+    // 警告メッセージと認証要求
+    const warningMessage = `警告: 「${businessType.name}」業態を削除しようとしています。\n\nこの操作は取り消せません。\n\n続行するには、勤怠番号とパスワードを再入力してください。`;
+    
+    if (!confirm(warningMessage)) {
+      return;
+    }
+
+    // 勤怠番号とパスワードの再入力
+    const employeeId = prompt('勤怠番号を入力してください:');
+    if (!employeeId) {
+      setErrorMessage('勤怠番号が入力されませんでした');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    const password = prompt('パスワードを入力してください:');
+    if (!password) {
+      setErrorMessage('パスワードが入力されませんでした');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    // 認証確認
+    try {
+      const authResponse = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ employeeId, password }),
+      });
+
+      const authData = await authResponse.json();
+      
+      if (!authData.success) {
+        setErrorMessage('認証に失敗しました。勤怠番号またはパスワードが正しくありません。');
+        setTimeout(() => setErrorMessage(''), 5000);
+        return;
+      }
+
+      // 認証成功後、削除を実行
       const success = await deleteBusinessType(businessType.id);
       if (success) {
         setSuccessMessage('業態を削除しました');
@@ -74,6 +114,10 @@ const BusinessTypesPage = () => {
         setErrorMessage('削除に失敗しました');
         setTimeout(() => setErrorMessage(''), 3000);
       }
+    } catch (error) {
+      console.error('認証エラー:', error);
+      setErrorMessage('認証処理中にエラーが発生しました');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 

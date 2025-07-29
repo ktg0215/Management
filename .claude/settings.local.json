@@ -57,7 +57,10 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(export PATH=\"$PWD/gh_2.40.1_linux_amd64/bin:$PATH\")",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(git push:*)",
+      "Bash(npm install:*)",
+      "Bash(npx next dev:*)"
     ],
     "deny": []
   }

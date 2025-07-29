@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { 
@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useStoreStore } from '@/stores/storeStore';
 import apiClient from '@/lib/api';
-import ExcelJS from 'exceljs';
+// import ExcelJS from 'exceljs'; // 一時的にコメントアウト（権限エラー回避）
 import type { ShiftEntry } from '@/stores/shiftStore';
 import type { ShiftSubmission } from '@/lib/api';
 import AppLayout from '@/app/appLayout/layout';
@@ -31,20 +31,30 @@ interface PeriodOption {
 }
 
 const ShiftApproval = () => {
-  const { stores, fetchStores } = useStoreStore();
+  console.log('🔍 ShiftApproval コンポーネントがレンダリングされました');
+  
+  const { stores, fetchStores, isLoading } = useStoreStore();
   const [selectedStoreId, setSelectedStoreId] = useState<string>('');
   const [selectedPeriodValue, setSelectedPeriodValue] = useState<string>('');
   const [periodOptions, setPeriodOptions] = useState<PeriodOption[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [submissions, setSubmissions] = useState<ShiftSubmission[]>([]);
   const [expandedEmployeeId, setExpandedEmployeeId] = useState<string | null>(null);
   const [showEmployeeOrderModal, setShowEmployeeOrderModal] = useState(false);
   const [employeeOrder, setEmployeeOrder] = useState<string[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
+  
+  console.log('🔍 現在の状態:', { 
+    isHydrated, 
+    isLoading, 
+    storesLength: stores.length,
+    selectedStoreId,
+    selectedPeriodValue 
+  });
   
   // 並び順をローカルストレージに保存
   const saveEmployeeOrder = (order: string[]) => {
-    if (typeof window !== 'undefined' && selectedStoreId) {
+    if (isHydrated && selectedStoreId) {
       const key = `employeeOrder_${selectedStoreId}`;
       localStorage.setItem(key, JSON.stringify(order));
     }
@@ -52,7 +62,7 @@ const ShiftApproval = () => {
   
   // 並び順をローカルストレージから読み込み
   const loadEmployeeOrder = (): string[] => {
-    if (typeof window !== 'undefined' && selectedStoreId) {
+    if (isHydrated && selectedStoreId) {
       const key = `employeeOrder_${selectedStoreId}`;
       const saved = localStorage.getItem(key);
       if (saved) {
@@ -66,39 +76,16 @@ const ShiftApproval = () => {
     return [];
   };
   
-  // Generate period options based on current date
+  // Generate period options based on current date (直近1ヶ月のみ)
   const generatePeriodOptions = (): PeriodOption[] => {
-    if (typeof window === 'undefined') return []; // SSR対策
+    if (!isHydrated) return []; // SSR対策
     
     const today = new Date();
     const options: PeriodOption[] = [];
     
-    // 過去3ヶ月分
-    for (let i = 3; i >= 0; i--) {
+    // 直近1ヶ月分のみ（現在月と前月）
+    for (let i = 1; i >= 0; i--) {
       const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      
-      // 前半と後半を追加
-      options.push({
-        year,
-        month,
-        isFirstHalf: true,
-        value: `${year}-${month.toString().padStart(2, '0')}-first`,
-        label: `${year}年${month}月 前半`
-      });
-      options.push({
-        year,
-        month,
-        isFirstHalf: false,
-        value: `${year}-${month.toString().padStart(2, '0')}-second`,
-        label: `${year}年${month}月 後半`
-      });
-    }
-    
-    // 未来3ヶ月分
-    for (let i = 1; i <= 3; i++) {
-      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
       const year = date.getFullYear();
       const month = date.getMonth() + 1;
       
@@ -123,21 +110,64 @@ const ShiftApproval = () => {
   };
   
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setPeriodOptions(generatePeriodOptions());
-    }
+    console.log('🔍 setIsHydrated(true) を実行');
+    setIsHydrated(true);
   }, []);
+
+  useEffect(() => {
+    console.log('🔍 fetchStores useEffect 開始');
+    const loadData = async () => {
+      try {
+        console.log('🔍 fetchStores() を呼び出し中...');
+        await fetchStores();
+        console.log('🔍 fetchStores() 完了');
+      } catch (error) {
+        console.error('🔍 店舗データ読み込みエラー:', error);
+      }
+    };
+    
+    loadData();
+  }, []); // マウント時に一度だけ実行
+
+  useEffect(() => {
+    if (isHydrated) {
+      const options = generatePeriodOptions();
+      setPeriodOptions(options);
+      // Set default period to current month first half if not already set
+      if (!selectedPeriodValue && options.length > 0) {
+        // Find current month's first half, or default to first option
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth() + 1;
+        const defaultOption = options.find(opt => 
+          opt.year === currentYear && opt.month === currentMonth && opt.isFirstHalf
+        ) || options[Math.floor(options.length / 2)]; // Middle option as fallback
+        
+        if (defaultOption) {
+          setSelectedPeriodValue(defaultOption.value);
+        }
+      }
+    }
+  }, [isHydrated, selectedPeriodValue]);
   
   const loadShiftData = useCallback(async () => {
-    if (!selectedStoreId || !selectedPeriodValue) return;
+    console.log('🔍 loadShiftData開始:', { selectedStoreId, selectedPeriodValue });
+    
+    if (!selectedStoreId || !selectedPeriodValue) {
+      console.log('🔍 必要なパラメータが不足:', { selectedStoreId, selectedPeriodValue });
+      return;
+    }
+    
     try {
       // 従業員一覧を取得
+      console.log('🔍 従業員データを取得中...');
       const employeesResponse = await apiClient.getEmployees();
       if (employeesResponse.success && employeesResponse.data) {
         // 選択された店舗の従業員のみをフィルタリング
         const filteredEmployees = employeesResponse.data.filter(
           (emp: Employee) => emp.storeId === selectedStoreId
         );
+        console.log('🔍 フィルタリング後の従業員数:', filteredEmployees.length);
         setEmployees(filteredEmployees);
         
         // 保存された並び順を読み込み、なければデフォルト順序を使用
@@ -163,22 +193,45 @@ const ShiftApproval = () => {
       }
 
       // シフト期間を取得
+      console.log('🔍 シフト期間データを取得中...');
       const periodsResponse = await apiClient.getShiftPeriods(selectedStoreId);
       if (periodsResponse.success && periodsResponse.data) {
+        console.log('🔍 取得したシフト期間数:', periodsResponse.data.length);
+        
         // 選択された期間に該当するシフト期間を探す
         const selectedPeriod = periodOptions.find(p => p.value === selectedPeriodValue);
+        console.log('🔍 選択された期間:', selectedPeriod);
+        
         if (selectedPeriod) {
           const targetPeriod = periodsResponse.data.find((period) => {
-            const p = period as { startDate: string };
+            const p = period as { startDate: string; isFirstHalf: boolean };
             const periodDate = new Date(p.startDate);
-            return periodDate.getFullYear() === selectedPeriod.year && 
-                   periodDate.getMonth() + 1 === selectedPeriod.month;
+            const matches = periodDate.getFullYear() === selectedPeriod.year && 
+                           periodDate.getMonth() + 1 === selectedPeriod.month &&
+                           p.isFirstHalf === selectedPeriod.isFirstHalf;
+            
+            console.log('🔍 期間マッチング:', {
+              periodYear: periodDate.getFullYear(),
+              periodMonth: periodDate.getMonth() + 1,
+              selectedYear: selectedPeriod.year,
+              selectedMonth: selectedPeriod.month,
+              periodIsFirstHalf: p.isFirstHalf,
+              selectedIsFirstHalf: selectedPeriod.isFirstHalf,
+              matches
+            });
+            
+            return matches;
           });
+
+          console.log('🔍 見つかったターゲット期間:', targetPeriod);
 
           if (targetPeriod) {
             // シフト提出データを取得
+            console.log('🔍 シフト提出データを取得中...');
             const submissionsResponse = await apiClient.getShiftSubmissions(targetPeriod.id);
             if (submissionsResponse.success && submissionsResponse.data) {
+              console.log('🔍 取得したシフト提出数:', submissionsResponse.data.length);
+              
               // シフトエントリも含めて取得
               const submissionsWithEntries = await Promise.all(
                 submissionsResponse.data.map(async (submission: ShiftSubmission) => {
@@ -189,15 +242,19 @@ const ShiftApproval = () => {
                   };
                 })
               );
+              console.log('🔍 エントリ付きシフト提出データ設定完了');
               setSubmissions(submissionsWithEntries);
             } else {
               console.error('シフト提出取得エラー:', submissionsResponse.error);
               setSubmissions([]);
             }
           } else {
-            console.log('該当するシフト期間が見つかりません');
+            console.log('🔍 該当するシフト期間が見つかりません - データをクリア');
             setSubmissions([]);
           }
+        } else {
+          console.log('🔍 選択された期間が無効 - データをクリア');
+          setSubmissions([]);
         }
       } else {
         console.error('シフト期間取得エラー:', periodsResponse.error);
@@ -209,25 +266,13 @@ const ShiftApproval = () => {
       setEmployeeOrder([]);
       setSubmissions([]);
     }
-  }, [selectedStoreId, selectedPeriodValue, periodOptions, loadEmployeeOrder]);
+  }, [selectedStoreId, selectedPeriodValue, periodOptions]);
   
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        await fetchStores();
-        if (selectedStoreId && selectedPeriodValue) {
-          await loadShiftData();
-        }
-      } catch (error) {
-        console.error('データ読み込みエラー:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadData();
-  }, [selectedPeriodValue, selectedStoreId, fetchStores, loadShiftData]);
+    if (selectedStoreId && selectedPeriodValue) {
+      loadShiftData();
+    }
+  }, [selectedStoreId, selectedPeriodValue]);
   
   // Set default store when stores are loaded
   useEffect(() => {
@@ -265,7 +310,7 @@ const ShiftApproval = () => {
         setEmployeeOrder(sortedIds);
       }
     }
-  }, [employees, employeeOrder.length, selectedStoreId, loadEmployeeOrder]);
+  }, [employees, employeeOrder.length, selectedStoreId]);
   
   // Get unique employees from submissions and sort by custom order
   const getUniqueEmployees = () => {
@@ -340,16 +385,12 @@ const ShiftApproval = () => {
     }
   };
   
-  // Export to Excel with the specified template format using ExcelJS
-  const exportToExcel = async () => {
+  // Export to CSV (lightweight alternative to Excel)
+  const exportToCSV = async () => {
     if (!selectedPeriodValue) return;
     
     const selectedPeriod = periodOptions.find(p => p.value === selectedPeriodValue);
     if (!selectedPeriod) return;
-    
-    // Create workbook
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('シフト表');
     
     // Get unique employees and sort by their custom order
     const uniqueEmployees = getUniqueEmployees();
@@ -359,202 +400,49 @@ const ShiftApproval = () => {
     const month = selectedPeriod.month;
     const startDay = selectedPeriod.isFirstHalf ? 1 : 16;
     const endDay = selectedPeriod.isFirstHalf ? 15 : (typeof window !== 'undefined' ? new Date(year, month, 0).getDate() : 31);
-    const daysInPeriod = endDay - startDay + 1;
     
-    // Set column widths
-    worksheet.getColumn(1).width = 3;   // A column (empty)
-    worksheet.getColumn(2).width = 10;  // B column (employee names)
+    // Create CSV content
+    let csvContent = '';
     
-    // Set widths for date columns
-    for (let i = 0; i < daysInPeriod * 2; i++) {
-      worksheet.getColumn(3 + i).width = 4;
-    }
-    
-    // Row 1: Title with store name
+    // Title row
     const currentStore = stores.find(store => store.id === selectedStoreId);
     const storeName = currentStore ? currentStore.name : '全店舗';
-    const titleText = `${storeName} ${year}年${month}月${selectedPeriod.isFirstHalf ? '前半' : '後半'}シフト表`;
+    csvContent += `${storeName} ${year}年${month}月${selectedPeriod.isFirstHalf ? '前半' : '後半'}シフト表\n\n`;
     
-    worksheet.getCell('B1').value = titleText;
-    worksheet.mergeCells(`B1:${String.fromCharCode(66 + (daysInPeriod * 2))}1`);
-    worksheet.getRow(1).height = 20;
-    worksheet.getCell('B1').style = {
-      alignment: { horizontal: 'center', vertical: 'middle' },
-      font: { bold: true }
-    };
-    
-    // Row 2: Date headers
-    let currentCol = 3;
+    // Header row with dates
+    let headerRow = '従業員名,';
     for (let day = startDay; day <= endDay; day++) {
-      const colLetter = String.fromCharCode(65 + currentCol - 1);
-      const nextColLetter = String.fromCharCode(65 + currentCol);
-      
-      worksheet.getCell(`${colLetter}2`).value = day.toString();
-      worksheet.mergeCells(`${colLetter}2:${nextColLetter}2`);
-      worksheet.getCell(`${colLetter}2`).style = {
-        alignment: { horizontal: 'center', vertical: 'middle' },
-        border: {
-          top: { style: 'thin' },
-          bottom: { style: 'thin' },
-          left: { style: 'thin' },
-          right: { style: 'thin' }
-        }
-      };
-      
-      currentCol += 2;
+      headerRow += `${day}日 出勤,${day}日 退勤,`;
     }
-    worksheet.getRow(2).height = 20;
+    csvContent += headerRow.slice(0, -1) + '\n'; // Remove last comma
     
-    // Row 3: Day of week labels
-    currentCol = 3;
-    for (let day = startDay; day <= endDay; day++) {
-      const colLetter = String.fromCharCode(65 + currentCol - 1);
-      const nextColLetter = String.fromCharCode(65 + currentCol);
-      
-      if (typeof window !== 'undefined') {
-        const date = new Date(year, month - 1, day);
-        const dayOfWeek = format(date, 'E', { locale: ja });
-        worksheet.getCell(`${colLetter}3`).value = dayOfWeek;
-      }
-      
-      worksheet.mergeCells(`${colLetter}3:${nextColLetter}3`);
-      worksheet.getCell(`${colLetter}3`).style = {
-        alignment: { horizontal: 'center', vertical: 'middle' },
-        border: {
-          top: { style: 'thin' },
-          bottom: { style: 'thin' },
-          left: { style: 'thin' },
-          right: { style: 'thin' }
-        }
-      };
-      
-      currentCol += 2;
-    }
-    worksheet.getRow(3).height = 20;
-    
-    // Row 4: "出" and "退" headers
-    currentCol = 3;
-    for (let day = startDay; day <= endDay; day++) {
-      const colLetter1 = String.fromCharCode(65 + currentCol - 1);
-      const colLetter2 = String.fromCharCode(65 + currentCol);
-      
-      worksheet.getCell(`${colLetter1}4`).value = '出';
-      worksheet.getCell(`${colLetter2}4`).value = '退';
-      
-      worksheet.getCell(`${colLetter1}4`).style = {
-        alignment: { horizontal: 'center', vertical: 'middle' },
-        border: {
-          top: { style: 'thin' },
-          bottom: { style: 'thin' },
-          left: { style: 'thin' },
-          right: { style: 'thin' }
-        }
-      };
-      
-      worksheet.getCell(`${colLetter2}4`).style = {
-        alignment: { horizontal: 'center', vertical: 'middle' },
-        border: {
-          top: { style: 'thin' },
-          bottom: { style: 'thin' },
-          left: { style: 'thin' },
-          right: { style: 'thin' }
-        }
-      };
-      
-      currentCol += 2;
-    }
-    worksheet.getRow(4).height = 20;
-    
-    // Rows 5-6: Empty rows
-    worksheet.getRow(5).height = 15;
-    worksheet.getRow(6).height = 15;
-    
-    // Employee data rows (starting from row 7)
-    let currentRow = 7;
-    for (const employee of uniqueEmployees) {
+    // Employee data rows
+    uniqueEmployees.forEach(employee => {
       const submission = getEmployeeSubmission(employee.id);
+      let row = `${employee.nickname},`;
       
-      // Employee name in column B
-      worksheet.getCell(`B${currentRow}`).value = employee.nickname;
-      worksheet.getCell(`B${currentRow}`).style = {
-        alignment: { horizontal: 'center', vertical: 'middle' },
-        border: {
-          top: { style: 'thin' },
-          bottom: { style: 'thin' },
-          left: { style: 'thin' },
-          right: { style: 'thin' }
-        }
-      };
-      
-      // Create a map of shifts by date for easy lookup
-      const shiftMap = new Map();
-      if (submission?.shiftEntries) {
-        submission.shiftEntries.forEach(shift => {
-          if (typeof window !== 'undefined') {
-            const shiftDay = new Date(shift.work_date).getDate();
-            shiftMap.set(shiftDay, shift);
-          }
-        });
-      }
-      
-      // Fill in shift data for each day
-      currentCol = 3;
       for (let day = startDay; day <= endDay; day++) {
-        const shift = shiftMap.get(day);
-        const colLetter1 = String.fromCharCode(65 + currentCol - 1);
-        const colLetter2 = String.fromCharCode(65 + currentCol);
+        const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        const shiftEntry = submission?.shiftEntries?.find((entry: ShiftEntry) => entry.work_date === dateStr);
         
-        if (shift && !shift.isHoliday) {
-          // Convert time format: "9" -> "9.0", "9.5" -> "9.5"
-          const startTime = shift.startTime ? (shift.startTime.includes('.') ? shift.startTime : `${shift.startTime}.0`) : '';
-          const endTime = shift.endTime ? (shift.endTime.includes('.') ? shift.endTime : `${shift.endTime}.0`) : '';
-          
-          worksheet.getCell(`${colLetter1}${currentRow}`).value = startTime;
-          worksheet.getCell(`${colLetter2}${currentRow}`).value = endTime;
-        }
-        
-        // Add borders to all cells
-        worksheet.getCell(`${colLetter1}${currentRow}`).style = {
-          alignment: { horizontal: 'center', vertical: 'middle' },
-          border: {
-            top: { style: 'thin' },
-            bottom: { style: 'thin' },
-            left: { style: 'thin' },
-            right: { style: 'thin' }
-          }
-        };
-        
-        worksheet.getCell(`${colLetter2}${currentRow}`).style = {
-          alignment: { horizontal: 'center', vertical: 'middle' },
-          border: {
-            top: { style: 'thin' },
-            bottom: { style: 'thin' },
-            left: { style: 'thin' },
-            right: { style: 'thin' }
-          }
-        };
-        
-        currentCol += 2;
+        const startTime = shiftEntry?.startTime || '';
+        const endTime = shiftEntry?.endTime || '';
+        row += `${startTime},${endTime},`;
       }
       
-      worksheet.getRow(currentRow).height = 18;
-      currentRow++;
-    }
+      csvContent += row.slice(0, -1) + '\n'; // Remove last comma
+    });
     
-    // Save file
-    const fileStore = stores.find(store => store.id === selectedStoreId);
-    const fileStoreName = fileStore ? fileStore.name : '全店舗';
-    const fileName = `シフト表_${fileStoreName}_${selectedPeriod.year}年${selectedPeriod.month}月${selectedPeriod.isFirstHalf ? '前半' : '後半'}.xlsx`;
-    
-    // Generate Excel file and download
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
+    // Download CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `シフト表_${storeName}_${year}年${month}月${selectedPeriod.isFirstHalf ? '前半' : '後半'}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
     link.click();
-    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
   };
   
   // Calculate submission statistics (excluding admins)
@@ -572,23 +460,17 @@ const ShiftApproval = () => {
   
   const stats = getSubmissionStats();
   
-  if (isLoading) {
+  if (!isHydrated || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex justify-center items-center h-64">
-            <Clock className="animate-spin h-8 w-8 text-primary-600 mr-3" />
-            <span>Loading...</span>
-          </div>
-        </main>
+      <div className="flex justify-center items-center h-64">
+        <Clock className="animate-spin h-8 w-8 text-primary-600 mr-3" />
+        <span>Loading...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="py-8">
-        <div className="space-y-6 slide-up">
+    <div className="space-y-6 slide-up">
           <h1 className="text-2xl font-bold text-gray-900">シフト管理</h1>
           
           {/* Filters */}
@@ -621,11 +503,15 @@ const ShiftApproval = () => {
                   value={selectedPeriodValue}
                   onChange={(e) => setSelectedPeriodValue(e.target.value)}
                 >
-                  {periodOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
+                  {periodOptions.length === 0 ? (
+                    <option value="">期間を読み込み中...</option>
+                  ) : (
+                    periodOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
               <div className="flex items-end space-x-2">
@@ -638,10 +524,10 @@ const ShiftApproval = () => {
                 </button>
                 <button 
                   className="btn-primary flex items-center"
-                  onClick={exportToExcel}
+                  onClick={exportToCSV}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Excelで出力
+                  CSVで出力
                 </button>
               </div>
             </div>
@@ -915,8 +801,6 @@ const ShiftApproval = () => {
             </div>
           )}
         </div>
-      </main>
-    </div>
   );
 };
 

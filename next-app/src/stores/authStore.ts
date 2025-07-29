@@ -95,6 +95,13 @@ export const useAuthStore = create<AuthState>()(
 
           const { user, token } = response.data;
           
+          console.log('📋 Login response received:', { 
+            hasUser: !!user, 
+            hasToken: !!token, 
+            userId: user?.id,
+            userRole: user?.role 
+          });
+          
           // Set token in API client
           apiClient.setToken(token);
 
@@ -103,6 +110,8 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
+          
+          console.log('✅ User state updated in store');
 
           console.log('ログイン成功:', { 
             employeeId: user.employeeId, 
@@ -173,6 +182,16 @@ export const useAuthStore = create<AuthState>()(
 
       checkAuth: async () => {
         try {
+          console.log('🔍 checkAuth started');
+          
+          // APIクライアントが既存のトークンを持っているかチェック
+          const existingToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+          console.log('🔑 Existing token check:', { hasToken: !!existingToken });
+          
+          if (existingToken) {
+            apiClient.setToken(existingToken);
+          }
+          
           // タイムアウトを設定（5秒）
           const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('認証チェックタイムアウト')), 5000);
@@ -180,22 +199,44 @@ export const useAuthStore = create<AuthState>()(
           
           const authPromise = apiClient.checkAuth();
           
-          const response = await Promise.race([authPromise, timeoutPromise]) as { success: boolean; data?: { user: Employee } };
+          const response = await Promise.race([authPromise, timeoutPromise]) as { success: boolean; data?: { user: Employee }; status?: number };
           
-          if (response.success && response.data) {
-            const user = response.data.user;
+          console.log('📋 checkAuth response:', { success: response.success, hasData: !!response.data, status: response.status });
+          
+          // 304レスポンスも成功として扱う
+          if (response.success || response.status === 304) {
+            // 304の場合は既存のユーザー情報を使用
+            if (response.status === 304) {
+              const currentUser = get().user;
+              if (currentUser) {
+                set({
+                  user: currentUser,
+                  isAuthenticated: true,
+                  isLoading: false,
+                });
+                console.log('✅ checkAuth: User authenticated (304)');
+                return;
+              }
+            }
             
-            set({
-              user: { ...user, isActive: true, role: user.role ?? 'user' } as User,
-              isAuthenticated: true,
-              isLoading: false,
-            });
+            // 通常の成功レスポンス
+            if (response.data) {
+              const user = response.data.user;
+              
+              set({
+                user: { ...user, isActive: true, role: user.role ?? 'user' } as User,
+                isAuthenticated: true,
+                isLoading: false,
+              });
+              console.log('✅ checkAuth: User authenticated');
+            }
           } else {
             set({
               user: null,
               isAuthenticated: false,
               isLoading: false,
             });
+            console.log('❌ checkAuth: User not authenticated');
           }
         } catch (error) {
           console.error('認証チェックエラー:', error);
@@ -218,7 +259,7 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (error) {
           console.error('管理者チェックエラー:', error);
-          set({ hasExistingAdmins: false });
+          set({ hasExistingAdmins: true }); // エラー時も管理者が存在することにする
         }
       },
 

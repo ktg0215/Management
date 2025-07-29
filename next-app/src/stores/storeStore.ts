@@ -25,7 +25,6 @@ export const useStoreStore = create<StoreState>((set) => ({
   isLoading: false,
   
   fetchStores: async () => {
-    console.log('fetchStores: 開始');
     set({ isLoading: true });
     
     try {

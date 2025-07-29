@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useStoreStore, Store } from '@/stores/storeStore';
 import { useBusinessTypeStore } from '@/stores/businessTypeStore';
+import { formatStoreName, sortStoresByBusinessType } from '@/utils/storeDisplay';
 import AppLayout from '@/app/appLayout/layout';
 
 const StoreManagement = () => {
@@ -183,19 +184,12 @@ const StoreManagement = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {stores
-                      .sort((a, b) => {
-                        // 業態名でソート（業態が設定されていない場合は最後に）
-                        const businessTypeA = a.businessTypeName || 'zzz'; // 未設定は最後
-                        const businessTypeB = b.businessTypeName || 'zzz';
-                        return businessTypeA.localeCompare(businessTypeB, 'ja');
-                      })
-                      .map((store) => (
+                    {sortStoresByBusinessType(stores).map((store) => (
                       <tr key={store.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <Building className="h-5 w-5 text-gray-400 mr-3" />
-                            <span className="text-sm font-medium text-gray-900">{store.name}</span>
+                            <span className="text-sm font-medium text-gray-900">{formatStoreName(store)}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

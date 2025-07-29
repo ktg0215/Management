@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'reac
 import { Plus, X, Calculator, TrendingUp, DollarSign, BarChart3, Save, Calendar, Building2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
+import { formatStoreName, sortStoresByBusinessType } from '@/utils/storeDisplay';
 import apiClient from '@/lib/api';
 import { useSearchParams } from 'next/navigation';
 
@@ -500,8 +501,8 @@ PaymentDetailList.displayName = 'PaymentDetailList';
                 >
                   <option value="">選択してください</option>
                   {stores.length > 0 ? (
-                    stores.filter(store => store.name !== '無所属' && store.name !== 'Manager').map((store) => (
-                      <option key={store.id} value={store.id}>{store.name}</option>
+                    sortStoresByBusinessType(stores.filter(store => store.name !== '無所属' && store.name !== 'Manager')).map((store) => (
+                      <option key={store.id} value={store.id}>{formatStoreName(store)}</option>
                     ))
                   ) : (
                     <option disabled>店舗を読み込み中...</option>

@@ -6,9 +6,15 @@ import { useSidebarStore } from "@/stores/sidebarStore";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { isCollapsed, isHydrated } = useSidebarStore();
+  const [isClient, setIsClient] = React.useState(false);
+  
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   // Use consistent default for SSR
   const actualCollapsed = isHydrated ? isCollapsed : false;
+  const marginLeft = isClient ? (actualCollapsed ? '64px' : '256px') : '0px';
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -19,7 +25,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           actualCollapsed ? 'sidebar-collapsed' : ''
         }`}
         style={{
-          marginLeft: actualCollapsed ? '64px' : '256px',
+          marginLeft: marginLeft,
           transition: 'margin-left 0.3s ease',
           minHeight: '100vh'
         }}

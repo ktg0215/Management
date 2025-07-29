@@ -5,6 +5,7 @@ import { Building2, TrendingUp, Calendar, ArrowRight, BarChart3, Eye, EyeOff, Do
 import { useAuthStore } from '@/stores/authStore';
 import apiClient from '@/lib/api';
 import { useStoreStore } from '@/stores/storeStore';
+import { formatStoreName, sortStoresByBusinessType } from '@/utils/storeDisplay';
 import AppLayout from '@/app/appLayout/layout';
 
 const monthNames = [
@@ -74,11 +75,14 @@ function YearlyProgress() {
       try {
         const results = await Promise.all(
           Array.from({ length: 12 }, (_, i) =>
-            apiClient.getPL(currentYear, i + 1, storeId)
+            apiClient.getPL(currentYear, i + 1, storeId).catch(error => {
+              console.warn(`月${i + 1}のPLデータ取得失敗:`, error);
+              return { success: false, data: null };
+            })
           )
         );
         
-        const plData = results.map(r => {
+        const plData = results.map((r, index) => {
           if (r.success && r.data) {
             // データ構造を確認し、適切に処理
             if (Array.isArray(r.data.items)) {
@@ -87,10 +91,18 @@ function YearlyProgress() {
               return r.data as PLItem[];
             }
           }
+          // デバッグ用ログ
+          console.log(`月${index + 1}のPLデータ:`, r);
           return [];
         });
         
         setYearlyPL(plData);
+        
+        // データが全て空の場合は警告メッセージを表示
+        const hasData = plData.some(monthData => monthData.length > 0);
+        if (!hasData) {
+          setPlError('年間PLデータが見つかりません。先に損益データを作成してください。');
+        }
       } catch (error) {
         console.error('PLデータ取得エラー:', error);
         setPlError('年間PLデータの取得に失敗しました。データが存在しない可能性があります。');
@@ -114,51 +126,115 @@ function YearlyProgress() {
     return <div className="text-red-600">{plError}</div>;
   }
 
-  // 年間合計・カード用データ計算
-  const getSum = (subject: string, type: 'estimate' | 'actual'): number =>
+  // 年間合計・カード用データ計算を改善
+  const getSum = (subjects: string[], type: 'estimate' | 'actual'): number =>
     yearlyPL.reduce((sum: number, items: PLItem[]) => {
-      const item = items.find((i: PLItem) => (i.subject_name === subject || i.name === subject));
-      return sum + (item ? item[type] : 0);
+      if (!items || items.length === 0) return sum;
+      // 複数の項目名パターンをチェック
+      const item = items.find((i: PLItem) => 
+        subjects.some(subject => 
+          i.subject_name === subject || i.name === subject
+        )
+      );
+      return sum + (item ? (item[type] || 0) : 0);
     }, 0);
 
-  const totalRevenue = getSum('売上高', 'actual') + getSum('売上', 'actual');
+  // 複数の売上項目を統合して取得
+  const totalRevenue = getSum(['売上高', '売上', '純売上'], 'actual');
 
-  // 利益の集計を強化
-  const getProfitItem = (items: PLItem[]): PLItem | undefined =>
-    items.find((i: PLItem) =>
-      i.subject_name === '営業利益' || i.subject_name === 'operatingProfit' || i.subject_name === 'operating_profit' ||
-      i.name === '営業利益' || i.name === 'operatingProfit' || i.name === 'operating_profit'
-    );
-  const totalProfit = yearlyPL.reduce((sum: number, items: PLItem[]) => {
-    const item = getProfitItem(items);
-    return sum + (item ? item.actual : 0);
-  }, 0);
+  // PLデータから利益項目を取得する関数
+  const getProfitItem = (items: PLItem[]): PLItem | undefined => {
+    try {
+      if (!items || items.length === 0) return undefined;
+      return items.find(item => 
+        item.name === '当期純利益' || 
+        item.name === '営業利益' || 
+        item.name === '経常利益' ||
+        item.name === '利益'
+      );
+    } catch (error) {
+      console.error('getProfitItem function error:', error);
+      return undefined;
+    }
+  };
 
-  const totalExpenses = getSum('固定費', 'actual') + getSum('変動費', 'actual');
-  const profitMargin = totalRevenue ? ((totalProfit / totalRevenue) * 100).toFixed(1) : '0.0';
+  // 利益の集計を強化 - より多くのパターンに対応
+  const totalProfit = getSum(['営業利益', 'operatingProfit', 'operating_profit', '利益'], 'actual');
+
+  // 経費の集計（変動費 + 固定費 + 管理費 + 売上原価）
+  const totalExpenses = getSum(['固定費', '変動費', '管理費', '管理費計', '売上原価', '原価'], 'actual');
+  
+  // 利益率の計算
+  const profitMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : '0.0';
+
+  console.log('🔍 損益管理カードデータ:', {
+    yearlyPLLength: yearlyPL.length,
+    totalRevenue,
+    totalProfit,
+    totalExpenses,
+    profitMargin,
+    samplePLData: yearlyPL[0] // 最初の月のデータサンプル
+  });
 
   // 年間合計テーブル用データをPLデータから再構成
   const calculateAnnualTotals = (): { [key: string]: { amount: number; percentage: string } } => {
     const subjects: string[] = Array.from(
-      new Set(yearlyPL.flat().map((item: PLItem) => item.subject_name || item.name))
+      new Set(yearlyPL.flat().filter(item => item).map((item: PLItem) => item.subject_name || item.name).filter(name => name))
     );
     const annualTotals: { [key: string]: { amount: number; percentage: string } } = {};
+    
     // まず通常合計
     subjects.forEach(name => {
-      const amount = getSum(name, 'actual');
-      annualTotals[name] = { amount, percentage: '' };
+      const amount = getSum([name], 'actual');
+      if (amount !== 0 || name) { // 0でも項目名があれば追加
+        annualTotals[name] = { amount, percentage: '' };
+      }
     });
+    
     // --- 自動計算系は再計算で上書き ---
-    // 粗利
-    annualTotals['粗利'] = { amount: (annualTotals['売上']?.amount ?? 0) - (annualTotals['原価']?.amount ?? 0), percentage: '' };
+    // 売上高の統合
+    const totalSalesAmount = getSum(['売上高', '売上', '純売上'], 'actual');
+    if (totalSalesAmount > 0) {
+      annualTotals['売上高'] = { amount: totalSalesAmount, percentage: '' };
+    }
+    
+    // 粗利益の計算
+    const grossProfitAmount = getSum(['粗利益', '粗利'], 'actual');
+    if (grossProfitAmount > 0) {
+      annualTotals['粗利益'] = { amount: grossProfitAmount, percentage: '' };
+    } else {
+      // 粗利益がない場合は売上 - 売上原価で計算
+      const costOfSales = getSum(['売上原価', '原価'], 'actual');
+      annualTotals['粗利益'] = { amount: totalSalesAmount - costOfSales, percentage: '' };
+    }
+    
     // 管理費計
-    annualTotals['管理費計'] = { amount: (annualTotals['変動費']?.amount ?? 0) + (annualTotals['固定費']?.amount ?? 0), percentage: '' };
+    const managementCostAmount = getSum(['変動費'], 'actual') + getSum(['固定費'], 'actual');
+    if (managementCostAmount > 0) {
+      annualTotals['管理費計'] = { amount: managementCostAmount, percentage: '' };
+    }
+    
     // 償却前利益
-    annualTotals['償却前利益'] = { amount: (annualTotals['粗利']?.amount ?? 0) - (annualTotals['管理費計']?.amount ?? 0), percentage: '' };
+    const profitBeforeDepAmount = getSum(['償却前利益'], 'actual');
+    if (profitBeforeDepAmount > 0) {
+      annualTotals['償却前利益'] = { amount: profitBeforeDepAmount, percentage: '' };
+    } else {
+      // 計算で求める
+      annualTotals['償却前利益'] = { amount: (annualTotals['粗利益']?.amount ?? 0) - managementCostAmount, percentage: '' };
+    }
+    
     // 営業利益
-    annualTotals['営業利益'] = { amount: (annualTotals['償却前利益']?.amount ?? 0) - (annualTotals['減価償却費']?.amount ?? 0), percentage: '' };
+    const operatingProfitAmount = getSum(['営業利益'], 'actual');
+    if (operatingProfitAmount > 0) {
+      annualTotals['営業利益'] = { amount: operatingProfitAmount, percentage: '' };
+    } else {
+      // 計算で求める
+      const depreciationAmount = getSum(['減価償却費'], 'actual');
+      annualTotals['営業利益'] = { amount: (annualTotals['償却前利益']?.amount ?? 0) - depreciationAmount, percentage: '' };
+    }
+    
     // 売上高合計で比率計算
-    const netSalesTotal = getSum('売上高', 'actual') + getSum('売上', 'actual') || 1;
+    const netSalesTotal = totalSalesAmount || 1;
     Object.keys(annualTotals).forEach(name => {
       const percentage = ((annualTotals[name].amount / netSalesTotal) * 100).toFixed(1);
       annualTotals[name].percentage = `${percentage}%`;
@@ -185,12 +261,17 @@ function YearlyProgress() {
     }
   });
   const monthlyProfit = yearlyPL.map(items => {
-    const profitItem = getProfitItem(items);
-    if (profitItem && profitItem.actual && profitItem.actual !== 0) {
-      return { value: profitItem.actual, isEstimate: false };
-    } else if (profitItem && profitItem.estimate) {
-      return { value: profitItem.estimate, isEstimate: true };
-    } else {
+    try {
+      const profitItem = getProfitItem(items);
+      if (profitItem && profitItem.actual && profitItem.actual !== 0) {
+        return { value: profitItem.actual, isEstimate: false };
+      } else if (profitItem && profitItem.estimate) {
+        return { value: profitItem.estimate, isEstimate: true };
+      } else {
+        return { value: 0, isEstimate: false };
+      }
+    } catch (error) {
+      console.error('getProfitItem error:', error);
       return { value: 0, isEstimate: false };
     }
   });
@@ -286,10 +367,10 @@ function YearlyProgress() {
                             {(() => {
                               const currentStore = stores.find(store => store.id === storeId);
                               if (currentStore && currentStore.name !== 'Manager') {
-                                return currentStore.name;
+                                return formatStoreName(currentStore);
                               }
                               const fallbackStore = stores.find(s => s.name !== '無所属' && s.name !== 'Manager');
-                              return fallbackStore?.name || '選択してください';
+                              return fallbackStore ? formatStoreName(fallbackStore) : '選択してください';
                             })()}
                           </span>
                           <ChevronDown className={`h-4 w-4 text-gray-600 group-hover:text-blue-600 transition-all duration-300 ${isStoreDropdownOpen ? 'rotate-180' : ''}`} />
@@ -302,7 +383,7 @@ function YearlyProgress() {
                     <div className="absolute top-full left-0 right-0 mt-2 z-50 animate-in slide-in-from-top-2 duration-200">
                       <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
                         <div className="p-2">
-                          {stores.filter(store => store.name !== '無所属' && store.name !== 'Manager').map((store, index) => (
+                          {sortStoresByBusinessType(stores.filter(store => store.name !== '無所属' && store.name !== 'Manager')).map((store, index) => (
                             <button
                               key={store.id}
                               onClick={() => { setStoreId(store.id); setIsStoreDropdownOpen(false); }}
@@ -324,7 +405,7 @@ function YearlyProgress() {
                                     : 'h-4 w-4 text-gray-600 group-hover:text-blue-600'
                                 } />
                               </div>
-                              <span className="font-semibold flex-1">{store.name}</span>
+                              <span className="font-semibold flex-1">{formatStoreName(store)}</span>
                               {storeId === store.id && (
                                 <div className="p-1 bg-white/20 rounded-full">
                                   <Check className="h-4 w-4 text-white" />
@@ -447,15 +528,20 @@ function YearlyProgress() {
                     <tbody>
                       {/* ここは既存のannualTotals描画ロジックを流用しつつ、デザインのみ上記に合わせてリファイン */}
                       {(() => {
-                        // 先頭に売上・原価・粗利
+                        // 適切な表示順序を定義
                         const keys = Object.keys(annualTotals);
-                        const order = ['売上', '原価', '粗利'];
-                        const rows = order.filter(k => keys.includes(k)).map((name) => {
+                        const order = ['売上高', '売上', '純売上', '売上原価', '原価', '粗利益', '粗利', '変動費', '固定費', '管理費計', '償却前利益', '減価償却費', '営業利益'];
+                        const displayedKeys = new Set();
+                        
+                        // 順序に従って表示
+                        const rows = order.filter(k => keys.includes(k) && !displayedKeys.has(k)).map((name) => {
+                          displayedKeys.add(name);
                           const data = annualTotals[name];
-                          const isHighlighted = name === '粗利';
+                          const isHighlighted = name === '粗利益' || name === '粗利' || name === '営業利益';
+                          const isSubtotal = name === '管理費計' || name === '変動費' || name === '固定費';
                           return (
                             <tr key={name} className={
-                              `group transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 ${isHighlighted ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-400 font-bold text-lg' : 'font-medium'}`
+                              `group transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 ${isHighlighted ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-400 font-bold text-lg' : ''} ${isSubtotal ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 font-bold text-lg' : 'font-medium'}`
                             }>
                               <td className="py-4 px-8 text-gray-800">{name}</td>
                               <td className="py-4 px-8 text-right font-mono text-gray-700">¥{data.amount.toLocaleString()}</td>
@@ -463,12 +549,13 @@ function YearlyProgress() {
                             </tr>
                           );
                         });
-                        // 残りの行
-                        rows.push(...Object.entries(annualTotals)
-                          .filter(([name]) => !order.includes(name))
+                        
+                        // 残りの項目も表示
+                        const remainingRows = Object.entries(annualTotals)
+                          .filter(([name]) => !displayedKeys.has(name))
                           .map(([name, data]) => {
-                            const isHighlighted = name === '営業利益';
-                            const isSubtotal = name === '管理費計';
+                            const isHighlighted = name.includes('利益');
+                            const isSubtotal = name.includes('費') || name.includes('計');
                             return (
                               <tr key={name} className={
                                 `group transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 ${isHighlighted ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-400 font-bold text-lg' : ''} ${isSubtotal ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 font-bold text-lg' : 'font-medium'}`
@@ -478,8 +565,9 @@ function YearlyProgress() {
                                 <td className="py-4 px-8 text-right font-mono text-gray-700">{data.percentage}</td>
                               </tr>
                             );
-                          }));
-                        return rows;
+                          });
+                        
+                        return [...rows, ...remainingRows];
                       })()}
                     </tbody>
                   </table>

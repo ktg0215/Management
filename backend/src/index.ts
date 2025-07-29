@@ -224,6 +224,12 @@ app.post('/api/auth/login', requireDatabase, async (req: Request, res: Response)
     );
     
     console.log('ログイン成功');
+    console.log('📤 Response data:', {
+      hasUser: !!user,
+      hasToken: !!token,
+      userKeys: user ? Object.keys(user) : [],
+      tokenLength: token ? token.length : 0
+    });
     res.json({ data: { user, token } });
   } catch (err) {
     console.error('ログインエラー:', err);
@@ -493,9 +499,10 @@ app.delete('/api/business-types/:id', requireDatabase, authenticateToken, async 
     
     const businessTypeName = businessTypeResult.rows[0].name;
     
-    // Manager業態（管理者業態）の削除を防止
-    if (businessTypeName === 'Manager' || businessTypeName === '管理者') {
-      res.status(400).json({ error: '管理者業態は削除できません' });
+    // 必須業態の削除を防止
+    const protectedBusinessTypes = ['Manager', '管理者', '温野菜', 'ピザーラ', 'EDW'];
+    if (protectedBusinessTypes.includes(businessTypeName)) {
+      res.status(400).json({ error: `${businessTypeName}業態は必須業態のため削除できません` });
       return;
     }
     
@@ -714,11 +721,10 @@ app.get('/api/shift-submissions', requireDatabase, authenticateToken, async (req
 app.post('/api/shift-submissions', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { periodId, employeeId, status } = req.body;
   try {
-    const isSubmitted = status === 'submitted';
     const result = await pool!.query(
-      `INSERT INTO shift_submissions (period_id, employee_id, is_submitted)
+      `INSERT INTO shift_submissions (period_id, employee_id, status)
        VALUES ($1, $2, $3) RETURNING *`,
-      [periodId, employeeId, isSubmitted]
+      [periodId, employeeId, status || 'draft']
     );
     const submission = toCamelCase(result.rows[0]);
     res.json({ data: submission });
@@ -732,10 +738,9 @@ app.put('/api/shift-submissions/:id', requireDatabase, authenticateToken, async 
   const { id } = req.params;
   const { status } = req.body;
   try {
-    const isSubmitted = status === 'submitted';
     const result = await pool!.query(
-      `UPDATE shift_submissions SET is_submitted = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
-      [isSubmitted, id]
+      `UPDATE shift_submissions SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [status, id]
     );
     if (result.rows.length === 0) {
       res.status(404).json({ error: 'シフト提出が見つかりません' });
@@ -752,7 +757,7 @@ app.post('/api/shift-submissions/:id/submit', requireDatabase, authenticateToken
   const { id } = req.params;
   try {
     const result = await pool!.query(
-      `UPDATE shift_submissions SET is_submitted = true, submitted_at = NOW(), updated_at = NOW() 
+      `UPDATE shift_submissions SET status = 'submitted', submitted_at = NOW(), updated_at = NOW() 
        WHERE id = $1 RETURNING *`,
       [id]
     );
@@ -779,7 +784,7 @@ app.get('/api/shift-entries', requireDatabase, authenticateToken, async (req: Re
       params.push(submissionId);
     }
     
-    query += ' ORDER BY date';
+    query += ' ORDER BY work_date';
     
     const result = await pool!.query(query, params);
     const entries = toCamelCase(result.rows);
@@ -791,12 +796,12 @@ app.get('/api/shift-entries', requireDatabase, authenticateToken, async (req: Re
 });
 
 app.post('/api/shift-entries', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
-  const { submissionId, date, startTime, endTime, isHoliday } = req.body;
+  const { submissionId, work_date, startTime, endTime, isHoliday } = req.body;
   try {
     const result = await pool!.query(
       `INSERT INTO shift_entries (submission_id, work_date, start_time, end_time, is_holiday)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [submissionId, date, startTime, endTime, isHoliday]
+      [submissionId, work_date, startTime, endTime, isHoliday]
     );
     const entry = toCamelCase(result.rows[0]);
     res.json({ data: entry });
@@ -1393,6 +1398,71 @@ app.delete('/api/companies/:id', requireDatabase, authenticateToken, async (req:
   } catch (err) {
     console.error('企業削除エラー:', err);
     res.status(500).json({ success: false, error: '企業の削除に失敗しました' });
+  }
+});
+
+// 売上データ管理API
+app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { year, month, storeId } = req.query;
+  
+  if (!year || !month || !storeId) {
+    res.status(400).json({ success: false, error: 'year, month, storeIdは必須です' });
+    return;
+  }
+  
+  try {
+    const result = await pool!.query(
+      'SELECT * FROM sales_data WHERE year = $1 AND month = $2 AND store_id = $3',
+      [year, month, storeId]
+    );
+    
+    if (result.rows.length === 0) {
+      res.json({ success: true, data: null });
+      return;
+    }
+    
+    const salesData = result.rows[0];
+    res.json({ success: true, data: salesData });
+  } catch (err) {
+    console.error('売上データ取得エラー:', err);
+    res.status(500).json({ success: false, error: '売上データの取得に失敗しました' });
+  }
+});
+
+app.post('/api/sales', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { year, month, storeId, dailyData } = req.body;
+  const user = (req as any).user;
+  
+  if (!year || !month || !storeId || !dailyData) {
+    res.status(400).json({ success: false, error: 'year, month, storeId, dailyDataは必須です' });
+    return;
+  }
+  
+  try {
+    // 既存データがあれば更新、なければ新規作成
+    const existingResult = await pool!.query(
+      'SELECT id FROM sales_data WHERE year = $1 AND month = $2 AND store_id = $3',
+      [year, month, storeId]
+    );
+    
+    if (existingResult.rows.length > 0) {
+      // 更新
+      await pool!.query(
+        'UPDATE sales_data SET daily_data = $1, updated_at = NOW(), updated_by = $2 WHERE id = $3',
+        [JSON.stringify(dailyData), user.id, existingResult.rows[0].id]
+      );
+    } else {
+      // 新規作成
+      await pool!.query(
+        'INSERT INTO sales_data (store_id, year, month, daily_data, created_by, updated_by) VALUES ($1, $2, $3, $4, $5, $6)',
+        [storeId, year, month, JSON.stringify(dailyData), user.id, user.id]
+      );
+    }
+    
+    res.json({ success: true, message: '売上データが正常に保存されました' });
+  } catch (err) {
+    console.error('売上データ保存エラー:', err);
+    res.status(500).json({ success: false, error: '売上データの保存に失敗しました' });
   }
 });
 

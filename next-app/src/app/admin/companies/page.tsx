@@ -6,6 +6,7 @@ import { useStoreStore } from '@/stores/storeStore';
 import { Company } from '@/lib/api';
 import apiClient from '@/lib/api';
 import AppLayout from '@/app/appLayout/layout';
+import { formatStoreName } from '@/utils/storeDisplay';
 import { 
   Building2, 
   Plus, 
@@ -400,17 +401,57 @@ function CompaniesPage() {
   };
 
   const handleDeleteCompany = async (id: string) => {
-    if (!confirm('この取引先を削除しますか？')) return;
+    // 警告メッセージと認証要求
+    const warningMessage = `警告: この取引先を削除しようとしています。\n\nこの操作は取り消せません。\n\n続行するには、勤怠番号とパスワードを再入力してください。`;
+    
+    if (!confirm(warningMessage)) {
+      return;
+    }
 
+    // 勤怠番号とパスワードの再入力
+    const employeeId = prompt('勤怠番号を入力してください:');
+    if (!employeeId) {
+      setError('勤怠番号が入力されませんでした');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    const password = prompt('パスワードを入力してください:');
+    if (!password) {
+      setError('パスワードが入力されませんでした');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    // 認証確認
     try {
+      const authResponse = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ employeeId, password }),
+      });
+
+      const authData = await authResponse.json();
+      
+      if (!authData.success) {
+        setError('認証に失敗しました。勤怠番号またはパスワードが正しくありません。');
+        setTimeout(() => setError(''), 5000);
+        return;
+      }
+
+      // 認証成功後、削除を実行
       const response = await apiClient.deleteCompany(id);
       if (response.success) {
         await loadCompanies();
+        setError(null); // エラーをクリア
       } else {
-        setError('削除に失敗しました');
+        setError(response.error || '削除に失敗しました');
       }
-    } catch {
-      setError('削除に失敗しました');
+    } catch (error) {
+      console.error('削除エラー:', error);
+      setError('削除に失敗しました。ネットワークエラーが発生した可能性があります。');
     }
   };
 
@@ -496,11 +537,14 @@ function CompaniesPage() {
                 onChange={(e) => setSelectedStoreId(e.target.value)}
                 className="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {stores.filter(store => store.name !== 'Manager').map(store => (
-                  <option key={store.id} value={store.id}>
-                    {store.name}
-                  </option>
-                ))}
+                {stores.filter(store => store.name !== 'Manager').map(store => {
+                  console.log('Store data:', store);
+                  return (
+                    <option key={store.id} value={store.id}>
+                      {formatStoreName(store)}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           )}

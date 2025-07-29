@@ -7,6 +7,12 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
     ? `${process.env.NEXT_PUBLIC_API_URL}/api`
     : 'http://localhost:3001/api';
 
+console.log('🔧 API Configuration:', {
+  NODE_ENV: process.env.NODE_ENV,
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  API_BASE_URL: API_BASE_URL
+});
+
 import { Employee } from '@/app/admin/employees/page';
 import { Store } from '@/stores/storeStore';
 import { ShiftEntry, ShiftPeriod } from '@/stores/shiftStore';
@@ -68,6 +74,7 @@ interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
+  status?: number;
 }
 
 // ShiftSubmission型を定義
@@ -102,12 +109,15 @@ class ApiClient {
   }
 
   setToken(token: string | null) {
+    console.log('🔑 APIClient.setToken called:', { token: token ? '***存在***' : 'null', hasWindow: typeof window !== 'undefined' });
     this.token = token;
     if (typeof window !== 'undefined') {
       if (token) {
         localStorage.setItem('auth_token', token);
+        console.log('💾 Token saved to localStorage');
       } else {
         localStorage.removeItem('auth_token');
+        console.log('🗑️ Token removed from localStorage');
       }
     }
   }
@@ -125,6 +135,9 @@ class ApiClient {
 
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
+      console.log('🔐 Authorization header set for request to:', endpoint);
+    } else {
+      console.log('⚠️ No token available for request to:', endpoint);
     }
 
     try {
@@ -148,7 +161,8 @@ class ApiClient {
         };
       }
 
-      if (!response.ok) {
+      // 304 Not Modifiedは成功レスポンスとして扱う
+      if (!response.ok && response.status !== 304) {
         let errorMessage = (data?.error as string) || `HTTP ${response.status}`;
         
         // 409 Conflictエラーの場合、より分かりやすいメッセージを設定
@@ -156,16 +170,31 @@ class ApiClient {
           errorMessage = '同じ名前の取引先が既に存在します。別の名前を使用してください。';
         }
         
+        console.log('❌ API Request failed:', { 
+          endpoint, 
+          status: response.status, 
+          errorMessage,
+          responseData: data 
+        });
+        
         return {
           success: false,
           error: errorMessage,
         };
       }
 
+      console.log('✅ API Request success:', { 
+        endpoint, 
+        status: response.status,
+        hasData: !!data,
+        dataKeys: data ? Object.keys(data) : []
+      });
+
       return {
         success: true,
         data: (data?.data as T) || (data as T),
         message: data?.message as string,
+        status: response.status,
       };
     } catch (error) {
       return {
@@ -177,10 +206,19 @@ class ApiClient {
 
   // Authentication endpoints
   async login(employeeId: string, password: string) {
-    return this.request<{ user: Employee; token: string }>('/auth/login', {
+    console.log('🔑 APIClient.login called:', { employeeId });
+    const response = await this.request<{ user: Employee; token: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ employeeId, password }),
     });
+    console.log('📋 Login API response:', { 
+      success: response.success, 
+      hasData: !!response.data,
+      hasUser: !!response.data?.user,
+      hasToken: !!response.data?.token,
+      error: response.error 
+    });
+    return response;
   }
 
   async register(data: {
@@ -351,7 +389,7 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({
         submissionId: data.submissionId,
-        date: data.work_date,
+        work_date: data.work_date,
         startTime: data.startTime,
         endTime: data.endTime,
         isHoliday: data.isHoliday
@@ -458,3 +496,19 @@ class ApiClient {
 
 export const apiClient = new ApiClient(API_BASE_URL);
 export default apiClient;
+
+// 売上データ関連のAPI
+export const salesApi = {
+  // 売上データ取得
+  getSales: async (year: number, month: number, storeId: string): Promise<ApiResponse<any>> => {
+    return apiClient.request(`/sales?year=${year}&month=${month}&storeId=${storeId}`);
+  },
+
+  // 売上データ保存
+  saveSales: async (year: number, month: number, storeId: string, dailyData: any): Promise<ApiResponse<any>> => {
+    return apiClient.request('/sales', {
+      method: 'POST',
+      body: JSON.stringify({ year, month, storeId, dailyData }),
+    });
+  },
+};

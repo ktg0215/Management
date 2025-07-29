@@ -4,6 +4,7 @@ import { formatCurrency, formatPercentage, formatNumber } from '../../utils/calc
 import { Edit2, Plus, Calendar, Building, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useStoreStore } from '../../stores/storeStore';
+import { formatStoreName, sortStoresByBusinessType } from '../../utils/storeDisplay';
 
 interface StoreMonthlyDataTableProps {
   businessTypes: BusinessType[];
@@ -24,7 +25,7 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['sales', 'customer', 'profit']));
   
   // 管理者の場合は自分の店舗、総管理者の場合は選択可能
-  const availableStores = isSuperAdmin() ? stores : stores.filter(store => store.id === user?.storeId);
+  const availableStores = isSuperAdmin() ? sortStoresByBusinessType(stores) : stores.filter(store => store.id === user?.storeId);
   
   useEffect(() => {
     if (availableStores.length > 0 && !selectedStoreId) {
@@ -245,7 +246,7 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
                   className="bg-transparent border-none focus:ring-0 text-gray-900 font-semibold cursor-pointer flex-1"
                 >
                   {availableStores.map(store => (
-                    <option key={store.id} value={store.id}>{store.name}</option>
+                    <option key={store.id} value={store.id}>{formatStoreName(store)}</option>
                   ))}
                 </select>
                 <ChevronDown className="w-4 h-4 text-gray-400" />

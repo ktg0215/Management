@@ -18,7 +18,7 @@ services:
   # バックエンドAPI
   backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: management-backend
     environment:
