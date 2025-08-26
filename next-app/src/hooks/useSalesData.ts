@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { MonthlyData, DailySalesData, EDWDailySalesData } from '../types/sales';
 import { getDaysInMonth, getDayOfWeek, formatDate } from '../utils/salesUtils';
 import { calculateDerivedValues, calculateCumulativeValues } from '../utils/salesCalculations';
@@ -18,8 +18,19 @@ export const useSalesData = (storeId?: string) => {
   });
   const [isLoading, setIsLoading] = useState(false);
 
+  // 初期EDWデータ生成をメモ化
+  const createEmptyEDWData = useCallback((dateKey: string, dayOfWeek: string): Partial<EDWDailySalesData> => {
+    const edwBase: Partial<EDWDailySalesData> = {};
+    EDW_SALES_FIELDS.forEach(field => {
+      (edwBase as any)[field.key] = undefined;
+    });
+    edwBase['date'] = dateKey;
+    edwBase['dayOfWeek'] = dayOfWeek;
+    return edwBase;
+  }, []);
+
   // Load data from API
-  const loadData = async (year: number, month: number, storeId?: string) => {
+  const loadData = useCallback(async (year: number, month: number, storeId?: string) => {
     if (!storeId) {
       // 店舗が選択されていない場合は空のデータを設定
       const daysInMonth = getDaysInMonth(year, month);
@@ -28,14 +39,7 @@ export const useSalesData = (storeId?: string) => {
       for (let day = 1; day <= daysInMonth; day++) {
         const dateKey = formatDate(year, month, day);
         const dayOfWeek = getDayOfWeek(year, month, day);
-        // EDW_SALES_FIELDSの全項目で初期化
-        const edwBase: any = {};
-        EDW_SALES_FIELDS.forEach(field => {
-          edwBase[field.key] = undefined;
-        });
-        edwBase['date'] = dateKey;
-        edwBase['dayOfWeek'] = dayOfWeek;
-        dailyData[dateKey] = edwBase;
+        dailyData[dateKey] = createEmptyEDWData(dateKey, dayOfWeek);
       }
       
       setMonthlyData({
@@ -66,14 +70,7 @@ export const useSalesData = (storeId?: string) => {
         for (let day = 1; day <= daysInMonth; day++) {
           const dateKey = formatDate(year, month, day);
           const dayOfWeek = getDayOfWeek(year, month, day);
-          // EDW_SALES_FIELDSの全項目で初期化
-          const edwBase: any = {};
-          EDW_SALES_FIELDS.forEach(field => {
-            edwBase[field.key] = undefined;
-          });
-          edwBase['date'] = dateKey;
-          edwBase['dayOfWeek'] = dayOfWeek;
-          dailyData[dateKey] = edwBase;
+          dailyData[dateKey] = createEmptyEDWData(dateKey, dayOfWeek);
         }
         
         setMonthlyData({
@@ -91,13 +88,7 @@ export const useSalesData = (storeId?: string) => {
       for (let day = 1; day <= daysInMonth; day++) {
         const dateKey = formatDate(year, month, day);
         const dayOfWeek = getDayOfWeek(year, month, day);
-        const edwBase: any = {};
-        EDW_SALES_FIELDS.forEach(field => {
-          edwBase[field.key] = undefined;
-        });
-        edwBase['date'] = dateKey;
-        edwBase['dayOfWeek'] = dayOfWeek;
-        dailyData[dateKey] = edwBase;
+        dailyData[dateKey] = createEmptyEDWData(dateKey, dayOfWeek);
       }
       
       setMonthlyData({
@@ -108,15 +99,15 @@ export const useSalesData = (storeId?: string) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [createEmptyEDWData]);
 
   // Force reload data from API
-  const forceReloadData = () => {
+  const forceReloadData = useCallback(() => {
     loadData(currentYear, currentMonth, storeId);
-  };
+  }, [loadData, currentYear, currentMonth, storeId]);
 
   // Save data to API
-  const saveData = async (data: MonthlyData, storeId?: string) => {
+  const saveData = useCallback(async (data: MonthlyData, storeId?: string) => {
     if (!storeId) return;
 
     try {
@@ -135,10 +126,10 @@ export const useSalesData = (storeId?: string) => {
     } catch (error) {
       console.error('売上データ保存エラー:', error);
     }
-  };
+  }, []);
 
   // Load demo data
-  const loadDemoData = async () => {
+  const loadDemoData = useCallback(async () => {
     if (!storeId) return;
 
     setIsLoading(true);
@@ -166,10 +157,10 @@ export const useSalesData = (storeId?: string) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentYear, currentMonth, storeId, saveData]);
 
   // Update sales data for a specific date
-  const updateSalesData = async (date: string, formData: EDWDailySalesData) => {
+  const updateSalesData = useCallback(async (date: string, formData: EDWDailySalesData) => {
     if (!storeId) return;
 
     const currentData = monthlyData.dailyData[date] || { date, dayOfWeek: '' };
@@ -186,7 +177,7 @@ export const useSalesData = (storeId?: string) => {
       [date]: updatedData,
     };
 
-    // Calculate cumulative values
+    // Calculate cumulative values using useMemo for performance
     const dailyDataWithCumulatives = calculateCumulativeValues(
       newDailyData,
       currentYear,
@@ -200,31 +191,32 @@ export const useSalesData = (storeId?: string) => {
 
     setMonthlyData(newMonthlyData);
     await saveData(newMonthlyData, storeId);
-  };
+  }, [monthlyData, currentYear, currentMonth, storeId, saveData]);
 
   // Get data for a specific date
-  const getDailyData = (date: string): EDWDailySalesData | undefined => {
+  const getDailyData = useCallback((date: string): EDWDailySalesData | undefined => {
     return monthlyData.dailyData[date];
-  };
+  }, [monthlyData.dailyData]);
 
   // Check if data exists for a date
-  const hasData = (date: string): boolean => {
+  const hasData = useCallback((date: string): boolean => {
     const data = monthlyData.dailyData[date];
     return !!(data && data.storeNetSales !== undefined);
-  };
+  }, [monthlyData.dailyData]);
 
   // Change year/month
-  const changeMonth = (year: number, month: number) => {
+  const changeMonth = useCallback((year: number, month: number) => {
     setCurrentYear(year);
     setCurrentMonth(month);
-  };
+  }, []);
 
   // Load data when year/month or storeId changes
   useEffect(() => {
     loadData(currentYear, currentMonth, storeId);
-  }, [currentYear, currentMonth, storeId]);
+  }, [currentYear, currentMonth, storeId, loadData]);
 
-  return {
+  // メモ化された返り値
+  const returnValue = useMemo(() => ({
     currentYear,
     currentMonth,
     monthlyData,
@@ -235,5 +227,18 @@ export const useSalesData = (storeId?: string) => {
     forceReloadData,
     loadDemoData,
     isLoading,
-  };
-}; 
+  }), [
+    currentYear,
+    currentMonth,
+    monthlyData,
+    updateSalesData,
+    getDailyData,
+    hasData,
+    changeMonth,
+    forceReloadData,
+    loadDemoData,
+    isLoading,
+  ]);
+
+  return returnValue;
+};

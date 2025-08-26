@@ -69,7 +69,7 @@ export interface ActivityLog {
   storeName?: string;
 }
 
-interface ApiResponse<T> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -497,18 +497,57 @@ class ApiClient {
 export const apiClient = new ApiClient(API_BASE_URL);
 export default apiClient;
 
+// 売上データ型を定義
+export interface SalesDataResponse {
+  year: number;
+  month: number;
+  daily_data: Record<string, any>;
+}
+
+export interface SaveSalesRequest {
+  year: number;
+  month: number;
+  storeId: string;
+  dailyData: Record<string, any>;
+}
+
 // 売上データ関連のAPI
 export const salesApi = {
   // 売上データ取得
-  getSales: async (year: number, month: number, storeId: string): Promise<ApiResponse<any>> => {
-    return apiClient.request(`/sales?year=${year}&month=${month}&storeId=${storeId}`);
+  getSales: async (year: number, month: number, storeId: string): Promise<ApiResponse<SalesDataResponse>> => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    
+    const response = await fetch(`${API_BASE_URL}/sales?year=${year}&month=${month}&storeId=${storeId}`, {
+      headers: { 
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    return await response.json();
   },
 
   // 売上データ保存
-  saveSales: async (year: number, month: number, storeId: string, dailyData: any): Promise<ApiResponse<any>> => {
-    return apiClient.request('/sales', {
+  saveSales: async (year: number, month: number, storeId: string, dailyData: Record<string, any>): Promise<ApiResponse<SalesDataResponse>> => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    
+    const response = await fetch(`${API_BASE_URL}/sales`, {
       method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      },
       body: JSON.stringify({ year, month, storeId, dailyData }),
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    return await response.json();
   },
 };
