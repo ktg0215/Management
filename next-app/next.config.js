@@ -9,6 +9,40 @@ const nextConfig = {
   // 本番環境用の設定
   poweredByHeader: false,
   compress: true,
+  // Performance optimizations
+  swcMinify: true,
+  reactStrictMode: true,
+  // Experimental features for better performance
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['lucide-react', 'date-fns'],
+  },
+  // Bundle analysis
+  webpack: (config, { dev, isServer }) => {
+    // Bundle analyzer in development
+    if (dev && !isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              chunks: 'all',
+            },
+            common: {
+              name: 'commons',
+              minChunks: 2,
+              chunks: 'all',
+              enforce: true,
+            },
+          },
+        },
+      };
+    }
+    return config;
+  },
   // 環境変数の設定
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
@@ -41,6 +75,32 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=86400',
+          },
+        ],
+      },
+      {
+        source: '/images/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
           },
         ],
       },

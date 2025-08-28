@@ -511,43 +511,257 @@ export interface SaveSalesRequest {
   dailyData: Record<string, any>;
 }
 
+// Enhanced sales API with retry mechanisms and error handling
+interface RetryOptions {
+  maxRetries: number;
+  retryDelay: number;
+  shouldRetry: (error: any) => boolean;
+}
+
+const defaultRetryOptions: RetryOptions = {
+  maxRetries: 3,
+  retryDelay: 1000,
+  shouldRetry: (error) => {
+    // Retry on network errors or 5xx server errors
+    return !error.status || error.status >= 500;
+  },
+};
+
+async function fetchWithRetry<T>(
+  url: string,
+  options: RequestInit = {},
+  retryOptions: Partial<RetryOptions> = {}
+): Promise<ApiResponse<T>> {
+  const finalOptions = { ...defaultRetryOptions, ...retryOptions };
+  let lastError: any;
+
+  for (let attempt = 0; attempt <= finalOptions.maxRetries; attempt++) {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+          ...options.headers,
+        },
+        ...options,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, data };
+      }
+
+      // Handle client errors (4xx) - don't retry
+      if (response.status >= 400 && response.status < 500) {
+        const errorData = await response.json().catch(() => ({}));
+        return {
+          success: false,
+          error: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+        };
+      }
+
+      // Server errors (5xx) - may retry
+      lastError = {
+        status: response.status,
+        statusText: response.statusText,
+        message: `HTTP ${response.status}: ${response.statusText}`,
+      };
+
+    } catch (error) {
+      lastError = {
+        message: error instanceof Error ? error.message : 'Network error',
+        networkError: true,
+      };
+    }
+
+    // Check if we should retry
+    if (attempt < finalOptions.maxRetries && finalOptions.shouldRetry(lastError)) {
+      const delay = finalOptions.retryDelay * Math.pow(2, attempt); // Exponential backoff
+      console.log(`API call failed, retrying in ${delay}ms (attempt ${attempt + 1}/${finalOptions.maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    } else {
+      break;
+    }
+  }
+
+  return {
+    success: false,
+    error: lastError.message || 'Unknown error occurred',
+  };
+}
+
 // 売上データ関連のAPI
 export const salesApi = {
   // 売上データ取得
   getSales: async (year: number, month: number, storeId: string): Promise<ApiResponse<SalesDataResponse>> => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-    
-    const response = await fetch(`${API_BASE_URL}/sales?year=${year}&month=${month}&storeId=${storeId}`, {
-      headers: { 
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    return await response.json();
+    return fetchWithRetry<SalesDataResponse>(
+      `${API_BASE_URL}/sales?year=${year}&month=${month}&storeId=${storeId}`,
+      { method: 'GET' }
+    );
   },
 
   // 売上データ保存
   saveSales: async (year: number, month: number, storeId: string, dailyData: Record<string, any>): Promise<ApiResponse<SalesDataResponse>> => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-    
-    const response = await fetch(`${API_BASE_URL}/sales`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
+    return fetchWithRetry<SalesDataResponse>(
+      `${API_BASE_URL}/sales`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ year, month, storeId, dailyData }),
       },
-      body: JSON.stringify({ year, month, storeId, dailyData }),
+      {
+        // Don't retry POST requests by default (to avoid duplicate submissions)
+        maxRetries: 0,
+        shouldRetry: () => false,
+      }
+    );
+  },
+
+  // 日別売上データ保存
+  saveDailySales: async (
+    year: number,
+    month: number,
+    storeId: string,
+    date: string,
+    data: any
+  ): Promise<ApiResponse<any>> => {
+    return fetchWithRetry(
+      `${API_BASE_URL}/sales/daily`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          year,
+          month,
+          storeId,
+          date,
+          data,
+        }),
+      },
+      {
+        maxRetries: 1, // Retry once for updates
+        shouldRetry: (error) => error.networkError || error.status >= 500,
+      }
+    );
+  },
+
+  // バッチ売上データ保存
+  saveBatchSales: async (
+    year: number,
+    month: number,
+    storeId: string,
+    updates: Array<{ date: string; data: any }>
+  ): Promise<ApiResponse<any>> => {
+    return fetchWithRetry(
+      `${API_BASE_URL}/sales/batch`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          year,
+          month,
+          storeId,
+          updates,
+        }),
+      },
+      {
+        maxRetries: 1,
+        shouldRetry: (error) => error.networkError || error.status >= 500,
+      }
+    );
+  },
+
+  // ヘルスチェック
+  healthCheck: async (): Promise<ApiResponse<any>> => {
+    return fetchWithRetry(
+      `${API_BASE_URL}/health`,
+      { method: 'HEAD' },
+      {
+        maxRetries: 1,
+        retryDelay: 500,
+        shouldRetry: () => true,
+      }
+    );
+  },
+};
+
+// API response cache utilities
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
+
+class ApiCache {
+  private cache = new Map<string, CacheEntry<any>>();
+  
+  set<T>(key: string, data: T, ttl = 5 * 60 * 1000): void {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl,
     });
+  }
+  
+  get<T>(key: string): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
     
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    if (Date.now() - entry.timestamp > entry.ttl) {
+      this.cache.delete(key);
+      return null;
     }
     
-    return await response.json();
-  },
+    return entry.data;
+  }
+  
+  clear(): void {
+    this.cache.clear();
+  }
+  
+  delete(key: string): boolean {
+    return this.cache.delete(key);
+  }
+  
+  has(key: string): boolean {
+    const entry = this.cache.get(key);
+    if (!entry) return false;
+    
+    if (Date.now() - entry.timestamp > entry.ttl) {
+      this.cache.delete(key);
+      return false;
+    }
+    
+    return true;
+  }
+}
+
+export const apiCache = new ApiCache();
+
+// Utility functions for handling API responses
+export const handleApiError = (error: string): string => {
+  if (error.includes('Network error') || error.includes('fetch')) {
+    return 'ネットワークエラーが発生しました。インターネット接続を確認してください。';
+  }
+  
+  if (error.includes('HTTP 401')) {
+    return '認証が必要です。ログインしてください。';
+  }
+  
+  if (error.includes('HTTP 403')) {
+    return 'アクセス権限がありません。';
+  }
+  
+  if (error.includes('HTTP 404')) {
+    return '要求されたリソースが見つかりません。';
+  }
+  
+  if (error.includes('HTTP 429')) {
+    return 'リクエストが多すぎます。しばらく待ってからお試しください。';
+  }
+  
+  if (error.includes('HTTP 5')) {
+    return 'サーバーエラーが発生しました。しばらく待ってからお試しください。';
+  }
+  
+  return error || '予期しないエラーが発生しました。';
 };

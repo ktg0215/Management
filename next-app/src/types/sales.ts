@@ -3,6 +3,14 @@ export interface DailySalesData {
   dayOfWeek: string;
   isHoliday?: boolean;
   
+  // EDW業態用の目標・実績項目
+  salesTarget?: number;
+  targetCumulative?: number;
+  targetAchievementRate?: number;
+  yearOnYear?: number;
+  edwYearOnYear?: number;
+  ohbYearOnYear?: number;
+  
   // 入力項目
   collectionManager?: string;
   storeNetSales?: number;
@@ -20,6 +28,12 @@ export interface DailySalesData {
   voidCount?: number;
   voidAmount?: number;
   cashDifference?: number;
+  
+  // EDW業態用の社員項目
+  employee1?: number;
+  employee2?: number;
+  employee3?: number;
+  employee4?: number;
   
   // 計算項目
   storeNetSalesCumulative?: number;
@@ -42,6 +56,11 @@ export interface DailySalesData {
   edwProductivity?: number;
   ohbProductivity?: number;
   totalProductivity?: number;
+  
+  // EDW業態用の追加計算項目
+  edwCustomerCount?: number;
+  edwGroupCount?: number;
+  ohbGroups?: number;
 }
 
 export interface MonthlyData {

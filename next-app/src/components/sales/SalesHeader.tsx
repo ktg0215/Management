@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback, memo } from 'react';
 import { ChevronLeft, ChevronRight, Plus, RefreshCw, Database, TrendingUp } from 'lucide-react';
 import { Store } from '@/stores/storeStore';
 import { formatStoreName } from '@/utils/storeDisplay';
@@ -19,7 +19,7 @@ interface SalesHeaderProps {
   onStoreChange?: (storeId: string) => void;
 }
 
-export const SalesHeader: React.FC<SalesHeaderProps> = ({
+const SalesHeader: React.FC<SalesHeaderProps> = memo(({
   currentYear,
   currentMonth,
   onYearChange,
@@ -33,23 +33,23 @@ export const SalesHeader: React.FC<SalesHeaderProps> = ({
   currentStoreName,
   onStoreChange,
 }) => {
-  const handlePrevMonth = () => {
+  const handlePrevMonth = useCallback(() => {
     if (currentMonth === 1) {
       onYearChange(currentYear - 1);
       onMonthChange(12);
     } else {
       onMonthChange(currentMonth - 1);
     }
-  };
+  }, [currentMonth, currentYear, onYearChange, onMonthChange]);
 
-  const handleNextMonth = () => {
+  const handleNextMonth = useCallback(() => {
     if (currentMonth === 12) {
       onYearChange(currentYear + 1);
       onMonthChange(1);
     } else {
       onMonthChange(currentMonth + 1);
     }
-  };
+  }, [currentMonth, currentYear, onYearChange, onMonthChange]);
 
   const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onYearChange(parseInt(e.target.value));
@@ -65,14 +65,14 @@ export const SalesHeader: React.FC<SalesHeaderProps> = ({
     }
   };
 
-  const getYearOptions = () => {
+  const getYearOptions = useMemo(() => {
     const currentYearValue = new Date().getFullYear();
     const years = [];
     for (let year = currentYearValue - 2; year <= currentYearValue + 1; year++) {
       years.push(year);
     }
     return years;
-  };
+  }, []);
 
   const monthNames = [
     '1月', '2月', '3月', '4月', '5月', '6月',
@@ -189,4 +189,6 @@ export const SalesHeader: React.FC<SalesHeaderProps> = ({
       </div>
     </div>
   );
-}; 
+});
+
+export { SalesHeader };

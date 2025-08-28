@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { X, Save, Calendar, TrendingUp } from 'lucide-react';
 import { EDW_SALES_FIELDS, EDWDailySalesData } from '../../types/sales';
 
@@ -10,7 +10,7 @@ interface SalesFormProps {
   initialData?: EDWDailySalesData;
 }
 
-export const SalesForm: React.FC<SalesFormProps> = ({
+const SalesForm: React.FC<SalesFormProps> = memo(({
   isOpen,
   onClose,
   onSave,
@@ -42,33 +42,35 @@ export const SalesForm: React.FC<SalesFormProps> = ({
     onClose();
   };
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = useCallback((field: string, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
     }));
-  };
+  }, []);
 
   if (!isOpen) return null;
 
-  const formatDateDisplay = (dateStr: string) => {
+  const formatDateDisplay = useCallback((dateStr: string) => {
     const date = new Date(dateStr);
     const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
     const dayOfWeek = dayNames[date.getDay()];
     const month = date.getMonth() + 1;
     const day = date.getDate();
     return `${month}月${day}日（${dayOfWeek}）`;
-  };
+  }, []);
 
-  // フィールドをカテゴリ別にグループ化
-  const groupedFields = EDW_SALES_FIELDS.reduce((groups, field) => {
-    const category = field.category || 'その他';
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(field);
-    return groups;
-  }, {} as Record<string, typeof EDW_SALES_FIELDS>);
+  // Memoize grouped fields to prevent recalculation on every render
+  const groupedFields = useMemo(() => {
+    return EDW_SALES_FIELDS.reduce((groups, field) => {
+      const category = field.category || 'その他';
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(field);
+      return groups;
+    }, {} as Record<string, Array<typeof EDW_SALES_FIELDS[number]>>);
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -138,7 +140,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
                               const inputValue = e.target.type === 'number' ? 
                                 (e.target.value === '' ? undefined : parseFloat(e.target.value)) : 
                                 e.target.value;
-                              handleInputChange(field.key, inputValue);
+                              handleInputChange(field.key, inputValue ?? '');
                             }}
                             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 placeholder-gray-400 text-gray-900 font-medium"
                             placeholder={`${field.label}を入力`}
@@ -183,4 +185,6 @@ export const SalesForm: React.FC<SalesFormProps> = ({
       </div>
     </div>
   );
-}; 
+});
+
+export { SalesForm };

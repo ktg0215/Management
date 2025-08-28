@@ -1,0 +1,32 @@
+{
+    "mcpServers": {
+      "playwright-gui": {
+        "command": "npx", 
+        "args": ["playwright", "codegen"],
+        "env": {
+          "DISPLAY": ":0"
+        }
+      },
+      "puppeteer": {
+        "command": "docker",
+        "args": [
+          "run",
+          "-i",
+          "--rm",
+          "-e",
+          "DOCKER_CONTAINER=true",
+          "mcp/puppeteer"
+        ],
+        "env": {
+          "DOCKER_CONTAINER": "true"
+        }
+      },
+      "filesystem": {
+        "command": "npx",
+        "args": [
+          "@modelcontextprotocol/server-filesystem",
+          "/mnt/c/プログラミング/project"
+        ]
+      }
+    }
+  }

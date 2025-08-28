@@ -23,12 +23,12 @@ export function aggregateDailyToMonthly(
 
   EDW_SALES_FIELDS.forEach(field => {
     // 数値型の項目は合計、文字列型は最終値をセット
-    const values = dailyData.map(d => d[field.key]);
-    if (typeof values[0] === 'number') {
+    const values = dailyData.map(d => d[field.key]).filter(v => v !== undefined);
+    if (values.length > 0 && typeof values[0] === 'number') {
       // 合計値
-      const sum = values.reduce((acc, v) => acc + (typeof v === 'number' ? v : 0), 0);
+      const sum = values.reduce((acc: number, v) => acc + (typeof v === 'number' ? v : 0), 0);
       result[field.key] = sum;
-    } else if (typeof values[0] === 'string') {
+    } else if (values.length > 0 && typeof values[0] === 'string') {
       // 文字列は最終値
       result[field.key] = values.reverse().find(v => typeof v === 'string') ?? '';
     }
