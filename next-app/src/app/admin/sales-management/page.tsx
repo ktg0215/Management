@@ -1,10 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import AppLayout from '@/app/appLayout/layout';
 import { SalesHeader } from '@/components/sales/SalesHeader';
-// Lazy load heavy components for better performance
-import { SalesTable } from '@/components/lazy';
+import { SalesTable } from '@/components/sales/SalesTable';
 import { OptimizedSalesForm } from '@/components/sales/OptimizedSalesForm';
 import { useSalesData, usePrefetchAdjacentMonths } from '@/hooks/queries/useSalesQueries';
 import { useAuthStore } from '@/stores/authStore';
@@ -105,7 +103,7 @@ const SalesManagementPage = () => {
   // 権限チェック（管理者以上のみアクセス可能）
   if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
     return (
-      <AppLayout>
+      
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -116,7 +114,7 @@ const SalesManagementPage = () => {
             </p>
           </div>
         </div>
-      </AppLayout>
+      
     );
   }
 
@@ -128,7 +126,7 @@ const SalesManagementPage = () => {
   };
 
   return (
-    <AppLayout>
+    
       <div className="min-h-screen bg-gray-50">
         <SalesHeader
           currentYear={currentYear}
@@ -184,14 +182,15 @@ const SalesManagementPage = () => {
             </div>
           ) : selectedStoreId || user.role === 'admin' ? (
             monthlyData && (
-              {/* @ts-ignore - Dynamic component typing issue */}
-              <SalesTable
-                dailyData={monthlyData.dailyData}
-                hasData={hasData}
-                onEditClick={handleOpenForm}
-                currentYear={currentYear}
-                currentMonth={currentMonth}
-              />
+              <>
+                <SalesTable
+                  dailyData={monthlyData.dailyData}
+                  hasData={hasData}
+                  onEditClick={handleOpenForm}
+                  currentYear={currentYear}
+                  currentMonth={currentMonth}
+                />
+              </>
             )
           ) : (
             <div className="flex items-center justify-center h-64">
@@ -217,7 +216,7 @@ const SalesManagementPage = () => {
           month={currentMonth}
         />
       </div>
-    </AppLayout>
+    
   );
 };
 
