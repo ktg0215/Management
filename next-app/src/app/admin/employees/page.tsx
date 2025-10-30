@@ -1,27 +1,14 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { 
+import {
   Search, Plus, Edit, Trash, Check, X, AlertCircle, User
 } from 'lucide-react';
 import { useStoreStore } from '@/stores/storeStore';
 import { useBusinessTypeStore } from '@/stores/businessTypeStore';
 import apiClient from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
-import AppLayout from '@/app/appLayout/layout';
-
-export interface Employee {
-  id: string;
-  employeeId: string;
-  email: string;
-  fullName: string;
-  nickname: string;
-  storeId: string;
-  storeName?: string;
-  role?: 'user' | 'admin' | 'super_admin';
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Employee } from '@/types/employee';
 
 const EmployeeManagement = () => {
   const { stores, fetchStores } = useStoreStore();
@@ -916,8 +903,8 @@ const EmployeeManagement = () => {
 
 export default function Page() {
   return (
-    <AppLayout>
+    
       <EmployeeManagement />
-    </AppLayout>
+    
   );
 }

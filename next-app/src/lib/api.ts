@@ -13,7 +13,7 @@ console.log('🔧 API Configuration:', {
   API_BASE_URL: API_BASE_URL
 });
 
-import { Employee } from '@/app/admin/employees/page';
+import type { Employee } from '@/types/employee';
 import { Store } from '@/stores/storeStore';
 import { ShiftEntry, ShiftPeriod } from '@/stores/shiftStore';
 
