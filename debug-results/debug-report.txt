@@ -1,0 +1,497 @@
+====================================================================================================
+MANAGEMENT SYSTEM - COMPREHENSIVE BROWSER DEBUGGING REPORT
+====================================================================================================
+
+Test Date: 2025/10/30 22:22:49
+Frontend URL: http://localhost:3002
+Total Pages Tested: 15
+
+SUMMARY:
+  ✅ Healthy (No Errors): 0
+  ⚠️  Warning (1-2 Errors): 0
+  ❌ Error (3+ Errors): 15
+
+====================================================================================================
+AUTH PAGES (2)
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+Page: Login Page
+Path: /login
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 995ms
+Screenshot: login.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/login
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 744
+  - JS Heap Used: 28 MB
+  - Layout Count: 15
+  - Style Recalculations: 18
+
+----------------------------------------------------------------------------------------------------
+Page: Registration Page
+Path: /register
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1197ms
+Screenshot: register.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/register
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 858
+  - JS Heap Used: 28 MB
+  - Layout Count: 15
+  - Style Recalculations: 18
+
+====================================================================================================
+ADMIN PAGES (11)
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+Page: Admin Dashboard
+Path: /admin/dashboard
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1439ms
+Screenshot: admin_dashboard.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/admin/dashboard
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 1218
+  - JS Heap Used: 17 MB
+  - Layout Count: 16
+  - Style Recalculations: 21
+
+----------------------------------------------------------------------------------------------------
+Page: Sales Management
+Path: /admin/sales-management
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1540ms
+Screenshot: admin_sales-management.png
+
+Error Summary: 6 errors, 0 warnings
+
+❌ Console Errors (5):
+
+  1. WebSocket error: JSHandle@object
+     Location: webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+
+  2. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  3. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/admin/sales-management
+
+  4. WebSocket connection to 'ws://localhost:8080/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+     Location: webpack-internal:///(app-pages-browser)/./src/hooks/useWebSocket.ts:142
+
+  5. WebSocket error: JSHandle@object
+     Location: webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 1120
+  - JS Heap Used: 19 MB
+  - Layout Count: 16
+  - Style Recalculations: 19
+
+----------------------------------------------------------------------------------------------------
+Page: P&L Creation
+Path: /admin/pl-create
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1593ms
+Screenshot: admin_pl-create.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/admin/pl-create
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 4113
+  - JS Heap Used: 21 MB
+  - Layout Count: 19
+  - Style Recalculations: 23
+
+----------------------------------------------------------------------------------------------------
+Page: Yearly Progress
+Path: /admin/yearly-progress
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1330ms
+Screenshot: admin_yearly-progress.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/admin/yearly-progress
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 858
+  - JS Heap Used: 16 MB
+  - Layout Count: 16
+  - Style Recalculations: 21
+
+----------------------------------------------------------------------------------------------------
+Page: Payments Management
+Path: /admin/payments
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1549ms
+Screenshot: admin_payments.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/admin/payments
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 1678
+  - JS Heap Used: 19 MB
+  - Layout Count: 16
+  - Style Recalculations: 20
+
+----------------------------------------------------------------------------------------------------
+Page: Store Management
+Path: /admin/stores
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1324ms
+Screenshot: admin_stores.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/admin/stores
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 1210
+  - JS Heap Used: 17 MB
+  - Layout Count: 17
+  - Style Recalculations: 23
+
+----------------------------------------------------------------------------------------------------
+Page: Employee Management
+Path: /admin/employees
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1327ms
+Screenshot: admin_employees.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/admin/employees
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 1062
+  - JS Heap Used: 16 MB
+  - Layout Count: 18
+  - Style Recalculations: 27
+
+----------------------------------------------------------------------------------------------------
+Page: Shift Management (Admin)
+Path: /admin/shifts
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1351ms
+Screenshot: admin_shifts.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/admin/shifts
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 1099
+  - JS Heap Used: 17 MB
+  - Layout Count: 15
+  - Style Recalculations: 26
+
+----------------------------------------------------------------------------------------------------
+Page: Company Management
+Path: /admin/companies
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1329ms
+Screenshot: admin_companies.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/admin/companies
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 1118
+  - JS Heap Used: 17 MB
+  - Layout Count: 17
+  - Style Recalculations: 21
+
+----------------------------------------------------------------------------------------------------
+Page: Business Types Management
+Path: /admin/business-types
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1328ms
+Screenshot: admin_business-types.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/admin/business-types
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 1016
+  - JS Heap Used: 16 MB
+  - Layout Count: 16
+  - Style Recalculations: 20
+
+----------------------------------------------------------------------------------------------------
+Page: Monthly Sales
+Path: /admin/monthly-sales
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1984ms
+Screenshot: admin_monthly-sales.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/admin/monthly-sales
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 1031
+  - JS Heap Used: 16 MB
+  - Layout Count: 15
+  - Style Recalculations: 19
+
+====================================================================================================
+EMPLOYEE PAGES (2)
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+Page: Employee Dashboard
+Path: /employee/dashboard
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1344ms
+Screenshot: employee_dashboard.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/employee/dashboard
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 1008
+  - JS Heap Used: 15 MB
+  - Layout Count: 18
+  - Style Recalculations: 27
+
+----------------------------------------------------------------------------------------------------
+Page: Shift Submission/History
+Path: /employee/shifts
+Status: 200 | Health: ERROR
+Title: シフト管理システム
+Load Time: 1089ms
+Screenshot: employee_shifts.png
+
+Error Summary: 3 errors, 0 warnings
+
+❌ Console Errors (2):
+
+  1. Failed to load resource: the server responded with a status of 404 (Not Found)
+     Location: http://localhost:3002/icons/icon-144x144.png
+
+  2. Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)
+     Location: http://localhost:3002/employee/shifts
+
+❌ Network Errors (1):
+
+  1. GET http://localhost:3002/icons/icon-144x144.png
+     Status: 404 Not Found
+
+Performance Metrics:
+  - DOM Nodes: 909
+  - JS Heap Used: 31 MB
+  - Layout Count: 15
+  - Style Recalculations: 18
+
+====================================================================================================
+OVERALL HEALTH STATUS
+====================================================================================================
+
+Health Score: 0% (0/15 pages healthy)
+
+⚠️  ATTENTION REQUIRED: 15 pages have critical errors
+
+Pages with errors:
+  - Login Page (/login): 3 errors
+  - Registration Page (/register): 3 errors
+  - Admin Dashboard (/admin/dashboard): 3 errors
+  - Sales Management (/admin/sales-management): 6 errors
+  - P&L Creation (/admin/pl-create): 3 errors
+  - Yearly Progress (/admin/yearly-progress): 3 errors
+  - Payments Management (/admin/payments): 3 errors
+  - Store Management (/admin/stores): 3 errors
+  - Employee Management (/admin/employees): 3 errors
+  - Shift Management (Admin) (/admin/shifts): 3 errors
+  - Company Management (/admin/companies): 3 errors
+  - Business Types Management (/admin/business-types): 3 errors
+  - Monthly Sales (/admin/monthly-sales): 3 errors
+  - Employee Dashboard (/employee/dashboard): 3 errors
+  - Shift Submission/History (/employee/shifts): 3 errors
+
+====================================================================================================
+END OF REPORT
+====================================================================================================

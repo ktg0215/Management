@@ -1,0 +1,102 @@
+{
+  "timestamp": "2025-10-27T16:16:34.964Z",
+  "results": [
+    {
+      "name": "ログインページ",
+      "path": "/login",
+      "status": 200,
+      "duration": "3395ms",
+      "contentLength": 14946,
+      "hasHtml": true,
+      "hasReactRoot": true,
+      "hasTitle": true,
+      "hasScripts": true,
+      "hasStyles": true,
+      "redirectTo": null,
+      "hasError404": false,
+      "hasError500": true,
+      "hasNextError": false
+    },
+    {
+      "name": "ダッシュボード",
+      "path": "/admin/dashboard",
+      "status": 200,
+      "duration": "1267ms",
+      "contentLength": 25085,
+      "hasHtml": true,
+      "hasReactRoot": true,
+      "hasTitle": true,
+      "hasScripts": true,
+      "hasStyles": true,
+      "redirectTo": null,
+      "hasError404": false,
+      "hasError500": true,
+      "hasNextError": false
+    },
+    {
+      "name": "売上管理",
+      "path": "/admin/sales-management",
+      "status": "TIMEOUT",
+      "duration": "10000ms+"
+    },
+    {
+      "name": "店舗管理",
+      "path": "/admin/stores",
+      "status": "TIMEOUT",
+      "duration": "10000ms+"
+    },
+    {
+      "name": "従業員管理",
+      "path": "/admin/employees",
+      "status": "TIMEOUT",
+      "duration": "10000ms+"
+    },
+    {
+      "name": "シフト管理",
+      "path": "/admin/shifts",
+      "status": "TIMEOUT",
+      "duration": "10000ms+"
+    },
+    {
+      "name": "月次売上管理",
+      "path": "/admin/monthly-sales",
+      "status": "TIMEOUT",
+      "duration": "10000ms+"
+    },
+    {
+      "name": "年次損益進捗",
+      "path": "/admin/yearly-progress",
+      "status": "TIMEOUT",
+      "duration": "10000ms+"
+    },
+    {
+      "name": "支払い管理",
+      "path": "/admin/payments",
+      "status": "TIMEOUT",
+      "duration": "10000ms+"
+    },
+    {
+      "name": "業態管理",
+      "path": "/admin/business-types",
+      "status": "TIMEOUT",
+      "duration": "10000ms+"
+    },
+    {
+      "name": "企業管理",
+      "path": "/admin/companies",
+      "status": "TIMEOUT",
+      "duration": "10000ms+"
+    },
+    {
+      "name": "管理者追加",
+      "path": "/admin/add-admin",
+      "status": "TIMEOUT",
+      "duration": "10000ms+"
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "success": 2,
+    "failure": 10
+  }
+}

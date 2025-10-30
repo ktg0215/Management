@@ -5,7 +5,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
 import { Company } from '@/lib/api';
 import apiClient from '@/lib/api';
-import AppLayout from '@/app/appLayout/layout';
 import { formatStoreName } from '@/utils/storeDisplay';
 import { 
   Building2, 
@@ -732,8 +731,8 @@ function CompaniesPage() {
 
 export default function Page() {
   return (
-    <AppLayout>
+    <>
       <CompaniesPage />
-    </AppLayout>
+    </>
   );
 }

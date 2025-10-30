@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface SidebarState {
   isCollapsed: boolean;
@@ -20,6 +20,16 @@ export const useSidebarStore = create<SidebarState>()(
     }),
     {
       name: 'sidebar-storage',
+      storage: createJSONStorage(() =>
+        typeof window !== 'undefined'
+          ? localStorage
+          : {
+              getItem: () => null,
+              setItem: () => {},
+              removeItem: () => {},
+            }
+      ),
+      skipHydration: true,
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();
       },

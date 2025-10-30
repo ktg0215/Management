@@ -5,8 +5,6 @@ import { Building2, TrendingUp, Calendar, ArrowRight, BarChart3, Eye, EyeOff, Do
 import { useAuthStore } from '@/stores/authStore';
 import apiClient from '@/lib/api';
 import { useStoreStore } from '@/stores/storeStore';
-import { formatStoreName, sortStoresByBusinessType } from '@/utils/storeDisplay';
-import AppLayout from '@/app/appLayout/layout';
 
 const monthNames = [
   '1月', '2月', '3月', '4月', '5月', '6月',
@@ -48,17 +46,17 @@ function YearlyProgress() {
     if (!storeId && user?.storeId && user?.role !== 'super_admin') setStoreId(user.storeId);
   }, [stores.length, user, storeId, fetchStores]);
 
-  // stores取得後、storeIdが空なら非Manager店舗をセット（総管理者対応）
+  // stores取得後、storeIdが空なら非Manager店舗をセット(総管理者対応)
   React.useEffect(() => {
     if (stores.length > 0 && !storeId) {
       // Manager以外の最初の店舗を選択
-      const nonManagerStores = stores.filter(store => 
+      const nonManagerStores = stores.filter(store =>
         store.name !== '無所属' && store.name !== 'Manager'
       );
       if (nonManagerStores.length > 0) {
         setStoreId(nonManagerStores[0].id);
       } else {
-        // 本店があれば本店を選択（フォールバック）
+        // 本店があれば本店を選択(フォールバック)
         const mainStore = stores.find(s => s.name === '本店');
         if (mainStore) setStoreId(mainStore.id);
       }
@@ -70,7 +68,7 @@ function YearlyProgress() {
     if (!storeId) return;
     setLoading(true);
     setPlError(null);
-    
+
     const fetchYearlyPL = async () => {
       try {
         const results = await Promise.all(
@@ -81,7 +79,7 @@ function YearlyProgress() {
             })
           )
         );
-        
+
         const plData = results.map((r, index) => {
           if (r.success && r.data) {
             // データ構造を確認し、適切に処理
@@ -95,9 +93,9 @@ function YearlyProgress() {
           console.log(`月${index + 1}のPLデータ:`, r);
           return [];
         });
-        
+
         setYearlyPL(plData);
-        
+
         // データが全て空の場合は警告メッセージを表示
         const hasData = plData.some(monthData => monthData.length > 0);
         if (!hasData) {
@@ -112,7 +110,7 @@ function YearlyProgress() {
         setLoading(false);
       }
     };
-    
+
     fetchYearlyPL();
   }, [storeId, currentYear]);
 
@@ -127,54 +125,31 @@ function YearlyProgress() {
   }
 
   // 年間合計・カード用データ計算を改善
-  const getSum = (subjects: string[], type: 'estimate' | 'actual'): number =>
+  const getSum = (subject: string, type: 'estimate' | 'actual'): number =>
     yearlyPL.reduce((sum: number, items: PLItem[]) => {
       if (!items || items.length === 0) return sum;
-      // 複数の項目名パターンをチェック
-      const item = items.find((i: PLItem) => 
-        subjects.some(subject => 
-          i.subject_name === subject || i.name === subject
-        )
-      );
+      const item = items.find((i: PLItem) => (i.subject_name === subject || i.name === subject));
       return sum + (item ? (item[type] || 0) : 0);
     }, 0);
 
   // 複数の売上項目を統合して取得
-  const totalRevenue = getSum(['売上高', '売上', '純売上'], 'actual');
-
-  // PLデータから利益項目を取得する関数
-  const getProfitItem = (items: PLItem[]): PLItem | undefined => {
-    try {
-      if (!items || items.length === 0) return undefined;
-      return items.find(item => 
-        item.name === '当期純利益' || 
-        item.name === '営業利益' || 
-        item.name === '経常利益' ||
-        item.name === '利益'
-      );
-    } catch (error) {
-      console.error('getProfitItem function error:', error);
-      return undefined;
-    }
-  };
+  const totalRevenue = getSum('売上高', 'actual') + getSum('売上', 'actual') + getSum('純売上', 'actual');
 
   // 利益の集計を強化 - より多くのパターンに対応
-  const totalProfit = getSum(['営業利益', 'operatingProfit', 'operating_profit', '利益'], 'actual');
+  const getProfitItem = (items: PLItem[]): PLItem | undefined =>
+    items.find((i: PLItem) =>
+      i.subject_name === '営業利益' || i.subject_name === 'operatingProfit' || i.subject_name === 'operating_profit' ||
+      i.name === '営業利益' || i.name === 'operatingProfit' || i.name === 'operating_profit' ||
+      i.subject_name === '利益' || i.name === '利益'
+    );
+  const totalProfit = yearlyPL.reduce((sum: number, items: PLItem[]) => {
+    if (!items || items.length === 0) return sum;
+    const item = getProfitItem(items);
+    return sum + (item ? (item.actual || 0) : 0);
+  }, 0);
 
-  // 経費の集計（変動費 + 固定費 + 管理費 + 売上原価）
-  const totalExpenses = getSum(['固定費', '変動費', '管理費', '管理費計', '売上原価', '原価'], 'actual');
-  
-  // 利益率の計算
+  const totalExpenses = getSum('固定費', 'actual') + getSum('変動費', 'actual') + getSum('管理費', 'actual');
   const profitMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : '0.0';
-
-  console.log('🔍 損益管理カードデータ:', {
-    yearlyPLLength: yearlyPL.length,
-    totalRevenue,
-    totalProfit,
-    totalExpenses,
-    profitMargin,
-    samplePLData: yearlyPL[0] // 最初の月のデータサンプル
-  });
 
   // 年間合計テーブル用データをPLデータから再構成
   const calculateAnnualTotals = (): { [key: string]: { amount: number; percentage: string } } => {
@@ -182,57 +157,57 @@ function YearlyProgress() {
       new Set(yearlyPL.flat().filter(item => item).map((item: PLItem) => item.subject_name || item.name).filter(name => name))
     );
     const annualTotals: { [key: string]: { amount: number; percentage: string } } = {};
-    
+
     // まず通常合計
     subjects.forEach(name => {
-      const amount = getSum([name], 'actual');
+      const amount = getSum(name, 'actual');
       if (amount !== 0 || name) { // 0でも項目名があれば追加
         annualTotals[name] = { amount, percentage: '' };
       }
     });
-    
+
     // --- 自動計算系は再計算で上書き ---
     // 売上高の統合
-    const totalSalesAmount = getSum(['売上高', '売上', '純売上'], 'actual');
+    const totalSalesAmount = getSum('売上高', 'actual') + getSum('売上', 'actual') + getSum('純売上', 'actual');
     if (totalSalesAmount > 0) {
       annualTotals['売上高'] = { amount: totalSalesAmount, percentage: '' };
     }
-    
+
     // 粗利益の計算
-    const grossProfitAmount = getSum(['粗利益', '粗利'], 'actual');
+    const grossProfitAmount = getSum('粗利益', 'actual') + getSum('粗利', 'actual');
     if (grossProfitAmount > 0) {
       annualTotals['粗利益'] = { amount: grossProfitAmount, percentage: '' };
     } else {
       // 粗利益がない場合は売上 - 売上原価で計算
-      const costOfSales = getSum(['売上原価', '原価'], 'actual');
+      const costOfSales = getSum('売上原価', 'actual') + getSum('原価', 'actual');
       annualTotals['粗利益'] = { amount: totalSalesAmount - costOfSales, percentage: '' };
     }
-    
+
     // 管理費計
-    const managementCostAmount = getSum(['変動費'], 'actual') + getSum(['固定費'], 'actual');
+    const managementCostAmount = getSum('変動費', 'actual') + getSum('固定費', 'actual');
     if (managementCostAmount > 0) {
       annualTotals['管理費計'] = { amount: managementCostAmount, percentage: '' };
     }
-    
+
     // 償却前利益
-    const profitBeforeDepAmount = getSum(['償却前利益'], 'actual');
+    const profitBeforeDepAmount = getSum('償却前利益', 'actual');
     if (profitBeforeDepAmount > 0) {
       annualTotals['償却前利益'] = { amount: profitBeforeDepAmount, percentage: '' };
     } else {
       // 計算で求める
       annualTotals['償却前利益'] = { amount: (annualTotals['粗利益']?.amount ?? 0) - managementCostAmount, percentage: '' };
     }
-    
+
     // 営業利益
-    const operatingProfitAmount = getSum(['営業利益'], 'actual');
+    const operatingProfitAmount = getSum('営業利益', 'actual');
     if (operatingProfitAmount > 0) {
       annualTotals['営業利益'] = { amount: operatingProfitAmount, percentage: '' };
     } else {
       // 計算で求める
-      const depreciationAmount = getSum(['減価償却費'], 'actual');
+      const depreciationAmount = getSum('減価償却費', 'actual');
       annualTotals['営業利益'] = { amount: (annualTotals['償却前利益']?.amount ?? 0) - depreciationAmount, percentage: '' };
     }
-    
+
     // 売上高合計で比率計算
     const netSalesTotal = totalSalesAmount || 1;
     Object.keys(annualTotals).forEach(name => {
@@ -249,7 +224,7 @@ function YearlyProgress() {
   };
 
   // --- 年間進捗チャート・月次ボタン用データをAPI取得データから生成 ---
-  // 各月の売上・利益（実績優先、なければ見込み）
+  // 各月の売上・利益(実績優先、なければ見込み)
   const monthlyRevenue = yearlyPL.map(items => {
     const actualItem = items.find((i: PLItem) => (i.subject_name === '売上高' || i.name === '売上高' || i.subject_name === '売上' || i.name === '売上'));
     if (actualItem && actualItem.actual && actualItem.actual !== 0) {
@@ -261,17 +236,12 @@ function YearlyProgress() {
     }
   });
   const monthlyProfit = yearlyPL.map(items => {
-    try {
-      const profitItem = getProfitItem(items);
-      if (profitItem && profitItem.actual && profitItem.actual !== 0) {
-        return { value: profitItem.actual, isEstimate: false };
-      } else if (profitItem && profitItem.estimate) {
-        return { value: profitItem.estimate, isEstimate: true };
-      } else {
-        return { value: 0, isEstimate: false };
-      }
-    } catch (error) {
-      console.error('getProfitItem error:', error);
+    const profitItem = getProfitItem(items);
+    if (profitItem && profitItem.actual && profitItem.actual !== 0) {
+      return { value: profitItem.actual, isEstimate: false };
+    } else if (profitItem && profitItem.estimate) {
+      return { value: profitItem.estimate, isEstimate: true };
+    } else {
       return { value: 0, isEstimate: false };
     }
   });
@@ -367,10 +337,10 @@ function YearlyProgress() {
                             {(() => {
                               const currentStore = stores.find(store => store.id === storeId);
                               if (currentStore && currentStore.name !== 'Manager') {
-                                return formatStoreName(currentStore);
+                                return currentStore.name;
                               }
                               const fallbackStore = stores.find(s => s.name !== '無所属' && s.name !== 'Manager');
-                              return fallbackStore ? formatStoreName(fallbackStore) : '選択してください';
+                              return fallbackStore?.name || '選択してください';
                             })()}
                           </span>
                           <ChevronDown className={`h-4 w-4 text-gray-600 group-hover:text-blue-600 transition-all duration-300 ${isStoreDropdownOpen ? 'rotate-180' : ''}`} />
@@ -383,7 +353,7 @@ function YearlyProgress() {
                     <div className="absolute top-full left-0 right-0 mt-2 z-50 animate-in slide-in-from-top-2 duration-200">
                       <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
                         <div className="p-2">
-                          {sortStoresByBusinessType(stores.filter(store => store.name !== '無所属' && store.name !== 'Manager')).map((store, index) => (
+                          {stores.filter(store => store.name !== '無所属' && store.name !== 'Manager').map((store, index) => (
                             <button
                               key={store.id}
                               onClick={() => { setStoreId(store.id); setIsStoreDropdownOpen(false); }}
@@ -405,7 +375,7 @@ function YearlyProgress() {
                                     : 'h-4 w-4 text-gray-600 group-hover:text-blue-600'
                                 } />
                               </div>
-                              <span className="font-semibold flex-1">{formatStoreName(store)}</span>
+                              <span className="font-semibold flex-1">{store.name}</span>
                               {storeId === store.id && (
                                 <div className="p-1 bg-white/20 rounded-full">
                                   <Check className="h-4 w-4 text-white" />
@@ -532,7 +502,7 @@ function YearlyProgress() {
                         const keys = Object.keys(annualTotals);
                         const order = ['売上高', '売上', '純売上', '売上原価', '原価', '粗利益', '粗利', '変動費', '固定費', '管理費計', '償却前利益', '減価償却費', '営業利益'];
                         const displayedKeys = new Set();
-                        
+
                         // 順序に従って表示
                         const rows = order.filter(k => keys.includes(k) && !displayedKeys.has(k)).map((name) => {
                           displayedKeys.add(name);
@@ -549,7 +519,7 @@ function YearlyProgress() {
                             </tr>
                           );
                         });
-                        
+
                         // 残りの項目も表示
                         const remainingRows = Object.entries(annualTotals)
                           .filter(([name]) => !displayedKeys.has(name))
@@ -566,7 +536,7 @@ function YearlyProgress() {
                               </tr>
                             );
                           });
-                        
+
                         return [...rows, ...remainingRows];
                       })()}
                     </tbody>
@@ -599,7 +569,7 @@ function YearlyProgress() {
                             {monthNames[idx]}
                           </span>
                           <div className="flex-1 bg-gray-200 rounded-full h-8 relative overflow-hidden shadow-inner">
-                            <div 
+                            <div
                               className="bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-500 h-full rounded-full transition-all duration-1000 ease-out group-hover:from-blue-600 group-hover:via-blue-700 group-hover:to-cyan-600 relative overflow-hidden"
                               style={{ width: `${width}%`, animationDelay: `${idx * 100}ms` }}
                             >
@@ -630,7 +600,7 @@ function YearlyProgress() {
                             {monthNames[idx]}
                           </span>
                           <div className="flex-1 bg-gray-200 rounded-full h-8 relative overflow-hidden shadow-inner">
-                            <div 
+                            <div
                               className="bg-gradient-to-r from-green-500 via-green-600 to-emerald-500 h-full rounded-full transition-all duration-1000 ease-out group-hover:from-green-600 group-hover:via-green-700 group-hover:to-emerald-600 relative overflow-hidden"
                               style={{ width: `${width}%`, animationDelay: `${idx * 100}ms` }}
                             >
@@ -718,8 +688,8 @@ function YearlyProgress() {
 
 export default function Page() {
   return (
-    <AppLayout>
+    
       <YearlyProgress />
-    </AppLayout>
+    
   );
-} 
+}

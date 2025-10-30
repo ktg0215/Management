@@ -21,6 +21,10 @@
           "DOCKER_CONTAINER": "true"
         }
       },
+      "chrome-devtools": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "chrome-devtools-mcp@latest"]
+    },
       "filesystem": {
         "command": "npx",
         "args": [
@@ -29,4 +33,4 @@
         ]
       }
     }
-  }
+  }　

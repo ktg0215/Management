@@ -1,0 +1,3131 @@
+{
+  "timestamp": "2025-10-27T14:25:15.745Z",
+  "summary": {
+    "total": 11,
+    "passed": 0,
+    "failed": 11,
+    "errors": 195,
+    "warnings": 7,
+    "networkFailures": 207
+  },
+  "results": [
+    {
+      "page": "Login Page",
+      "status": "FAIL",
+      "url": "http://localhost:3002",
+      "loadTime": 1056,
+      "error": "Page returned status 500",
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+          "location": {
+            "url": "http://localhost:3002/",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "pageerror",
+          "text": "Cannot read properties of undefined (reading 'call')",
+          "stack": "TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/login/page.tsx:13:111)\n    at (app-pages-browser)/./src/app/login/page.tsx (http://localhost:3002/_next/static/chunks/app/login/page.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:361:21)"
+        },
+        {
+          "type": "error",
+          "text": "%o\n\n%s TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/login/page.tsx:13:111)\n    at (app-pages-browser)/./src/app/login/page.tsx (http://localhost:3002/_next/static/chunks/app/login/page.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:361:21)\n    at requireModule (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:100:27)\n    at initializeModuleChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1133:21)\n    at resolveModuleChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1096:12)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1944:20) The above error occurred in the <ClientPageRoot> component. It was handled by the <ErrorBoundary> error boundary.",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/react-client-callbacks/error-boundary-callbacks.js",
+            "lineNumber": 67,
+            "columnNumber": 24
+          }
+        },
+        {
+          "type": "error",
+          "text": "ErrorBoundary caught an error: TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/login/page.tsx:13:111)\n    at (app-pages-browser)/./src/app/login/page.tsx (http://localhost:3002/_next/static/chunks/app/login/page.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:361:21)\n    at requireModule (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:100:27)\n    at initializeModuleChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1133:21)\n    at resolveModuleChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1096:12)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1944:20) {componentStack: \n    at ClientPageRoot (<anonymous>)\n    at InnerL…ode_modules/next/dist/client/app-index.js:158:11)}",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Error reported: {message: Cannot read properties of undefined (reading 'call'), stack: TypeError: Cannot read properties of undefined (re…om-webpack-client.browser.development.js:1944:20), componentStack: \n    at ClientPageRoot (<anonymous>)\n    at InnerL…ode_modules/next/dist/client/app-index.js:158:11), timestamp: 2025-10-27T14:25:21.309Z, userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb…KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36}",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/employees",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "従業員取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "consoleWarnings": [
+        {
+          "type": "warning",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree.",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js",
+            "lineNumber": 111,
+            "columnNumber": 24
+          }
+        }
+      ],
+      "networkFailures": [
+        {
+          "url": "http://localhost:3002/",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/login?_rsc=vusbg",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.0bc36717b94854ff.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/commons.0bc36717b94854ff.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.0bc36717b94854ff.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.f9e83a095f812c6c.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.f9e83a095f812c6c.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/commons.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.76d9c0b62968da90.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/employees",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/bd9eb03c010b3a91.webpack.hot-update.json",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "page": "Login Process",
+      "status": "FAIL",
+      "url": "http://localhost:3002",
+      "error": "Login form not found",
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "%o\n\n%s TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/login/page.tsx:13:111)\n    at (app-pages-browser)/./src/app/login/page.tsx (http://localhost:3002/_next/static/chunks/app/login/page.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:361:21)\n    at requireModule (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:100:27)\n    at initializeModuleChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1133:21)\n    at resolveModuleChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1096:12)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1944:20) The above error occurred in the <ClientPageRoot> component. It was handled by the <ErrorBoundary> error boundary.",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/react-client-callbacks/error-boundary-callbacks.js",
+            "lineNumber": 67,
+            "columnNumber": 24
+          }
+        },
+        {
+          "type": "error",
+          "text": "ErrorBoundary caught an error: TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/login/page.tsx:13:111)\n    at (app-pages-browser)/./src/app/login/page.tsx (http://localhost:3002/_next/static/chunks/app/login/page.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761575119402:361:21)\n    at requireModule (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:100:27)\n    at initializeModuleChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1133:21)\n    at resolveModuleChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1096:12)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1944:20) {componentStack: \n    at ClientPageRoot (<anonymous>)\n    at InnerL…ode_modules/next/dist/client/app-index.js:158:11)}",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Error reported: {message: Cannot read properties of undefined (reading 'call'), stack: TypeError: Cannot read properties of undefined (re…om-webpack-client.browser.development.js:1944:20), componentStack: \n    at ClientPageRoot (<anonymous>)\n    at InnerL…ode_modules/next/dist/client/app-index.js:158:11), timestamp: 2025-10-27T14:25:21.309Z, userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb…KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36}",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/employees",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "従業員取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ]
+    },
+    {
+      "page": "Admin Dashboard",
+      "status": "FAIL",
+      "url": "http://localhost:3002/admin/dashboard",
+      "loadTime": 1956,
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/employees",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "従業員取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "consoleWarnings": [
+        {
+          "type": "warning",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree.",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js",
+            "lineNumber": 111,
+            "columnNumber": 24
+          }
+        }
+      ],
+      "networkFailures": [
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.0bc36717b94854ff.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/commons.0bc36717b94854ff.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.0bc36717b94854ff.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.f9e83a095f812c6c.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.f9e83a095f812c6c.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/commons.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.76d9c0b62968da90.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/employees",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/bd9eb03c010b3a91.webpack.hot-update.json",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        }
+      ],
+      "domIssues": [
+        "404 error detected in page content"
+      ],
+      "screenshot": "C:\\job\\project\\next-app\\screenshot-admin-dashboard-1761575126036.png"
+    },
+    {
+      "page": "Stores Management",
+      "status": "FAIL",
+      "url": "http://localhost:3002/admin/stores",
+      "loadTime": 2475,
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/employees",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "従業員取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "consoleWarnings": [
+        {
+          "type": "warning",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree.",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js",
+            "lineNumber": 111,
+            "columnNumber": 24
+          }
+        }
+      ],
+      "networkFailures": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.0bc36717b94854ff.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/commons.0bc36717b94854ff.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.0bc36717b94854ff.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.f9e83a095f812c6c.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.f9e83a095f812c6c.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/commons.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.76d9c0b62968da90.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/employees",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/bd9eb03c010b3a91.webpack.hot-update.json",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        }
+      ],
+      "domIssues": [
+        "404 error detected in page content"
+      ],
+      "screenshot": "C:\\job\\project\\next-app\\screenshot-stores-management-1761575131807.png"
+    },
+    {
+      "page": "Companies Management",
+      "status": "FAIL",
+      "url": "http://localhost:3002/admin/companies",
+      "loadTime": 2326,
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/employees",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "従業員取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "consoleWarnings": [
+        {
+          "type": "warning",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree.",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js",
+            "lineNumber": 111,
+            "columnNumber": 24
+          }
+        }
+      ],
+      "networkFailures": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.f9e83a095f812c6c.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.f9e83a095f812c6c.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/commons.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.76d9c0b62968da90.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/employees",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/bd9eb03c010b3a91.webpack.hot-update.json",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        }
+      ],
+      "domIssues": [
+        "404 error detected in page content"
+      ],
+      "screenshot": "C:\\job\\project\\next-app\\screenshot-companies-management-1761575137346.png"
+    },
+    {
+      "page": "Business Types",
+      "status": "FAIL",
+      "url": "http://localhost:3002/admin/business-types",
+      "loadTime": 2405,
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/employees",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "従業員取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "consoleWarnings": [
+        {
+          "type": "warning",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree.",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js",
+            "lineNumber": 111,
+            "columnNumber": 24
+          }
+        }
+      ],
+      "networkFailures": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/commons.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.776f747d7fae8bd1.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.76d9c0b62968da90.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/employees",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/bd9eb03c010b3a91.webpack.hot-update.json",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        }
+      ],
+      "domIssues": [
+        "404 error detected in page content"
+      ],
+      "screenshot": "C:\\job\\project\\next-app\\screenshot-business-types-1761575142953.png"
+    },
+    {
+      "page": "Employees Management",
+      "status": "FAIL",
+      "url": "http://localhost:3002/admin/employees",
+      "loadTime": 2215,
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/business-types",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "業態取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/employees",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "従業員取得エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "consoleWarnings": [
+        {
+          "type": "warning",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree.",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js",
+            "lineNumber": 111,
+            "columnNumber": 24
+          }
+        }
+      ],
+      "networkFailures": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.76d9c0b62968da90.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/business-types",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/employees",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/bd9eb03c010b3a91.webpack.hot-update.json",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        }
+      ],
+      "domIssues": [
+        "404 error detected in page content"
+      ],
+      "screenshot": "C:\\job\\project\\next-app\\screenshot-employees-management-1761575148319.png"
+    },
+    {
+      "page": "Shift Management",
+      "status": "FAIL",
+      "url": "http://localhost:3002/admin/shifts",
+      "loadTime": 6223,
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "consoleWarnings": [
+        {
+          "type": "warning",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree.",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js",
+            "lineNumber": 111,
+            "columnNumber": 24
+          }
+        }
+      ],
+      "networkFailures": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/bd9eb03c010b3a91.webpack.hot-update.json",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        }
+      ],
+      "domIssues": [
+        "404 error detected in page content"
+      ],
+      "screenshot": "C:\\job\\project\\next-app\\screenshot-shift-management-1761575157730.png"
+    },
+    {
+      "page": "Monthly Sales",
+      "status": "FAIL",
+      "url": "http://localhost:3002/admin/monthly-sales",
+      "loadTime": 3606,
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "consoleWarnings": [],
+      "networkFailures": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.e3e363c1f20fafb7.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        }
+      ],
+      "domIssues": [
+        "404 error detected in page content"
+      ],
+      "screenshot": "C:\\job\\project\\next-app\\screenshot-monthly-sales-1761575164502.png"
+    },
+    {
+      "page": "Yearly Progress",
+      "status": "FAIL",
+      "url": "http://localhost:3002/admin/yearly-progress",
+      "loadTime": 2607,
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/stores",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "fetchStores: エラー: Unauthorized",
+          "location": {
+            "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js",
+            "lineNumber": 56,
+            "columnNumber": 31
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "consoleWarnings": [],
+      "networkFailures": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.9986fa8f4bbdf6cd.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        }
+      ],
+      "domIssues": [
+        "404 error detected in page content"
+      ],
+      "screenshot": "C:\\job\\project\\next-app\\screenshot-yearly-progress-1761575170302.png"
+    },
+    {
+      "page": "Payments Management",
+      "status": "FAIL",
+      "url": "http://localhost:3002/admin/payments",
+      "loadTime": 2156,
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "location": {
+            "url": "http://localhost:3001/api/auth/me",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "consoleWarnings": [],
+      "networkFailures": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/vendors.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3002/_next/static/webpack/webpack.69ac6b12e6a5fb06.hot-update.js",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "method": "GET"
+        }
+      ],
+      "domIssues": [
+        "404 error detected in page content"
+      ],
+      "screenshot": "C:\\job\\project\\next-app\\screenshot-payments-management-1761575175609.png"
+    }
+  ]
+}

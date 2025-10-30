@@ -1,0 +1,1659 @@
+{
+  "timestamp": "2025-10-30T14:02:12.387Z",
+  "testEnvironment": {
+    "frontend": "http://localhost:3002",
+    "backend": "http://localhost:3001/api",
+    "credentials": {
+      "employeeId": "0000"
+    }
+  },
+  "summary": {
+    "total": 13,
+    "passed": 0,
+    "failed": 6,
+    "warnings": 7
+  },
+  "login": {
+    "status": "success",
+    "errors": [],
+    "logs": [],
+    "warnings": [
+      "JWT token not found in localStorage"
+    ],
+    "consoleLogs": [
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "log",
+        "text": "🔧 API Configuration: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "⚠️ No token available for request to: /admin/check-existing"
+      },
+      {
+        "type": "log",
+        "text": "🔍 checkAuth started"
+      },
+      {
+        "type": "log",
+        "text": "🔑 Existing token check: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "⚠️ No token available for request to: /auth/me"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      },
+      {
+        "type": "log",
+        "text": "📋 checkAuth response: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "❌ checkAuth: User not authenticated"
+      },
+      {
+        "type": "log",
+        "text": "✅ API Request success: JSHandle@object"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "warn",
+        "text": "Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)"
+      },
+      {
+        "type": "log",
+        "text": "ログイン試行: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "🔑 APIClient.login called: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "⚠️ No token available for request to: /auth/login"
+      },
+      {
+        "type": "log",
+        "text": "✅ API Request success: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "📋 Login API response: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "📋 Login response received: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "🔑 APIClient.setToken called: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "💾 Token saved to localStorage"
+      },
+      {
+        "type": "log",
+        "text": "✅ User state updated in store"
+      },
+      {
+        "type": "log",
+        "text": "ログイン成功: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "🔐 Authorization header set for request to: /activity-logs?limit=5"
+      },
+      {
+        "type": "log",
+        "text": "fetchStores: APIリクエスト送信中..."
+      },
+      {
+        "type": "log",
+        "text": "🔐 Authorization header set for request to: /stores"
+      },
+      {
+        "type": "log",
+        "text": "🔐 Authorization header set for request to: /activity-logs?limit=5"
+      },
+      {
+        "type": "log",
+        "text": "fetchStores: APIリクエスト送信中..."
+      },
+      {
+        "type": "log",
+        "text": "🔐 Authorization header set for request to: /stores"
+      },
+      {
+        "type": "log",
+        "text": "✅ API Request success: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "✅ API Request success: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "✅ API Request success: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "fetchStores: APIレスポンス受信: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "fetchStores: 成功 - 店舗数: 11"
+      },
+      {
+        "type": "log",
+        "text": "✅ API Request success: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "fetchStores: APIレスポンス受信: JSHandle@object"
+      },
+      {
+        "type": "log",
+        "text": "fetchStores: 成功 - 店舗数: 11"
+      }
+    ],
+    "consoleErrors": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      }
+    ],
+    "networkErrors": [],
+    "networkRequests": [
+      {
+        "url": "http://localhost:3001/api/auth/me",
+        "status": 401,
+        "statusText": "Unauthorized",
+        "method": "GET"
+      },
+      {
+        "url": "http://localhost:3001/api/admin/check-existing",
+        "status": 200,
+        "statusText": "OK",
+        "method": "GET"
+      },
+      {
+        "url": "http://localhost:3001/api/auth/login",
+        "status": 200,
+        "statusText": "OK",
+        "method": "POST"
+      },
+      {
+        "url": "http://localhost:3001/api/activity-logs?limit=5",
+        "status": 200,
+        "statusText": "OK",
+        "method": "GET"
+      },
+      {
+        "url": "http://localhost:3001/api/activity-logs?limit=5",
+        "status": 304,
+        "statusText": "Not Modified",
+        "method": "GET"
+      },
+      {
+        "url": "http://localhost:3001/api/stores",
+        "status": 200,
+        "statusText": "OK",
+        "method": "GET"
+      },
+      {
+        "url": "http://localhost:3001/api/stores",
+        "status": 304,
+        "statusText": "Not Modified",
+        "method": "GET"
+      }
+    ],
+    "afterLoginUrl": "http://localhost:3002/admin/dashboard",
+    "localStorage": {
+      "auth_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1wbG95ZWVJZCI6IjAwMDAiLCJyb2xlIjoic3VwZXJfYWRtaW4iLCJpYXQiOjE3NjE4MzI4NTcsImV4cCI6MTc2MjQzNzY1N30.Ptfm-Jw6SaOLB--prTuOCNqTBcZ67TV3ZYHevsXMkPo",
+      "sidebar-storage": "{\"state\":{\"isCollapsed\":false,\"isHydrated\":true},\"version\":0}",
+      "auth-storage": "{\"state\":{\"user\":{\"id\":2,\"employeeId\":\"0000\",\"fullName\":\"Super Admin\",\"nickname\":\"Admin\",\"storeId\":1,\"role\":\"super_admin\",\"isActive\":true},\"isAuthenticated\":true},\"version\":0}"
+    }
+  },
+  "adminPages": [
+    {
+      "name": "Dashboard",
+      "url": "/admin/dashboard",
+      "status": "warning",
+      "errors": [],
+      "warnings": [
+        "1 console error(s) detected"
+      ],
+      "consoleLogs": [
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: APIリクエスト送信中..."
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /stores"
+        },
+        {
+          "type": "log",
+          "text": "🔍 checkAuth started"
+        },
+        {
+          "type": "log",
+          "text": "🔑 Existing token check: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔑 APIClient.setToken called: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "💾 Token saved to localStorage"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /auth/me"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /activity-logs?limit=5"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: APIレスポンス受信: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: 成功 - 店舗数: 11"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "📋 checkAuth response: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ checkAuth: User authenticated"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /activity-logs?limit=5"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "warn",
+          "text": "Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        }
+      ],
+      "networkErrors": [],
+      "networkRequests": [
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 304,
+          "statusText": "Not Modified",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/activity-logs?limit=5",
+          "status": 304,
+          "statusText": "Not Modified",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/activity-logs?limit=5",
+          "status": 304,
+          "statusText": "Not Modified",
+          "method": "GET"
+        }
+      ],
+      "loadTime": 3226,
+      "screenshot": "test-screenshots\\admin_dashboard.png"
+    },
+    {
+      "name": "Sales Management",
+      "url": "/admin/sales-management",
+      "status": "failed",
+      "errors": [
+        "1 network request(s) failed"
+      ],
+      "warnings": [],
+      "consoleLogs": [
+        {
+          "type": "log",
+          "text": "[Fast Refresh] rebuilding"
+        },
+        {
+          "type": "warn",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree."
+        },
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "message": "Cannot assign to read only property 'params' of object '#<Object>'",
+          "stack": "TypeError: Cannot assign to read only property 'params' of object '#<Object>'\n    at fulfillReference (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1284:25)\n    at wakeChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:977:13)\n    at initializeModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1114:11)\n    at resolveModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1084:12)\n    at resolveModel (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1907:11)\n    at processFullStringRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2664:15)\n    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2606:7)\n    at processBinaryChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2733:15)\n    at progress (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2997:13)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot read properties of undefined (reading 'call')",
+          "stack": "TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832865310:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832865310:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832865310:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/components/sales/SalesHeader.tsx:14:77)\n    at (app-pages-browser)/./src/components/sales/SalesHeader.tsx (http://localhost:3002/_next/static/chunks/app/admin/sales-management/page.js:50:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832865310:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832865310:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832865310:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/admin/sales-management/page.tsx:8:87)\n    at (app-pages-browser)/./src/app/admin/sales-management/page.tsx (http://localhost:3002/_next/static/chunks/app/admin/sales-management/page.js:28:1)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot assign to read only property 'params' of object '#<Object>'",
+          "stack": "TypeError: Cannot assign to read only property 'params' of object '#<Object>'\n    at fulfillReference (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1284:25)\n    at wakeChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:977:13)\n    at initializeModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1114:11)\n    at resolveModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1084:12)\n    at resolveModel (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1907:11)\n    at processFullStringRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2664:15)\n    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2606:7)\n    at processBinaryChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2733:15)\n    at progress (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2997:13)"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/f9f1d5937c9a34f7.webpack.hot-update.json",
+          "method": "GET",
+          "failure": {
+            "errorText": "net::ERR_ABORTED"
+          }
+        }
+      ],
+      "networkRequests": [],
+      "loadTime": 4304,
+      "screenshot": "test-screenshots\\admin_sales_management.png"
+    },
+    {
+      "name": "P&L Create",
+      "url": "/admin/pl-create",
+      "status": "warning",
+      "errors": [],
+      "warnings": [
+        "3 console error(s) detected"
+      ],
+      "consoleLogs": [
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "message": "Cannot assign to read only property 'params' of object '#<Object>'",
+          "stack": "TypeError: Cannot assign to read only property 'params' of object '#<Object>'\n    at fulfillReference (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1284:25)\n    at wakeChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:977:13)\n    at initializeModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1114:11)\n    at resolveModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1084:12)\n    at resolveModel (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1907:11)\n    at processFullStringRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2664:15)\n    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2606:7)\n    at processBinaryChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2733:15)\n    at progress (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2997:13)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot read properties of undefined (reading 'call')",
+          "stack": "TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832870025:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832870025:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832870025:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/admin/yearly-progress/PLCreate.tsx:21:77)\n    at (app-pages-browser)/./src/app/admin/yearly-progress/PLCreate.tsx (http://localhost:3002/_next/static/chunks/app/admin/pl-create/page.js:39:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832870025:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832870025:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832870025:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/admin/pl-create/page.tsx:8:93)\n    at (app-pages-browser)/./src/app/admin/pl-create/page.tsx (http://localhost:3002/_next/static/chunks/app/admin/pl-create/page.js:28:1)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot assign to read only property 'params' of object '#<Object>'",
+          "stack": "TypeError: Cannot assign to read only property 'params' of object '#<Object>'\n    at fulfillReference (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1284:25)\n    at wakeChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:977:13)\n    at initializeModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1114:11)\n    at resolveModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1084:12)\n    at resolveModel (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1907:11)\n    at processFullStringRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2664:15)\n    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2606:7)\n    at processBinaryChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2733:15)\n    at progress (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2997:13)"
+        }
+      ],
+      "networkErrors": [],
+      "networkRequests": [],
+      "loadTime": 3721,
+      "screenshot": "test-screenshots\\admin_p_l_create.png"
+    },
+    {
+      "name": "Yearly Progress",
+      "url": "/admin/yearly-progress",
+      "status": "warning",
+      "errors": [],
+      "warnings": [
+        "1 console error(s) detected"
+      ],
+      "consoleLogs": [
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: APIリクエスト送信中..."
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /stores"
+        },
+        {
+          "type": "log",
+          "text": "🔍 checkAuth started"
+        },
+        {
+          "type": "log",
+          "text": "🔑 Existing token check: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔑 APIClient.setToken called: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "💾 Token saved to localStorage"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /auth/me"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: APIリクエスト送信中..."
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /stores"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "📋 checkAuth response: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ checkAuth: User authenticated"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: APIリクエスト送信中..."
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /stores"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: APIレスポンス受信: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: 成功 - 店舗数: 11"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: APIレスポンス受信: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: 成功 - 店舗数: 11"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /pl?year=2025&month=1&storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /pl?year=2025&month=2&storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /pl?year=2025&month=3&storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /pl?year=2025&month=4&storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /pl?year=2025&month=5&storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /pl?year=2025&month=6&storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /pl?year=2025&month=7&storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /pl?year=2025&month=8&storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /pl?year=2025&month=9&storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /pl?year=2025&month=10&storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /pl?year=2025&month=11&storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /pl?year=2025&month=12&storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: APIレスポンス受信: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: 成功 - 店舗数: 11"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "月1のPLデータ: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "月2のPLデータ: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "月3のPLデータ: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "月4のPLデータ: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "月5のPLデータ: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "月6のPLデータ: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "月7のPLデータ: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "月8のPLデータ: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "月9のPLデータ: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "月10のPLデータ: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "月11のPLデータ: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "月12のPLデータ: JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "type": "warn",
+          "text": "Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        }
+      ],
+      "networkErrors": [],
+      "networkRequests": [
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 304,
+          "statusText": "Not Modified",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 304,
+          "statusText": "Not Modified",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 304,
+          "statusText": "Not Modified",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 304,
+          "statusText": "Not Modified",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/pl?year=2025&month=1&storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/pl?year=2025&month=2&storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/pl?year=2025&month=5&storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/pl?year=2025&month=7&storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/pl?year=2025&month=9&storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/pl?year=2025&month=10&storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/pl?year=2025&month=11&storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/pl?year=2025&month=12&storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/pl?year=2025&month=3&storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/pl?year=2025&month=4&storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/pl?year=2025&month=8&storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/pl?year=2025&month=6&storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        }
+      ],
+      "loadTime": 4004,
+      "screenshot": "test-screenshots\\admin_yearly_progress.png"
+    },
+    {
+      "name": "Payments",
+      "url": "/admin/payments",
+      "status": "failed",
+      "errors": [
+        "1 network request(s) failed"
+      ],
+      "warnings": [],
+      "consoleLogs": [
+        {
+          "type": "log",
+          "text": "[Fast Refresh] rebuilding"
+        },
+        {
+          "type": "warn",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree."
+        },
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: APIリクエスト送信中..."
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /stores"
+        },
+        {
+          "type": "log",
+          "text": "🔍 checkAuth started"
+        },
+        {
+          "type": "log",
+          "text": "🔑 Existing token check: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔑 APIClient.setToken called: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "💾 Token saved to localStorage"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /auth/me"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "📋 checkAuth response: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ checkAuth: User authenticated"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: APIレスポンス受信: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: 成功 - 店舗数: 11"
+        },
+        {
+          "type": "warn",
+          "text": "Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/0e2c8704f0cdc5f9.webpack.hot-update.json",
+          "method": "GET",
+          "failure": {
+            "errorText": "net::ERR_ABORTED"
+          }
+        }
+      ],
+      "networkRequests": [
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 304,
+          "statusText": "Not Modified",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 304,
+          "statusText": "Not Modified",
+          "method": "GET"
+        }
+      ],
+      "loadTime": 4003,
+      "screenshot": "test-screenshots\\admin_payments.png"
+    },
+    {
+      "name": "Stores",
+      "url": "/admin/stores",
+      "status": "failed",
+      "errors": [
+        "1 network request(s) failed"
+      ],
+      "warnings": [],
+      "consoleLogs": [
+        {
+          "type": "log",
+          "text": "[Fast Refresh] rebuilding"
+        },
+        {
+          "type": "warn",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree."
+        },
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "message": "Cannot assign to read only property 'params' of object '#<Object>'",
+          "stack": "TypeError: Cannot assign to read only property 'params' of object '#<Object>'\n    at fulfillReference (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1284:25)\n    at wakeChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:977:13)\n    at initializeModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1114:11)\n    at resolveModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1084:12)\n    at resolveModel (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1907:11)\n    at processFullStringRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2664:15)\n    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2606:7)\n    at processBinaryChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2733:15)\n    at progress (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2997:13)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot read properties of undefined (reading 'call')",
+          "stack": "TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832884963:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832884963:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832884963:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/admin/stores/page.tsx:18:77)\n    at (app-pages-browser)/./src/app/admin/stores/page.tsx (http://localhost:3002/_next/static/chunks/app/admin/stores/page.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832884963:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832884963:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832884963:361:21)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot assign to read only property 'params' of object '#<Object>'",
+          "stack": "TypeError: Cannot assign to read only property 'params' of object '#<Object>'\n    at fulfillReference (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1284:25)\n    at wakeChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:977:13)\n    at initializeModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1114:11)\n    at resolveModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1084:12)\n    at resolveModel (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1907:11)\n    at processFullStringRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2664:15)\n    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2606:7)\n    at processBinaryChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2733:15)\n    at progress (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2997:13)"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/c4535c24955d8d5a.webpack.hot-update.json",
+          "method": "GET",
+          "failure": {
+            "errorText": "net::ERR_ABORTED"
+          }
+        }
+      ],
+      "networkRequests": [],
+      "loadTime": 3683,
+      "screenshot": "test-screenshots\\admin_stores.png"
+    },
+    {
+      "name": "Employees",
+      "url": "/admin/employees",
+      "status": "warning",
+      "errors": [],
+      "warnings": [
+        "3 console error(s) detected"
+      ],
+      "consoleLogs": [
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "message": "Cannot read properties of undefined (reading 'call')",
+          "stack": "TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832889814:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832889814:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832889814:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/admin/employees/page.tsx:17:83)\n    at (app-pages-browser)/./src/app/admin/employees/page.tsx (http://localhost:3002/_next/static/chunks/app/admin/employees/page.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832889814:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832889814:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832889814:361:21)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot assign to read only property 'params' of object '#<Object>'",
+          "stack": "TypeError: Cannot assign to read only property 'params' of object '#<Object>'\n    at fulfillReference (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1284:25)\n    at wakeChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:977:13)\n    at initializeModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1114:11)\n    at resolveModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1084:12)\n    at resolveModel (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1907:11)\n    at processFullStringRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2664:15)\n    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2606:7)\n    at processBinaryChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2733:15)\n    at progress (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2997:13)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot assign to read only property 'params' of object '#<Object>'",
+          "stack": "TypeError: Cannot assign to read only property 'params' of object '#<Object>'\n    at fulfillReference (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1284:25)\n    at wakeChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:977:13)\n    at initializeModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1114:11)\n    at resolveModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1084:12)\n    at resolveModel (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1907:11)\n    at processFullStringRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2664:15)\n    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2606:7)\n    at processBinaryChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2733:15)\n    at progress (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2997:13)"
+        }
+      ],
+      "networkErrors": [],
+      "networkRequests": [],
+      "loadTime": 4004,
+      "screenshot": "test-screenshots\\admin_employees.png"
+    },
+    {
+      "name": "Shifts",
+      "url": "/admin/shifts",
+      "status": "warning",
+      "errors": [],
+      "warnings": [
+        "1 console error(s) detected"
+      ],
+      "consoleLogs": [
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 setIsHydrated(true) を実行"
+        },
+        {
+          "type": "log",
+          "text": "🔍 fetchStores useEffect 開始"
+        },
+        {
+          "type": "log",
+          "text": "🔍 fetchStores() を呼び出し中..."
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: APIリクエスト送信中..."
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /stores"
+        },
+        {
+          "type": "log",
+          "text": "🔍 checkAuth started"
+        },
+        {
+          "type": "log",
+          "text": "🔑 Existing token check: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔑 APIClient.setToken called: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "💾 Token saved to localStorage"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /auth/me"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "📋 checkAuth response: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ checkAuth: User authenticated"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: APIレスポンス受信: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "fetchStores: 成功 - 店舗数: 11"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 fetchStores() 完了"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /employees"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔐 Authorization header set for request to: /shift-periods?storeId=57"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "✅ API Request success: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "該当するシフト期間が見つかりません"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "log",
+          "text": "🔍 ShiftApproval コンポーネントがレンダリングされました"
+        },
+        {
+          "type": "log",
+          "text": "🔍 現在の状態: JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "type": "warn",
+          "text": "Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        }
+      ],
+      "networkErrors": [],
+      "networkRequests": [
+        {
+          "url": "http://localhost:3001/api/auth/me",
+          "status": 304,
+          "statusText": "Not Modified",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/stores",
+          "status": 304,
+          "statusText": "Not Modified",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/employees",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:3001/api/shift-periods?storeId=57",
+          "status": 200,
+          "statusText": "OK",
+          "method": "GET"
+        }
+      ],
+      "loadTime": 7520,
+      "screenshot": "test-screenshots\\admin_shifts.png"
+    },
+    {
+      "name": "Companies",
+      "url": "/admin/companies",
+      "status": "failed",
+      "errors": [
+        "1 network request(s) failed"
+      ],
+      "warnings": [],
+      "consoleLogs": [
+        {
+          "type": "log",
+          "text": "[Fast Refresh] rebuilding"
+        },
+        {
+          "type": "warn",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree."
+        },
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "message": "Cannot assign to read only property 'params' of object '#<Object>'",
+          "stack": "TypeError: Cannot assign to read only property 'params' of object '#<Object>'\n    at fulfillReference (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1284:25)\n    at wakeChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:977:13)\n    at initializeModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1114:11)\n    at resolveModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1084:12)\n    at resolveModel (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1907:11)\n    at processFullStringRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2664:15)\n    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2606:7)\n    at processBinaryChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2733:15)\n    at progress (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2997:13)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot read properties of undefined (reading 'call')",
+          "stack": "TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832904677:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832904677:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832904677:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/admin/companies/page.tsx:11:77)\n    at (app-pages-browser)/./src/app/admin/companies/page.tsx (http://localhost:3002/_next/static/chunks/app/admin/companies/page.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832904677:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832904677:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832904677:361:21)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot assign to read only property 'params' of object '#<Object>'",
+          "stack": "TypeError: Cannot assign to read only property 'params' of object '#<Object>'\n    at fulfillReference (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1284:25)\n    at wakeChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:977:13)\n    at initializeModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1114:11)\n    at resolveModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1084:12)\n    at resolveModel (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1907:11)\n    at processFullStringRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2664:15)\n    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2606:7)\n    at processBinaryChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2733:15)\n    at progress (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2997:13)"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/cd773d1c8da394fa.webpack.hot-update.json",
+          "method": "GET",
+          "failure": {
+            "errorText": "net::ERR_ABORTED"
+          }
+        }
+      ],
+      "networkRequests": [],
+      "loadTime": 5068,
+      "screenshot": "test-screenshots\\admin_companies.png"
+    },
+    {
+      "name": "Business Types",
+      "url": "/admin/business-types",
+      "status": "warning",
+      "errors": [],
+      "warnings": [
+        "3 console error(s) detected"
+      ],
+      "consoleLogs": [
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "message": "Cannot assign to read only property 'params' of object '#<Object>'",
+          "stack": "TypeError: Cannot assign to read only property 'params' of object '#<Object>'\n    at fulfillReference (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1284:25)\n    at wakeChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:977:13)\n    at initializeModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1114:11)\n    at resolveModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1084:12)\n    at resolveModel (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1907:11)\n    at processFullStringRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2664:15)\n    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2606:7)\n    at processBinaryChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2733:15)\n    at progress (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2997:13)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot read properties of undefined (reading 'call')",
+          "stack": "TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832909546:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832909546:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832909546:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/admin/business-types/page.tsx:12:83)\n    at (app-pages-browser)/./src/app/admin/business-types/page.tsx (http://localhost:3002/_next/static/chunks/app/admin/business-types/page.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832909546:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832909546:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832909546:361:21)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot assign to read only property 'params' of object '#<Object>'",
+          "stack": "TypeError: Cannot assign to read only property 'params' of object '#<Object>'\n    at fulfillReference (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1284:25)\n    at wakeChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:977:13)\n    at initializeModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1114:11)\n    at resolveModelChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1084:12)\n    at resolveModel (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:1907:11)\n    at processFullStringRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2664:15)\n    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2606:7)\n    at processBinaryChunk (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2733:15)\n    at progress (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2997:13)"
+        }
+      ],
+      "networkErrors": [],
+      "networkRequests": [],
+      "loadTime": 4004,
+      "screenshot": "test-screenshots\\admin_business_types.png"
+    },
+    {
+      "name": "Monthly Sales",
+      "url": "/admin/monthly-sales",
+      "status": "warning",
+      "errors": [],
+      "warnings": [
+        "5 console error(s) detected"
+      ],
+      "consoleLogs": [
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "%o\n\n%s JSHandle@error The above error occurred in the <ClientPageRoot> component. It was handled by the <ErrorBoundary> error boundary."
+        },
+        {
+          "type": "error",
+          "text": "ErrorBoundary caught an error: JSHandle@error JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Error reported: JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "type": "warn",
+          "text": "Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "message": "Cannot read properties of undefined (reading 'call')",
+          "stack": "TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832915446:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832915446:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832915446:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/components/monthly-sales/BusinessTypeFieldConfiguration.tsx:15:83)\n    at (app-pages-browser)/./src/components/monthly-sales/BusinessTypeFieldConfiguration.tsx (http://localhost:3002/_next/static/chunks/app/admin/monthly-sales/page.js:39:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832915446:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832915446:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832915446:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/admin/monthly-sales/page.tsx:8:114)\n    at (app-pages-browser)/./src/app/admin/monthly-sales/page.tsx (http://localhost:3002/_next/static/chunks/app/admin/monthly-sales/page.js:28:1)"
+        },
+        {
+          "type": "error",
+          "text": "%o\n\n%s JSHandle@error The above error occurred in the <ClientPageRoot> component. It was handled by the <ErrorBoundary> error boundary."
+        },
+        {
+          "type": "error",
+          "text": "ErrorBoundary caught an error: JSHandle@error JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Error reported: JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        }
+      ],
+      "networkErrors": [],
+      "networkRequests": [],
+      "loadTime": 5239,
+      "screenshot": "test-screenshots\\admin_monthly_sales.png"
+    }
+  ],
+  "employeePages": [
+    {
+      "name": "Employee Dashboard",
+      "url": "/employee/dashboard",
+      "status": "failed",
+      "errors": [
+        "1 network request(s) failed"
+      ],
+      "warnings": [],
+      "consoleLogs": [
+        {
+          "type": "log",
+          "text": "[Fast Refresh] rebuilding"
+        },
+        {
+          "type": "warn",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree."
+        },
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "%o\n\n%s JSHandle@error The above error occurred in the <ClientSegmentRoot> component. It was handled by the <ErrorBoundary> error boundary."
+        },
+        {
+          "type": "error",
+          "text": "ErrorBoundary caught an error: JSHandle@error JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Error reported: JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "type": "warn",
+          "text": "Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "message": "Cannot read properties of undefined (reading 'call')",
+          "stack": "TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832921516:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832921516:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832921516:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/employee/layout.tsx:8:87)\n    at (app-pages-browser)/./src/app/employee/layout.tsx (http://localhost:3002/_next/static/chunks/app/employee/layout.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832921516:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832921516:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832921516:361:21)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot read properties of undefined (reading 'call')",
+          "stack": "TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832921516:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832921516:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832921516:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/employee/dashboard/page.tsx:19:81)\n    at (app-pages-browser)/./src/app/employee/dashboard/page.tsx (http://localhost:3002/_next/static/chunks/app/employee/dashboard/page.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832921516:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832921516:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832921516:361:21)"
+        },
+        {
+          "type": "error",
+          "text": "%o\n\n%s JSHandle@error The above error occurred in the <ClientSegmentRoot> component. It was handled by the <ErrorBoundary> error boundary."
+        },
+        {
+          "type": "error",
+          "text": "ErrorBoundary caught an error: JSHandle@error JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Error reported: JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/1659c937d9eec22a.webpack.hot-update.json",
+          "method": "GET",
+          "failure": {
+            "errorText": "net::ERR_ABORTED"
+          }
+        }
+      ],
+      "networkRequests": [],
+      "loadTime": 4978,
+      "screenshot": "test-screenshots\\employee_employee_dashboard.png"
+    },
+    {
+      "name": "Employee Shifts",
+      "url": "/employee/shifts",
+      "status": "failed",
+      "errors": [
+        "1 network request(s) failed"
+      ],
+      "warnings": [],
+      "consoleLogs": [
+        {
+          "type": "log",
+          "text": "[Fast Refresh] rebuilding"
+        },
+        {
+          "type": "warn",
+          "text": "[Fast Refresh] performing full reload\n\nFast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.\nYou might have a file which exports a React component but also exports a value that is imported by a non-React component file.\nConsider migrating the non-React component export to a separate file and importing it into both files.\n\nIt is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.\nFast Refresh requires at least one parent function component in your React tree."
+        },
+        {
+          "type": "info",
+          "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+        },
+        {
+          "type": "log",
+          "text": "🔧 API Configuration: JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "%o\n\n%s JSHandle@error The above error occurred in the <ClientSegmentRoot> component. It was handled by the <ErrorBoundary> error boundary."
+        },
+        {
+          "type": "error",
+          "text": "ErrorBoundary caught an error: JSHandle@error JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Error reported: JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "type": "warn",
+          "text": "Error while trying to use the following icon from the Manifest: http://localhost:3002/icons/icon-144x144.png (Download error or resource isn't a valid image)"
+        }
+      ],
+      "consoleErrors": [
+        {
+          "type": "error",
+          "message": "Cannot read properties of undefined (reading 'call')",
+          "stack": "TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832927631:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832927631:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832927631:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/employee/layout.tsx:8:87)\n    at (app-pages-browser)/./src/app/employee/layout.tsx (http://localhost:3002/_next/static/chunks/app/employee/layout.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832927631:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832927631:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832927631:361:21)"
+        },
+        {
+          "type": "error",
+          "message": "Cannot read properties of undefined (reading 'call')",
+          "stack": "TypeError: Cannot read properties of undefined (reading 'call')\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832927631:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832927631:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832927631:361:21)\n    at eval (webpack-internal:///(app-pages-browser)/./src/app/employee/shifts/page.tsx:18:76)\n    at (app-pages-browser)/./src/app/employee/shifts/page.tsx (http://localhost:3002/_next/static/chunks/app/employee/shifts/page.js:28:1)\n    at options.factory (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832927631:704:31)\n    at __webpack_require__ (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832927631:29:33)\n    at fn (http://localhost:3002/_next/static/chunks/webpack.js?v=1761832927631:361:21)"
+        },
+        {
+          "type": "error",
+          "text": "%o\n\n%s JSHandle@error The above error occurred in the <ClientSegmentRoot> component. It was handled by the <ErrorBoundary> error boundary."
+        },
+        {
+          "type": "error",
+          "text": "ErrorBoundary caught an error: JSHandle@error JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Error reported: JSHandle@object"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "http://localhost:3002/_next/static/webpack/899873807d5dc85e.webpack.hot-update.json",
+          "method": "GET",
+          "failure": {
+            "errorText": "net::ERR_ABORTED"
+          }
+        }
+      ],
+      "networkRequests": [],
+      "loadTime": 5055,
+      "screenshot": "test-screenshots\\employee_employee_shifts.png"
+    }
+  ]
+}

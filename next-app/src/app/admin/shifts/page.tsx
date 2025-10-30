@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { 
-  Download, ChevronDown, ChevronUp,  
+import {
+  Download, ChevronDown, ChevronUp,
   Clock,  AlertTriangle, CheckCircle, Settings, X
 } from 'lucide-react';
 import { useStoreStore } from '@/stores/storeStore';
@@ -11,7 +11,6 @@ import apiClient from '@/lib/api';
 // import ExcelJS from 'exceljs'; // 一時的にコメントアウト（権限エラー回避）
 import type { ShiftEntry } from '@/stores/shiftStore';
 import type { ShiftSubmission } from '@/lib/api';
-import AppLayout from '@/app/appLayout/layout';
 
 interface Employee {
   id: string;
@@ -32,7 +31,7 @@ interface PeriodOption {
 
 const ShiftApproval = () => {
   console.log('🔍 ShiftApproval コンポーネントがレンダリングされました');
-  
+
   const { stores, fetchStores, isLoading } = useStoreStore();
   const [selectedStoreId, setSelectedStoreId] = useState<string>('');
   const [selectedPeriodValue, setSelectedPeriodValue] = useState<string>('');
@@ -43,15 +42,15 @@ const ShiftApproval = () => {
   const [showEmployeeOrderModal, setShowEmployeeOrderModal] = useState(false);
   const [employeeOrder, setEmployeeOrder] = useState<string[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
-  
-  console.log('🔍 現在の状態:', { 
-    isHydrated, 
-    isLoading, 
+
+  console.log('🔍 現在の状態:', {
+    isHydrated,
+    isLoading,
     storesLength: stores.length,
     selectedStoreId,
-    selectedPeriodValue 
+    selectedPeriodValue
   });
-  
+
   // 並び順をローカルストレージに保存
   const saveEmployeeOrder = (order: string[]) => {
     if (isHydrated && selectedStoreId) {
@@ -59,7 +58,7 @@ const ShiftApproval = () => {
       localStorage.setItem(key, JSON.stringify(order));
     }
   };
-  
+
   // 並び順をローカルストレージから読み込み
   const loadEmployeeOrder = (): string[] => {
     if (isHydrated && selectedStoreId) {
@@ -75,20 +74,20 @@ const ShiftApproval = () => {
     }
     return [];
   };
-  
-  // Generate period options based on current date (直近1ヶ月のみ)
+
+  // Generate period options based on current date
   const generatePeriodOptions = (): PeriodOption[] => {
     if (!isHydrated) return []; // SSR対策
-    
+
     const today = new Date();
     const options: PeriodOption[] = [];
-    
-    // 直近1ヶ月分のみ（現在月と前月）
-    for (let i = 1; i >= 0; i--) {
+
+    // 過去3ヶ月分
+    for (let i = 3; i >= 0; i--) {
       const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const year = date.getFullYear();
       const month = date.getMonth() + 1;
-      
+
       // 前半と後半を追加
       options.push({
         year,
@@ -105,10 +104,33 @@ const ShiftApproval = () => {
         label: `${year}年${month}月 後半`
       });
     }
-    
+
+    // 未来3ヶ月分
+    for (let i = 1; i <= 3; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+
+      // 前半と後半を追加
+      options.push({
+        year,
+        month,
+        isFirstHalf: true,
+        value: `${year}-${month.toString().padStart(2, '0')}-first`,
+        label: `${year}年${month}月 前半`
+      });
+      options.push({
+        year,
+        month,
+        isFirstHalf: false,
+        value: `${year}-${month.toString().padStart(2, '0')}-second`,
+        label: `${year}年${month}月 後半`
+      });
+    }
+
     return options;
   };
-  
+
   useEffect(() => {
     console.log('🔍 setIsHydrated(true) を実行');
     setIsHydrated(true);
@@ -125,7 +147,7 @@ const ShiftApproval = () => {
         console.error('🔍 店舗データ読み込みエラー:', error);
       }
     };
-    
+
     loadData();
   }, []); // マウント時に一度だけ実行
 
@@ -139,41 +161,33 @@ const ShiftApproval = () => {
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentMonth = today.getMonth() + 1;
-        const defaultOption = options.find(opt => 
+        const defaultOption = options.find(opt =>
           opt.year === currentYear && opt.month === currentMonth && opt.isFirstHalf
         ) || options[Math.floor(options.length / 2)]; // Middle option as fallback
-        
+
         if (defaultOption) {
           setSelectedPeriodValue(defaultOption.value);
         }
       }
     }
   }, [isHydrated, selectedPeriodValue]);
-  
+
   const loadShiftData = useCallback(async () => {
-    console.log('🔍 loadShiftData開始:', { selectedStoreId, selectedPeriodValue });
-    
-    if (!selectedStoreId || !selectedPeriodValue) {
-      console.log('🔍 必要なパラメータが不足:', { selectedStoreId, selectedPeriodValue });
-      return;
-    }
-    
+    if (!selectedStoreId || !selectedPeriodValue) return;
     try {
       // 従業員一覧を取得
-      console.log('🔍 従業員データを取得中...');
       const employeesResponse = await apiClient.getEmployees();
       if (employeesResponse.success && employeesResponse.data) {
         // 選択された店舗の従業員のみをフィルタリング
         const filteredEmployees = employeesResponse.data.filter(
           (emp: Employee) => emp.storeId === selectedStoreId
         );
-        console.log('🔍 フィルタリング後の従業員数:', filteredEmployees.length);
         setEmployees(filteredEmployees);
-        
+
         // 保存された並び順を読み込み、なければデフォルト順序を使用
         const savedOrder = loadEmployeeOrder();
         const allEmployeeIds = filteredEmployees.map(emp => emp.id);
-        
+
         if (savedOrder.length > 0) {
           // 保存された順序を基に、新しい従業員も末尾に追加
           const orderedIds = [
@@ -193,45 +207,22 @@ const ShiftApproval = () => {
       }
 
       // シフト期間を取得
-      console.log('🔍 シフト期間データを取得中...');
       const periodsResponse = await apiClient.getShiftPeriods(selectedStoreId);
       if (periodsResponse.success && periodsResponse.data) {
-        console.log('🔍 取得したシフト期間数:', periodsResponse.data.length);
-        
         // 選択された期間に該当するシフト期間を探す
         const selectedPeriod = periodOptions.find(p => p.value === selectedPeriodValue);
-        console.log('🔍 選択された期間:', selectedPeriod);
-        
         if (selectedPeriod) {
           const targetPeriod = periodsResponse.data.find((period) => {
-            const p = period as { startDate: string; isFirstHalf: boolean };
+            const p = period as { startDate: string };
             const periodDate = new Date(p.startDate);
-            const matches = periodDate.getFullYear() === selectedPeriod.year && 
-                           periodDate.getMonth() + 1 === selectedPeriod.month &&
-                           p.isFirstHalf === selectedPeriod.isFirstHalf;
-            
-            console.log('🔍 期間マッチング:', {
-              periodYear: periodDate.getFullYear(),
-              periodMonth: periodDate.getMonth() + 1,
-              selectedYear: selectedPeriod.year,
-              selectedMonth: selectedPeriod.month,
-              periodIsFirstHalf: p.isFirstHalf,
-              selectedIsFirstHalf: selectedPeriod.isFirstHalf,
-              matches
-            });
-            
-            return matches;
+            return periodDate.getFullYear() === selectedPeriod.year &&
+                   periodDate.getMonth() + 1 === selectedPeriod.month;
           });
-
-          console.log('🔍 見つかったターゲット期間:', targetPeriod);
 
           if (targetPeriod) {
             // シフト提出データを取得
-            console.log('🔍 シフト提出データを取得中...');
             const submissionsResponse = await apiClient.getShiftSubmissions(targetPeriod.id);
             if (submissionsResponse.success && submissionsResponse.data) {
-              console.log('🔍 取得したシフト提出数:', submissionsResponse.data.length);
-              
               // シフトエントリも含めて取得
               const submissionsWithEntries = await Promise.all(
                 submissionsResponse.data.map(async (submission: ShiftSubmission) => {
@@ -242,19 +233,15 @@ const ShiftApproval = () => {
                   };
                 })
               );
-              console.log('🔍 エントリ付きシフト提出データ設定完了');
               setSubmissions(submissionsWithEntries);
             } else {
               console.error('シフト提出取得エラー:', submissionsResponse.error);
               setSubmissions([]);
             }
           } else {
-            console.log('🔍 該当するシフト期間が見つかりません - データをクリア');
+            console.log('該当するシフト期間が見つかりません');
             setSubmissions([]);
           }
-        } else {
-          console.log('🔍 選択された期間が無効 - データをクリア');
-          setSubmissions([]);
         }
       } else {
         console.error('シフト期間取得エラー:', periodsResponse.error);
@@ -267,36 +254,36 @@ const ShiftApproval = () => {
       setSubmissions([]);
     }
   }, [selectedStoreId, selectedPeriodValue, periodOptions]);
-  
+
   useEffect(() => {
     if (selectedStoreId && selectedPeriodValue) {
       loadShiftData();
     }
   }, [selectedStoreId, selectedPeriodValue]);
-  
+
   // Set default store when stores are loaded
   useEffect(() => {
     // Check if there's a selected store from navigation state
     const stateStoreId = undefined;
-    
+
     // Filter out Manager store
-    const nonManagerStores = stores.filter(store => 
+    const nonManagerStores = stores.filter(store =>
       store.name.toLowerCase() !== 'manager'
     );
-    
+
     if (stateStoreId && nonManagerStores.some(store => store.id === stateStoreId)) {
       setSelectedStoreId(stateStoreId);
     } else if (nonManagerStores.length > 0 && !selectedStoreId) {
       setSelectedStoreId(nonManagerStores[0].id);
     }
   }, [stores, selectedStoreId]);
-  
+
   // Initialize employee order when employees change
   useEffect(() => {
     if (employees.length > 0 && employeeOrder.length === 0) {
       const allEmployeeIds = employees.map(emp => emp.id);
       const savedOrder = loadEmployeeOrder();
-      
+
       if (savedOrder.length > 0) {
         // 保存された順序を基に、新しい従業員も末尾に追加
         const orderedIds = [
@@ -311,49 +298,49 @@ const ShiftApproval = () => {
       }
     }
   }, [employees, employeeOrder.length, selectedStoreId]);
-  
+
   // Get unique employees from submissions and sort by custom order
   const getUniqueEmployees = () => {
     return employees.sort((a, b) => {
       const indexA = employeeOrder.indexOf(a.id);
       const indexB = employeeOrder.indexOf(b.id);
-      
+
       // If both employees are in the order, sort by index
       if (indexA !== -1 && indexB !== -1) {
         return indexA - indexB;
       }
-      
+
       // If one is not in the order, put it at the end
       if (indexA === -1 && indexB !== -1) return 1;
       if (indexA !== -1 && indexB === -1) return -1;
-      
+
       // If neither is in the order, sort by ID
       return a.id.localeCompare(b.id);
     });
   };
-  
+
   // Get submission for a specific employee
   const getEmployeeSubmission = (employeeId: string) => {
     return submissions.find(sub => sub.employeeId === employeeId);
   };
-  
+
   // Check if employee has submitted shifts
   const hasEmployeeSubmitted = (employeeId: string) => {
     const submission = getEmployeeSubmission(employeeId);
     return submission?.status === 'submitted';
   };
-  
+
   // Format time for display
   const formatTimeDisplay = (time: string | null): string => {
     if (!time) return '-';
-    
-    const [hours, minutes] = time.includes('.') 
+
+    const [hours, minutes] = time.includes('.')
       ? [parseInt(time.split('.')[0]), parseInt(time.split('.')[1]) * 6] // Convert .5 to 30 minutes
       : [parseInt(time), 0];
-    
+
     return `${hours}:${minutes === 0 ? '00' : minutes}`;
   };
-  
+
   // Toggle employee expansion
   const toggleEmployeeExpansion = (employeeId: string) => {
     if (expandedEmployeeId === employeeId) {
@@ -362,7 +349,7 @@ const ShiftApproval = () => {
       setExpandedEmployeeId(employeeId);
     }
   };
-  
+
   // Move employee up in order
   const moveEmployeeUp = (employeeId: string) => {
     const currentIndex = employeeOrder.indexOf(employeeId);
@@ -373,7 +360,7 @@ const ShiftApproval = () => {
       saveEmployeeOrder(newOrder); // 並び順を保存
     }
   };
-  
+
   // Move employee down in order
   const moveEmployeeDown = (employeeId: string) => {
     const currentIndex = employeeOrder.indexOf(employeeId);
@@ -384,55 +371,55 @@ const ShiftApproval = () => {
       saveEmployeeOrder(newOrder); // 並び順を保存
     }
   };
-  
+
   // Export to CSV (lightweight alternative to Excel)
   const exportToCSV = async () => {
     if (!selectedPeriodValue) return;
-    
+
     const selectedPeriod = periodOptions.find(p => p.value === selectedPeriodValue);
     if (!selectedPeriod) return;
-    
+
     // Get unique employees and sort by their custom order
     const uniqueEmployees = getUniqueEmployees();
-    
+
     // Calculate the number of days in the period
     const year = selectedPeriod.year;
     const month = selectedPeriod.month;
     const startDay = selectedPeriod.isFirstHalf ? 1 : 16;
     const endDay = selectedPeriod.isFirstHalf ? 15 : (typeof window !== 'undefined' ? new Date(year, month, 0).getDate() : 31);
-    
+
     // Create CSV content
     let csvContent = '';
-    
+
     // Title row
     const currentStore = stores.find(store => store.id === selectedStoreId);
     const storeName = currentStore ? currentStore.name : '全店舗';
     csvContent += `${storeName} ${year}年${month}月${selectedPeriod.isFirstHalf ? '前半' : '後半'}シフト表\n\n`;
-    
+
     // Header row with dates
     let headerRow = '従業員名,';
     for (let day = startDay; day <= endDay; day++) {
       headerRow += `${day}日 出勤,${day}日 退勤,`;
     }
     csvContent += headerRow.slice(0, -1) + '\n'; // Remove last comma
-    
+
     // Employee data rows
     uniqueEmployees.forEach(employee => {
       const submission = getEmployeeSubmission(employee.id);
       let row = `${employee.nickname},`;
-      
+
       for (let day = startDay; day <= endDay; day++) {
         const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-        const shiftEntry = submission?.shiftEntries?.find((entry: ShiftEntry) => entry.work_date === dateStr);
-        
+        const shiftEntry = submission?.shiftEntries?.find((entry: ShiftEntry) => entry.date === dateStr);
+
         const startTime = shiftEntry?.startTime || '';
         const endTime = shiftEntry?.endTime || '';
         row += `${startTime},${endTime},`;
       }
-      
+
       csvContent += row.slice(0, -1) + '\n'; // Remove last comma
     });
-    
+
     // Download CSV file
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -444,12 +431,12 @@ const ShiftApproval = () => {
     link.click();
     document.body.removeChild(link);
   };
-  
+
   // Calculate submission statistics (excluding admins)
   const getSubmissionStats = () => {
     const totalEmployees = employees.length; // Already filtered to exclude admins
     const submittedEmployees = submissions.filter(sub => sub.status === 'submitted').length;
-    
+
     return {
       total: totalEmployees,
       submitted: submittedEmployees,
@@ -457,9 +444,9 @@ const ShiftApproval = () => {
       percentage: totalEmployees > 0 ? Math.round((submittedEmployees / totalEmployees) * 100) : 0
     };
   };
-  
+
   const stats = getSubmissionStats();
-  
+
   if (!isHydrated || isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -472,7 +459,7 @@ const ShiftApproval = () => {
   return (
     <div className="space-y-6 slide-up">
           <h1 className="text-2xl font-bold text-gray-900">シフト管理</h1>
-          
+
           {/* Filters */}
           <div className="bg-white rounded-lg shadow-sm p-4">
             <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
@@ -515,14 +502,14 @@ const ShiftApproval = () => {
                 </select>
               </div>
               <div className="flex items-end space-x-2">
-                <button 
+                <button
                   className="btn-secondary flex items-center"
                   onClick={() => setShowEmployeeOrderModal(true)}
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   並び順設定
                 </button>
-                <button 
+                <button
                   className="btn-primary flex items-center"
                   onClick={exportToCSV}
                 >
@@ -532,17 +519,17 @@ const ShiftApproval = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Submission Overview */}
           <div className="bg-white rounded-lg shadow-sm p-4">
             <h2 className="text-lg font-medium mb-3">提出状況</h2>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div className="bg-gray-50 p-3 rounded-md">
                 <div className="text-sm text-gray-500 mb-1">全従業員</div>
                 <p className="text-2xl font-semibold">{stats.total}</p>
               </div>
-              
+
               <div className="bg-green-50 p-3 rounded-md">
                 <div className="text-sm text-gray-500 mb-1">提出済み</div>
                 <p className="text-2xl font-semibold text-green-600">
@@ -552,29 +539,29 @@ const ShiftApproval = () => {
                   </span>
                 </p>
               </div>
-              
+
               <div className="bg-amber-50 p-3 rounded-md">
                 <div className="text-sm text-gray-500 mb-1">未提出</div>
                 <p className="text-2xl font-semibold text-amber-600">
                   {stats.pending}
                 </p>
               </div>
-              
+
               <div className="bg-blue-50 p-3 rounded-md">
                 <div className="text-sm text-gray-500 mb-1">提出期限</div>
                 <p className="text-lg font-semibold text-blue-600">
                   {selectedPeriodValue && periodOptions.find(p => p.value === selectedPeriodValue)?.isFirstHalf
-                    ? `前月20日` 
+                    ? `前月20日`
                     : `当月5日`
                   }
                 </p>
               </div>
             </div>
-            
+
             <div className="mt-4">
               <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div 
-                  className="bg-green-500 h-2.5 rounded-full" 
+                <div
+                  className="bg-green-500 h-2.5 rounded-full"
                   style={{ width: `${stats.percentage}%` }}
                 ></div>
               </div>
@@ -583,14 +570,14 @@ const ShiftApproval = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Employee Shifts */}
           <div className="bg-white rounded-lg shadow-sm">
             <div className="p-4 border-b border-gray-200">
               <h2 className="text-lg font-medium">従業員シフト一覧</h2>
               <p className="text-sm text-gray-600">
                 {selectedStoreId && stores.length > 0
-                  ? stores.find(s => s.id === selectedStoreId)?.name 
+                  ? stores.find(s => s.id === selectedStoreId)?.name
                   : '店舗選択中...'
                 } - {selectedPeriodValue && periodOptions.find(p => p.value === selectedPeriodValue)?.label}
               </p>
@@ -602,17 +589,17 @@ const ShiftApproval = () => {
                 <div className="w-24 sm:w-32">状態</div>
                 <div className="w-8"></div>
               </div>
-              
+
               <div className="divide-y divide-gray-200">
                 {getUniqueEmployees().map((employee) => {
                   const submission = getEmployeeSubmission(employee.id);
                   const isExpanded = expandedEmployeeId === employee.id;
                   const hasSubmitted = hasEmployeeSubmitted(employee.id);
-                  
+
                   return (
                     <div key={employee.id} className="bg-white">
                       {/* Employee Row */}
-                      <div 
+                      <div
                         className="p-3 flex items-center hover:bg-gray-50 cursor-pointer"
                         onClick={() => toggleEmployeeExpansion(employee.id)}
                       >
@@ -641,7 +628,7 @@ const ShiftApproval = () => {
                           )}
                         </div>
                       </div>
-                      
+
                       {/* Expanded Details */}
                       {isExpanded && (
                         <div className="px-3 py-2 bg-gray-50 border-t border-gray-100">
@@ -726,7 +713,7 @@ const ShiftApproval = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Employee Order Modal */}
           {showEmployeeOrderModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 fade-in">
@@ -740,18 +727,18 @@ const ShiftApproval = () => {
                     <X className="h-5 w-5" />
                   </button>
                 </div>
-                
+
                 <div className="mb-4">
                   <p className="text-sm text-gray-600">
                     Excel出力時の従業員の並び順を設定できます。上下ボタンで順序を変更してください。
                   </p>
                 </div>
-                
+
                 <div className="space-y-2">
                   {employeeOrder.map((employeeId, index) => {
                     const employee = employees.find(emp => emp.id === employeeId);
                     if (!employee) return null;
-                    
+
                     return (
                       <div key={employeeId} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                         <div className="flex items-center">
@@ -764,8 +751,8 @@ const ShiftApproval = () => {
                             onClick={() => moveEmployeeUp(employeeId)}
                             disabled={index === 0}
                             className={`p-1 rounded ${
-                              index === 0 
-                                ? 'text-gray-300 cursor-not-allowed' 
+                              index === 0
+                                ? 'text-gray-300 cursor-not-allowed'
                                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                             }`}
                           >
@@ -775,8 +762,8 @@ const ShiftApproval = () => {
                             onClick={() => moveEmployeeDown(employeeId)}
                             disabled={index === employeeOrder.length - 1}
                             className={`p-1 rounded ${
-                              index === employeeOrder.length - 1 
-                                ? 'text-gray-300 cursor-not-allowed' 
+                              index === employeeOrder.length - 1
+                                ? 'text-gray-300 cursor-not-allowed'
                                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                             }`}
                           >
@@ -787,7 +774,7 @@ const ShiftApproval = () => {
                     );
                   })}
                 </div>
-                
+
                 <div className="mt-6 flex justify-end">
                   <button
                     type="button"
@@ -806,8 +793,8 @@ const ShiftApproval = () => {
 
 export default function Page() {
   return (
-    <AppLayout>
+    <>
       <ShiftApproval />
-    </AppLayout>
+    </>
   );
 }

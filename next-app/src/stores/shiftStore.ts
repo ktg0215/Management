@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { addDays, format, parse, startOfMonth, endOfMonth } from 'date-fns';
 import { apiClient } from '../lib/api';
 import type { ShiftSubmission } from '../lib/api';
@@ -553,6 +553,16 @@ export const useShiftStore = create<ShiftState>()(
     },
     {
       name: 'shift-storage',
+      storage: createJSONStorage(() =>
+        typeof window !== 'undefined'
+          ? localStorage
+          : {
+              getItem: () => null,
+              setItem: () => {},
+              removeItem: () => {},
+            }
+      ),
+      skipHydration: true,
       partialize: (state) => ({
         draftPeriods: state.draftPeriods,
         // Don't persist selected period or currentPeriods

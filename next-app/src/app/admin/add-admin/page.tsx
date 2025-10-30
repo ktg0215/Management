@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
-import AppLayout from '@/app/appLayout/layout';
 
 const AddAdmin = () => {
   const navigate = useRouter();
@@ -287,8 +286,8 @@ const AddAdmin = () => {
 
 export default function Page() {
   return (
-    <AppLayout>
+    <>
       <AddAdmin />
-    </AppLayout>
+    </>
   );
 }

@@ -6,7 +6,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
 import { formatStoreName } from '@/utils/storeDisplay';
 import Information from '@/components/Information';
-import AppLayout from '@/app/appLayout/layout';
 
 function AdminDashboard() {
   const router = useRouter(); 
@@ -258,8 +257,8 @@ function AdminDashboard() {
 
 export default function Page() {
   return (
-    <AppLayout>
+    
       <AdminDashboard />
-    </AppLayout>
+    
   );
 }

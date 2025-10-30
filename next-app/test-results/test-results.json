@@ -1,0 +1,208 @@
+{
+  "summary": {
+    "total": 9,
+    "passed": 0,
+    "failed": 9,
+    "warnings": 0
+  },
+  "pages": [
+    {
+      "name": "Login Page",
+      "url": "http://localhost:3002/login",
+      "status": "failed",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Test Error: page.waitForTimeout is not a function\nStack: TypeError: page.waitForTimeout is not a function\n    at testPage (C:\\job\\project\\next-app\\test-all-pages.js:115:16)\n    at async runTests (C:\\job\\project\\next-app\\test-all-pages.js:410:7)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "networkErrors": [],
+      "screenshots": [
+        "C:\\job\\project\\next-app\\test-results\\Login_Page.png"
+      ],
+      "loadTime": 1839,
+      "renderComplete": false,
+      "functionalTests": []
+    },
+    {
+      "name": "Dashboard",
+      "url": "http://localhost:3002/admin/dashboard",
+      "status": "failed",
+      "httpStatus": 404,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Test Error: page.waitForTimeout is not a function\nStack: TypeError: page.waitForTimeout is not a function\n    at testPage (C:\\job\\project\\next-app\\test-all-pages.js:115:16)\n    at async runTests (C:\\job\\project\\next-app\\test-all-pages.js:410:7)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "networkErrors": [],
+      "screenshots": [
+        "C:\\job\\project\\next-app\\test-results\\Dashboard.png"
+      ],
+      "loadTime": 848,
+      "renderComplete": false,
+      "functionalTests": []
+    },
+    {
+      "name": "Sales Management",
+      "url": "http://localhost:3002/admin/sales-management",
+      "status": "failed",
+      "httpStatus": 404,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Test Error: page.waitForTimeout is not a function\nStack: TypeError: page.waitForTimeout is not a function\n    at testPage (C:\\job\\project\\next-app\\test-all-pages.js:115:16)\n    at async runTests (C:\\job\\project\\next-app\\test-all-pages.js:410:7)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "networkErrors": [],
+      "screenshots": [
+        "C:\\job\\project\\next-app\\test-results\\Sales_Management.png"
+      ],
+      "loadTime": 846,
+      "renderComplete": false,
+      "functionalTests": []
+    },
+    {
+      "name": "Stores Management",
+      "url": "http://localhost:3002/admin/stores",
+      "status": "failed",
+      "httpStatus": 404,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Test Error: page.waitForTimeout is not a function\nStack: TypeError: page.waitForTimeout is not a function\n    at testPage (C:\\job\\project\\next-app\\test-all-pages.js:115:16)\n    at async runTests (C:\\job\\project\\next-app\\test-all-pages.js:410:7)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "networkErrors": [],
+      "screenshots": [
+        "C:\\job\\project\\next-app\\test-results\\Stores_Management.png"
+      ],
+      "loadTime": 839,
+      "renderComplete": false,
+      "functionalTests": []
+    },
+    {
+      "name": "Employees Management",
+      "url": "http://localhost:3002/admin/employees",
+      "status": "failed",
+      "httpStatus": 404,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Test Error: page.waitForTimeout is not a function\nStack: TypeError: page.waitForTimeout is not a function\n    at testPage (C:\\job\\project\\next-app\\test-all-pages.js:115:16)\n    at async runTests (C:\\job\\project\\next-app\\test-all-pages.js:410:7)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "networkErrors": [],
+      "screenshots": [
+        "C:\\job\\project\\next-app\\test-results\\Employees_Management.png"
+      ],
+      "loadTime": 857,
+      "renderComplete": false,
+      "functionalTests": []
+    },
+    {
+      "name": "Shift Management",
+      "url": "http://localhost:3002/admin/shifts",
+      "status": "failed",
+      "httpStatus": 404,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Test Error: page.waitForTimeout is not a function\nStack: TypeError: page.waitForTimeout is not a function\n    at testPage (C:\\job\\project\\next-app\\test-all-pages.js:115:16)\n    at async runTests (C:\\job\\project\\next-app\\test-all-pages.js:410:7)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "networkErrors": [],
+      "screenshots": [
+        "C:\\job\\project\\next-app\\test-results\\Shift_Management.png"
+      ],
+      "loadTime": 807,
+      "renderComplete": false,
+      "functionalTests": []
+    },
+    {
+      "name": "Monthly Sales",
+      "url": "http://localhost:3002/admin/monthly-sales",
+      "status": "failed",
+      "httpStatus": 404,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Test Error: page.waitForTimeout is not a function\nStack: TypeError: page.waitForTimeout is not a function\n    at testPage (C:\\job\\project\\next-app\\test-all-pages.js:115:16)\n    at async runTests (C:\\job\\project\\next-app\\test-all-pages.js:410:7)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "networkErrors": [],
+      "screenshots": [
+        "C:\\job\\project\\next-app\\test-results\\Monthly_Sales.png"
+      ],
+      "loadTime": 807,
+      "renderComplete": false,
+      "functionalTests": []
+    },
+    {
+      "name": "Yearly Progress",
+      "url": "http://localhost:3002/admin/yearly-progress",
+      "status": "failed",
+      "httpStatus": 404,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Test Error: page.waitForTimeout is not a function\nStack: TypeError: page.waitForTimeout is not a function\n    at testPage (C:\\job\\project\\next-app\\test-all-pages.js:115:16)\n    at async runTests (C:\\job\\project\\next-app\\test-all-pages.js:410:7)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "networkErrors": [],
+      "screenshots": [
+        "C:\\job\\project\\next-app\\test-results\\Yearly_Progress.png"
+      ],
+      "loadTime": 815,
+      "renderComplete": false,
+      "functionalTests": []
+    },
+    {
+      "name": "Payments Management",
+      "url": "http://localhost:3002/admin/payments",
+      "status": "failed",
+      "httpStatus": 404,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Test Error: page.waitForTimeout is not a function\nStack: TypeError: page.waitForTimeout is not a function\n    at testPage (C:\\job\\project\\next-app\\test-all-pages.js:115:16)\n    at async runTests (C:\\job\\project\\next-app\\test-all-pages.js:410:7)"
+      ],
+      "consoleWarnings": [],
+      "networkErrors": [],
+      "screenshots": [
+        "C:\\job\\project\\next-app\\test-results\\Payments_Management.png"
+      ],
+      "loadTime": 875,
+      "renderComplete": false,
+      "functionalTests": []
+    }
+  ],
+  "timestamp": "2025-10-27T15:59:32.780Z"
+}

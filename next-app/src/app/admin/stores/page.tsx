@@ -6,7 +6,6 @@ import {
 import { useStoreStore, Store } from '@/stores/storeStore';
 import { useBusinessTypeStore } from '@/stores/businessTypeStore';
 import { formatStoreName, sortStoresByBusinessType } from '@/utils/storeDisplay';
-import AppLayout from '@/app/appLayout/layout';
 
 const StoreManagement = () => {
   const { stores, fetchStores, createStore, updateStore, deleteStore } = useStoreStore();
@@ -392,8 +391,8 @@ const StoreManagement = () => {
 
 export default function Page() {
   return (
-    <AppLayout>
+    
       <StoreManagement />
-    </AppLayout>
+    
   );
 }

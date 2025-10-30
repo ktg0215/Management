@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, Building2 } from 'lucide-react';
 import { useBusinessTypeStore } from '@/stores/businessTypeStore';
 import { BusinessType } from '@/lib/api';
-import AppLayout from '@/app/appLayout/layout';
 
 const BusinessTypesPage = () => {
   const { businessTypes, isLoading, fetchBusinessTypes, createBusinessType, updateBusinessType, deleteBusinessType } = useBusinessTypeStore();
@@ -134,7 +133,7 @@ const BusinessTypesPage = () => {
   };
 
   return (
-    <AppLayout>
+    <>
       <div className="py-8">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-8">
@@ -304,7 +303,7 @@ const BusinessTypesPage = () => {
           </div>
         </div>
       )}
-    </AppLayout>
+    </>
   );
 };
 
