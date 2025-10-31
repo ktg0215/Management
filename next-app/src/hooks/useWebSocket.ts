@@ -151,24 +151,29 @@ export const useWebSocket = ({
       ws.current.onmessage = handleMessage;
 
       ws.current.onclose = (event) => {
-        console.log('WebSocket disconnected:', event.code, event.reason);
+        console.warn('WebSocket disconnected:', event.code, event.reason);
         setIsConnected(false);
         stopHeartbeat();
         onConnectionChange?.(false);
 
-        // Attempt to reconnect if it wasn't a clean close
+        // クリーンな切断でない場合のみ再接続を試みる
+        // （初回接続失敗はcatchブロックで処理され、再接続しない）
         if (!event.wasClean && reconnectCount.current < reconnectAttempts) {
           attemptReconnect();
         }
       };
 
       ws.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        // WebSocketサーバーが起動していない場合は警告レベルに（予期される動作）
+        console.warn('WebSocket connection unavailable. Real-time updates disabled.');
         onError?.(error);
       };
     } catch (error) {
-      console.error('Failed to connect to WebSocket:', error);
-      attemptReconnect();
+      // 初回接続失敗は警告レベル（WebSocketサーバーがオプショナル）
+      console.warn('WebSocket server not available. Continuing without real-time updates.');
+      // 初回接続失敗時は再接続を試みない
+      setIsConnected(false);
+      setIsReconnecting(false);
     }
   }, [url, handleMessage, startHeartbeat, stopHeartbeat, onConnectionChange, onError]);
 
