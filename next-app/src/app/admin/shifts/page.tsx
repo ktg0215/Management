@@ -410,7 +410,7 @@ const ShiftApproval = () => {
 
       for (let day = startDay; day <= endDay; day++) {
         const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-        const shiftEntry = submission?.shiftEntries?.find((entry: ShiftEntry) => entry.date === dateStr);
+        const shiftEntry = submission?.shiftEntries?.find((entry: ShiftEntry) => entry.work_date === dateStr);
 
         const startTime = shiftEntry?.startTime || '';
         const endTime = shiftEntry?.endTime || '';

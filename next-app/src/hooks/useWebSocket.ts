@@ -56,14 +56,15 @@ export const useWebSocket = ({
           handleStoreUpdate(message);
           break;
         case 'system_message':
-          console.log('System message:', message.data);
+          // System message received
           break;
         case 'heartbeat':
           // Respond to heartbeat
           sendMessage({ type: 'heartbeat', timestamp: new Date().toISOString() });
           break;
         default:
-          console.log('Unknown message type:', message.type);
+          // Unknown message type
+          break;
       }
 
       // Call custom message handler
@@ -84,8 +85,6 @@ export const useWebSocket = ({
       if (year && month) {
         invalidateQueries.sales.byMonth(storeId, year, month);
       }
-
-      console.log('Sales data updated via WebSocket:', { storeId, year, month, date });
     }
   }, [queryClient]);
 
@@ -95,8 +94,6 @@ export const useWebSocket = ({
       // Invalidate store queries
       invalidateQueries.stores.byId(message.storeId);
       invalidateQueries.stores.all();
-      
-      console.log('Store data updated via WebSocket:', message.storeId);
     }
   }, [queryClient]);
 
@@ -140,7 +137,6 @@ export const useWebSocket = ({
       ws.current = new WebSocket(url);
 
       ws.current.onopen = () => {
-        console.log('WebSocket connected');
         setIsConnected(true);
         setIsReconnecting(false);
         reconnectCount.current = 0;
@@ -151,7 +147,6 @@ export const useWebSocket = ({
       ws.current.onmessage = handleMessage;
 
       ws.current.onclose = (event) => {
-        console.warn('WebSocket disconnected:', event.code, event.reason);
         setIsConnected(false);
         stopHeartbeat();
         onConnectionChange?.(false);
@@ -187,13 +182,11 @@ export const useWebSocket = ({
 
     setIsReconnecting(true);
     reconnectCount.current += 1;
-    
+
     const delay = Math.min(
       reconnectInterval * Math.pow(1.5, reconnectCount.current - 1),
       30000 // Max 30 seconds
     );
-
-    console.log(`Reconnecting in ${delay}ms... (attempt ${reconnectCount.current}/${reconnectAttempts})`);
 
     reconnectTimeoutId.current = setTimeout(() => {
       connect();

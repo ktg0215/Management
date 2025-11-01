@@ -59,7 +59,6 @@ export default defineConfig({
   expect: {
     timeout: 15000,
     toHaveScreenshot: {
-      mode: 'strict',
       threshold: 0.2,
     },
   },

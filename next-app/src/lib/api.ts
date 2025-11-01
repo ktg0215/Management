@@ -3,47 +3,18 @@
 // ローカル開発環境では直接APIサーバーにアクセス
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? '/api'  // プロダクション環境ではNginxプロキシ経由
-  : process.env.NEXT_PUBLIC_API_URL 
+  : process.env.NEXT_PUBLIC_API_URL
     ? `${process.env.NEXT_PUBLIC_API_URL}/api`
     : 'http://localhost:3001/api';
 
-console.log('🔧 API Configuration:', {
-  NODE_ENV: process.env.NODE_ENV,
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-  API_BASE_URL: API_BASE_URL
-});
-
 import type { Employee } from '@/types/employee';
-import { Store } from '@/stores/storeStore';
-import { ShiftEntry, ShiftPeriod } from '@/stores/shiftStore';
+import type { Store } from '@/types/store';
+import type { ShiftEntry, ShiftPeriod } from '@/types/shift';
+import type { Company } from '@/types/company';
+import type { Payment } from '@/types/payment';
 
-// Company type definition
-export interface Company {
-  id: string;
-  name: string;
-  bankName: string;
-  branchName: string;
-  accountType: string;
-  accountNumber: string;
-  category: string;
-  paymentType: 'regular' | 'irregular';
-  regularAmount?: number;
-  specificMonths?: string[];
-  isVisible: boolean;
-  storeId: string;
-  storeName?: string;
-}
-
-// Payment type definition  
-export interface Payment {
-  id: string;
-  companyId: string;
-  amount: number;
-  month: string;
-  storeId: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
+// Re-export types for backward compatibility
+export type { Company, Payment };
 
 // BusinessType型を定義
 export interface BusinessType {
@@ -109,15 +80,12 @@ class ApiClient {
   }
 
   setToken(token: string | null) {
-    console.log('🔑 APIClient.setToken called:', { token: token ? '***存在***' : 'null', hasWindow: typeof window !== 'undefined' });
     this.token = token;
     if (typeof window !== 'undefined') {
       if (token) {
         localStorage.setItem('auth_token', token);
-        console.log('💾 Token saved to localStorage');
       } else {
         localStorage.removeItem('auth_token');
-        console.log('🗑️ Token removed from localStorage');
       }
     }
   }
@@ -135,9 +103,6 @@ class ApiClient {
 
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
-      console.log('🔐 Authorization header set for request to:', endpoint);
-    } else {
-      console.log('⚠️ No token available for request to:', endpoint);
     }
 
     try {
@@ -169,26 +134,12 @@ class ApiClient {
         if (response.status === 409) {
           errorMessage = '同じ名前の取引先が既に存在します。別の名前を使用してください。';
         }
-        
-        console.log('❌ API Request failed:', { 
-          endpoint, 
-          status: response.status, 
-          errorMessage,
-          responseData: data 
-        });
-        
+
         return {
           success: false,
           error: errorMessage,
         };
       }
-
-      console.log('✅ API Request success:', { 
-        endpoint, 
-        status: response.status,
-        hasData: !!data,
-        dataKeys: data ? Object.keys(data) : []
-      });
 
       return {
         success: true,
@@ -206,17 +157,9 @@ class ApiClient {
 
   // Authentication endpoints
   async login(employeeId: string, password: string) {
-    console.log('🔑 APIClient.login called:', { employeeId });
     const response = await this.request<{ user: Employee; token: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ employeeId, password }),
-    });
-    console.log('📋 Login API response:', { 
-      success: response.success, 
-      hasData: !!response.data,
-      hasUser: !!response.data?.user,
-      hasToken: !!response.data?.token,
-      error: response.error 
     });
     return response;
   }
@@ -579,7 +522,6 @@ async function fetchWithRetry<T>(
     // Check if we should retry
     if (attempt < finalOptions.maxRetries && finalOptions.shouldRetry(lastError)) {
       const delay = finalOptions.retryDelay * Math.pow(2, attempt); // Exponential backoff
-      console.log(`API call failed, retrying in ${delay}ms (attempt ${attempt + 1}/${finalOptions.maxRetries})`);
       await new Promise(resolve => setTimeout(resolve, delay));
     } else {
       break;

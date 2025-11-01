@@ -91,8 +91,8 @@ const SalesTable: React.FC<SalesTableProps> = memo(({
         data,
         day,
         index,
-        dateCellClass: getDateCellClassName(date, data.dayOfWeek, index),
-        dayOfWeekCellClass: getDayOfWeekCellClassName(date, data.dayOfWeek, index),
+        dateCellClass: getDateCellClassName(date, data.dayOfWeek || '', index),
+        dayOfWeekCellClass: getDayOfWeekCellClassName(date, data.dayOfWeek || '', index),
         actionCellClass: getActionCellClassName(index)
       };
     });

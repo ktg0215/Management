@@ -1,15 +1,8 @@
 import { create } from 'zustand';
 import apiClient from '../lib/api';
+import type { Store } from '@/types/store';
 
-export interface Store {
-  id: string;
-  name: string;
-  businessTypeId?: string;
-  businessTypeName?: string;
-  businessTypeDescription?: string;
-  created_at: string;
-  updated_at: string;
-}
+export type { Store };
 
 interface StoreState {
   stores: Store[];
@@ -26,17 +19,14 @@ export const useStoreStore = create<StoreState>((set) => ({
   
   fetchStores: async () => {
     set({ isLoading: true });
-    
+
     try {
-      console.log('fetchStores: APIリクエスト送信中...');
       const response = await apiClient.getStores();
-      console.log('fetchStores: APIレスポンス受信:', response);
 
       if (response.success && response.data) {
-        console.log('fetchStores: 成功 - 店舗数:', response.data.length);
-        set({ 
+        set({
           stores: response.data,
-          isLoading: false 
+          isLoading: false
         });
       } else {
         console.error('fetchStores: エラー:', response.error);

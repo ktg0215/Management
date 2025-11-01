@@ -160,8 +160,8 @@ export const useBatchSalesDataMutation = () => {
       const previousData = queryClient.getQueryData<MonthlyData>(queryKey);
       
       if (previousData) {
-        let newDailyData = { ...previousData.dailyData };
-        
+        const newDailyData = { ...previousData.dailyData };
+
         // Apply all updates optimistically
         updates.forEach(({ date, data }) => {
           const currentData = newDailyData[date] || { date, dayOfWeek: '' };

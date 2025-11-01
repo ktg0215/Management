@@ -1,6 +1,6 @@
 export interface DailySalesData {
-  date: string;
-  dayOfWeek: string;
+  date?: string;
+  dayOfWeek?: string;
   isHoliday?: boolean;
   
   // EDW業態用の目標・実績項目
@@ -10,9 +10,12 @@ export interface DailySalesData {
   yearOnYear?: number;
   edwYearOnYear?: number;
   ohbYearOnYear?: number;
-  
+
   // 入力項目
   collectionManager?: string;
+  totalSales?: number;
+  totalSalesCumulative?: number;
+  salesTax?: number;
   storeNetSales?: number;
   ohbNetSales?: number;
   totalGroups?: number;
@@ -157,6 +160,9 @@ export const EDW_SALES_FIELDS = [
 
 // EDW業態 日次売上データ型
 export interface EDWDailySalesData {
+  date?: string;
+  dayOfWeek?: string;
+  isHoliday?: boolean;
   salesTarget?: number;
   targetCumulative?: number;
   targetAchievementRate?: number;
@@ -164,6 +170,9 @@ export interface EDWDailySalesData {
   edwYearOnYear?: number;
   ohbYearOnYear?: number;
   collectionManager?: string;
+  totalSales?: number;
+  totalSalesCumulative?: number;
+  salesTax?: number;
   storeNetSales?: number;
   storeNetSalesCumulative?: number;
   edwNetSales?: number;

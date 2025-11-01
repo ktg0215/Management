@@ -20,8 +20,8 @@ export const useSalesDataOptimized = (storeId?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   
   // Performance optimization refs
-  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
-  const abortControllerRef = useRef<AbortController>();
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const abortControllerRef = useRef<AbortController | undefined>(undefined);
   const lastRequestRef = useRef<string>('');
 
   // Debounced loading state to prevent flashing

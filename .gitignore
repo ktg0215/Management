@@ -6,6 +6,7 @@ node_modules/
 gh_*_linux_*
 gh_*_windows_*
 gh_*_darwin_*
+*.tar.gz
 
 # Next.js
 .next/
@@ -138,3 +139,49 @@ docker-compose.override.yml
 
 # Mac
 .DS_Store
+
+# Test and debug files
+test_*.js
+test_*.py
+test-*.js
+test-*.sh
+test-*.html
+debug_*.js
+debug-*.js
+analyze-*.js
+comprehensive-*.js
+verify_*.js
+verify_*.py
+get_error_*.js
+investigate_*.js
+create-test-*.js
+
+# Test output directories
+debug-results/
+test-screenshots/
+test-output/
+
+# Screenshots and images
+*screenshot*.png
+*-screenshot*.png
+*-verification*.png
+*-test*.png
+error-details*.png
+
+# Reports and logs
+*-report.json
+*-report.md
+*REPORT*.md
+*-verification-*.md
+*SUMMARY*.md
+PAGE-STATUS.txt
+test_results*.txt
+
+# Backup and old directories
+backup/
+sale/
+old/
+
+# Root level package files (project uses monorepo structure)
+/package.json
+/package-lock.json

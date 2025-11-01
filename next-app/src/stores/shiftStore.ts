@@ -3,26 +3,10 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { addDays, format, parse, startOfMonth, endOfMonth } from 'date-fns';
 import { apiClient } from '../lib/api';
 import type { ShiftSubmission } from '../lib/api';
+import type { ShiftEntry, ShiftPeriod } from '@/types/shift';
 
-export interface ShiftEntry {
-  work_date: string; // ISO date string
-  startTime: string | null; // Format: "9", "9.5", etc.
-  endTime: string | null; // Format: "17", "17.5", etc.
-  isHoliday: boolean;
-}
-
-export interface ShiftPeriod {
-  id: string;
-  storeId: string;
-  employeeId: string;
-  startDate: string; // ISO date string
-  endDate: string; // ISO date string
-  isFirstHalf: boolean; // true = 1-15, false = 16-end
-  submissionDeadline: string; // ISO date string
-  isSubmitted: boolean;
-  submittedAt: string | null; // ISO date-time string
-  shifts: ShiftEntry[];
-}
+// Re-export types
+export type { ShiftEntry, ShiftPeriod };
 
 export type ShiftPeriodStatus = 'upcoming' | 'current' | 'past';
 export type ShiftSubmissionStatus = 'draft' | 'submitted' | 'overdue';
@@ -152,7 +136,6 @@ export const useShiftStore = create<ShiftState>()(
             // Get current user from auth store
             const authToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
             if (!authToken) {
-              console.error('認証トークンが見つかりません');
               set({ currentPeriods: localPeriods });
               return;
             }
@@ -438,7 +421,6 @@ export const useShiftStore = create<ShiftState>()(
             // Get current user from auth store
             const authToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
             if (!authToken) {
-              console.error('認証トークンが見つかりません');
               return false;
             }
             
@@ -577,7 +559,6 @@ if (typeof window !== 'undefined') {
     const persisted = typeof window !== 'undefined' ? localStorage.getItem('shift-storage') : null;
     if (persisted && persisted.includes('2025-6-second')) {
       localStorage.removeItem('shift-storage');
-      console.warn('古いdraftPeriodsを検出し、shift-storageをクリアしました');
     }
   } catch {}
 }

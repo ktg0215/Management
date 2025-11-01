@@ -84,8 +84,6 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (employeeId, password) => {
         try {
-          console.log('ログイン試行:', { employeeId });
-
           const response = await apiClient.login(employeeId, password);
           
           if (!response.success || !response.data) {
@@ -94,14 +92,7 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const { user, token } = response.data;
-          
-          console.log('📋 Login response received:', { 
-            hasUser: !!user, 
-            hasToken: !!token, 
-            userId: user?.id,
-            userRole: user?.role 
-          });
-          
+
           // Set token in API client
           apiClient.setToken(token);
 
@@ -109,14 +100,6 @@ export const useAuthStore = create<AuthState>()(
             user: { ...user, isActive: true, role: user.role ?? 'user' } as User,
             isAuthenticated: true,
             isLoading: false,
-          });
-          
-          console.log('✅ User state updated in store');
-
-          console.log('ログイン成功:', { 
-            employeeId: user.employeeId, 
-            role: user.role,
-            nickname: user.nickname 
           });
 
           return true;
@@ -182,12 +165,9 @@ export const useAuthStore = create<AuthState>()(
 
       checkAuth: async () => {
         try {
-          console.log('🔍 checkAuth started');
-          
           // APIクライアントが既存のトークンを持っているかチェック
           const existingToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-          console.log('🔑 Existing token check:', { hasToken: !!existingToken });
-          
+
           if (existingToken) {
             apiClient.setToken(existingToken);
           }
@@ -198,11 +178,9 @@ export const useAuthStore = create<AuthState>()(
           });
           
           const authPromise = apiClient.checkAuth();
-          
+
           const response = await Promise.race([authPromise, timeoutPromise]) as { success: boolean; data?: { user: Employee }; status?: number };
-          
-          console.log('📋 checkAuth response:', { success: response.success, hasData: !!response.data, status: response.status });
-          
+
           // 304レスポンスも成功として扱う
           if (response.success || response.status === 304) {
             // 304の場合は既存のユーザー情報を使用
@@ -214,21 +192,19 @@ export const useAuthStore = create<AuthState>()(
                   isAuthenticated: true,
                   isLoading: false,
                 });
-                console.log('✅ checkAuth: User authenticated (304)');
                 return;
               }
             }
-            
+
             // 通常の成功レスポンス
             if (response.data) {
               const user = response.data.user;
-              
+
               set({
                 user: { ...user, isActive: true, role: user.role ?? 'user' } as User,
                 isAuthenticated: true,
                 isLoading: false,
               });
-              console.log('✅ checkAuth: User authenticated');
             }
           } else {
             set({
@@ -236,7 +212,6 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: false,
               isLoading: false,
             });
-            console.log('❌ checkAuth: User not authenticated');
           }
         } catch (error) {
           console.error('認証チェックエラー:', error);
@@ -287,16 +262,13 @@ export const useAuthStore = create<AuthState>()(
       // 総管理者アカウント作成関数
       createAdminAccount: async () => {
         try {
-          console.log('総管理者アカウント作成開始');
-
           const response = await apiClient.createAdminAccount();
-          
+
           if (response.success) {
-            console.log('総管理者アカウントが正常に作成されました');
             await get().checkExistingAdmins();
             return true;
           }
-          
+
           return false;
         } catch (error) {
           console.error('総管理者アカウント作成エラー:', error);
@@ -316,10 +288,9 @@ export const useAuthStore = create<AuthState>()(
           });
 
           if (response.success) {
-            console.log('新しい管理者アカウントが正常に作成されました');
             return true;
           }
-          
+
           return false;
         } catch (error) {
           console.error('管理者作成エラー:', error);
@@ -339,10 +310,9 @@ export const useAuthStore = create<AuthState>()(
           });
 
           if (response.success) {
-            console.log('新しい総管理者アカウントが正常に作成されました');
             return true;
           }
-          
+
           return false;
         } catch (error) {
           console.error('総管理者作成エラー:', error);

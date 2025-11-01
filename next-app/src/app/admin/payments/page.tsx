@@ -19,6 +19,7 @@ export type ExpenseCategory =
   | '外注費'
   | 'その他';
 
+// Company interface specific to payments page (extends the base Company type with page-specific properties)
 export interface Company {
   id: string;
   name: string;
@@ -33,6 +34,7 @@ export interface Company {
   isVisible?: boolean;
 }
 
+// Payment interface specific to payments page (uses Date objects instead of strings)
 export interface Payment {
   id: string;
   companyId: string;

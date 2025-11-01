@@ -190,8 +190,6 @@ const OptimizedSalesForm: React.FC<OptimizedSalesFormProps> = memo(({
     }
   }, [isOpen, initialData, storeId, selectedDate]);
 
-  if (!isOpen) return null;
-
   const formatDateDisplay = useCallback((dateStr: string) => {
     const date = new Date(dateStr);
     const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
@@ -212,6 +210,8 @@ const OptimizedSalesForm: React.FC<OptimizedSalesFormProps> = memo(({
       return groups;
     }, {} as Record<string, Array<typeof EDW_SALES_FIELDS[number]>>);
   }, []);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -311,7 +311,7 @@ const OptimizedSalesForm: React.FC<OptimizedSalesFormProps> = memo(({
                             ref={isFirstField ? firstInputRef : undefined}
                             type={typeof value === 'number' ? 'number' : 'text'}
                             step={typeof value === 'number' ? '0.01' : undefined}
-                            value={value || ''}
+                            value={typeof value === 'boolean' ? '' : (value || '')}
                             onChange={(e) => {
                               const inputValue = e.target.type === 'number' ? 
                                 (e.target.value === '' ? undefined : parseFloat(e.target.value)) : 
