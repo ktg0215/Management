@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { SalesHeader } from '@/components/sales/SalesHeader';
-import { SalesTable } from '@/components/sales/SalesTable';
-import { OptimizedSalesForm } from '@/components/sales/OptimizedSalesForm';
+import { SimpleSalesTable } from '@/components/sales/SimpleSalesTable';
+import { SimpleSalesForm } from '@/components/sales/SimpleSalesForm';
 import { useSalesData, usePrefetchAdjacentMonths } from '@/hooks/queries/useSalesQueries';
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
@@ -34,16 +34,12 @@ const SalesManagementPage = () => {
 
   // ユーザーの権限に応じて初期店舗を設定
   useEffect(() => {
-    if (user && stores.length > 0) {
-      if (user.role === 'admin') {
-        // 管理者の場合：所属する店舗を自動選択
-        setSelectedStoreId(user.storeId);
-      } else if (user.role === 'super_admin') {
-        // 総管理者の場合：初期状態では店舗は未選択
-        // ユーザーが手動で選択するまで空のまま
-      }
+    if (user && stores.length > 0 && !selectedStoreId) {
+      // 管理者・総管理者の場合：所属する店舗を自動選択
+      // 総管理者は後で他の店舗に変更可能
+      setSelectedStoreId(String(user.storeId));
     }
-  }, [user, stores]);
+  }, [user, stores, selectedStoreId, setSelectedStoreId]);
 
   // Prefetch adjacent months when store or date changes
   useEffect(() => {
@@ -88,12 +84,19 @@ const SalesManagementPage = () => {
 
   // Helper functions for compatibility with existing components
   const getDailyData = (date: string) => {
-    return monthlyData?.dailyData[date];
+    const data = monthlyData?.dailyData[date];
+    if (!data) return undefined;
+    return {
+      revenue: (data as any).revenue,
+      cost: (data as any).cost,
+      profit: (data as any).profit,
+    };
   };
 
   const hasData = (date: string) => {
     const data = monthlyData?.dailyData[date];
-    return !!(data && (data as any).storeNetSales !== undefined);
+    // revenue, cost, profitのいずれかがあればデータありと判定
+    return !!(data && ((data as any).revenue !== undefined || (data as any).cost !== undefined || (data as any).profit !== undefined));
   };
 
   const handleStoreChange = (storeId: string) => {
@@ -183,8 +186,8 @@ const SalesManagementPage = () => {
           ) : selectedStoreId || user.role === 'admin' ? (
             monthlyData && (
               <>
-                <SalesTable
-                  dailyData={monthlyData.dailyData}
+                <SimpleSalesTable
+                  dailyData={monthlyData.dailyData as { [date: string]: { date: string; dayOfWeek: string; revenue?: number; cost?: number; profit?: number } }}
                   hasData={hasData}
                   onEditClick={handleOpenForm}
                   currentYear={currentYear}
@@ -206,7 +209,7 @@ const SalesManagementPage = () => {
           )}
         </main>
 
-        <OptimizedSalesForm
+        <SimpleSalesForm
           isOpen={isFormOpen}
           onClose={handleCloseForm}
           selectedDate={selectedDate}
