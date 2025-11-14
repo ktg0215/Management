@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { format, isAfter } from 'date-fns';
 import { CalendarCheck, Clock, AlertTriangle, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import { useShiftStore, ShiftPeriod } from '@/stores/shiftStore';
+import { useShiftStore } from '@/stores/shiftStore';
+import type { ShiftPeriod } from '@/types/shift';
 import Information from '@/components/Information';
 
 const Dashboard = () => {
@@ -158,7 +159,7 @@ const Dashboard = () => {
                           {format(new Date(period.startDate), 'yyyy年MM月')}
                           {period.isFirstHalf ? '前半' : '後半'}
                           （期限：{format(new Date(period.submissionDeadline), 'yyyy年MM月dd日')}）
-                          <Link href="/employee/shifts/submit" className="ml-2 text-red-800 underline">
+                          <Link href="/employee/shifts" className="ml-2 text-red-800 underline">
                             今すぐ提出する
                           </Link>
                         </li>
@@ -201,13 +202,13 @@ const Dashboard = () => {
                   </div>
                 </div>
                 {!currentPeriod.isSubmitted && (
-                  <Link href="/employee/shifts/submit" className="btn-primary flex items-center justify-center">
+                  <Link href="/employee/shifts" className="btn-primary flex items-center justify-center">
                     <CalendarCheck className="h-4 w-4 mr-2" />
                     シフトを提出する
                   </Link>
                 )}
                 {currentPeriod.isSubmitted && (
-                  <Link href="/employee/shifts/history" className="btn-outline flex items-center justify-center">
+                  <Link href="/employee/shifts" className="btn-outline flex items-center justify-center">
                     <Clock className="h-4 w-4 mr-2" />
                     提出内容を確認する
                   </Link>
@@ -235,7 +236,7 @@ const Dashboard = () => {
                     {format(new Date(upcomingDeadline.submissionDeadline), 'yyyy年MM月dd日')}
                   </p>
                 </div>
-                <Link href="/employee/shifts/submit" className="btn-primary flex items-center justify-center">
+                <Link href="/employee/shifts" className="btn-primary flex items-center justify-center">
                   <CalendarCheck className="h-4 w-4 mr-2" />
                   シフトを提出する
                 </Link>
@@ -248,7 +249,7 @@ const Dashboard = () => {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">クイックアクション</h2>
             <div className="space-y-2">
               <Link 
-                href="/employee/shifts/submit" 
+                href="/employee/shifts" 
                 className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:bg-gray-50"
               >
                 <div className="flex items-center">
@@ -259,7 +260,7 @@ const Dashboard = () => {
               </Link>
               
               <Link 
-                href="/employee/shifts/history" 
+                href="/employee/shifts" 
                 className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:bg-gray-50"
               >
                 <div className="flex items-center">

@@ -1,7 +1,8 @@
 import React, { useMemo, useCallback, memo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, Database, TrendingUp } from 'lucide-react';
-import { Store } from '@/stores/storeStore';
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, Database, TrendingUp, Settings } from 'lucide-react';
+import { Store } from '@/types/store';
 import { formatStoreName } from '@/utils/storeDisplay';
+import Link from 'next/link';
 
 interface SalesHeaderProps {
   currentYear: number;
@@ -184,6 +185,14 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
               <Plus className="w-4 h-4 mr-2" />
               新規入力
             </button>
+            
+            <Link
+              href="/admin/sales-field-settings"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              表示項目設定
+            </Link>
           </div>
         </div>
       </div>

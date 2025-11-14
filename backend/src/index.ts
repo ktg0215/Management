@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt, { verify } from 'jsonwebtoken';
+import http from 'http';
+import { WebSocketManager } from './websocket/WebSocketServer';
 
 // 環境変数の読み込み
 dotenv.config();
@@ -324,9 +326,10 @@ app.post('/api/auth/register', requireDatabase, async (req: Request, res: Respon
 app.get('/api/stores', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   try {
     const result = await pool!.query(`
-      SELECT s.*, bt.name as business_type_name, bt.description as business_type_description
+      SELECT s.*, bt.name as business_type_name
       FROM stores s
       LEFT JOIN business_types bt ON s.business_type_id = bt.id
+      WHERE LOWER(bt.name) != 'manager' OR bt.name IS NULL
       ORDER BY s.name
     `);
     const stores = toCamelCase(result.rows);
@@ -489,63 +492,92 @@ app.put('/api/business-types/:id', requireDatabase, authenticateToken, async (re
 
 app.delete('/api/business-types/:id', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { id } = req.params;
+  const client = await pool!.connect();
+
   try {
+    await client.query('BEGIN');
+
     // 削除対象の業態情報を取得
-    const businessTypeResult = await pool!.query('SELECT name FROM business_types WHERE id = $1', [id]);
+    const businessTypeResult = await client.query('SELECT name FROM business_types WHERE id = $1', [id]);
     if (businessTypeResult.rows.length === 0) {
+      await client.query('ROLLBACK');
       res.status(404).json({ error: '業態が見つかりません' });
       return;
     }
-    
+
     const businessTypeName = businessTypeResult.rows[0].name;
-    
+
     // 必須業態の削除を防止
     const protectedBusinessTypes = ['Manager', '管理者', '温野菜', 'ピザーラ', 'EDW'];
     if (protectedBusinessTypes.includes(businessTypeName)) {
+      await client.query('ROLLBACK');
       res.status(400).json({ error: `${businessTypeName}業態は必須業態のため削除できません` });
       return;
     }
-    
-    // まず、この業態を使用している店舗があるかチェック
-    const storesResult = await pool!.query('SELECT COUNT(*) as count FROM stores WHERE business_type_id = $1', [id]);
-    const storeCount = parseInt(storesResult.rows[0].count);
-    
-    if (storeCount > 0) {
-      res.status(400).json({ error: `この業態は${storeCount}店舗で使用されているため削除できません` });
-      return;
+
+    // この業態を使用している店舗のIDを取得
+    const storesResult = await client.query('SELECT id FROM stores WHERE business_type_id = $1', [id]);
+    const storeIds = storesResult.rows.map(row => row.id);
+
+    // 関連データをカスケード削除
+    if (storeIds.length > 0) {
+      // 売上データを削除
+      await client.query('DELETE FROM sales WHERE store_id = ANY($1)', [storeIds]);
+
+      // 月次売上データを削除（存在する場合）
+      try {
+        await client.query('DELETE FROM sales_data WHERE store_id = ANY($1)', [storeIds]);
+      } catch (e) {
+        // sales_dataテーブルが存在しない場合はスキップ
+        console.log('sales_dataテーブルは存在しないためスキップしました');
+      }
+
+      // シフトエントリを削除
+      await client.query('DELETE FROM shift_entries WHERE store_id = ANY($1)', [storeIds]);
+
+      // 店舗を削除
+      await client.query('DELETE FROM stores WHERE business_type_id = $1', [id]);
     }
-    
-    const result = await pool!.query('DELETE FROM business_types WHERE id = $1 RETURNING *', [id]);
+
+    // 最後に業態を削除
+    const result = await client.query('DELETE FROM business_types WHERE id = $1 RETURNING *', [id]);
     if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
       res.status(404).json({ error: '業態が見つかりません' });
       return;
     }
-    res.json({ data: { message: '業態を削除しました' } });
+
+    await client.query('COMMIT');
+    res.json({ data: { message: '業態と関連するすべてのデータを削除しました' } });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('業態削除エラー:', err);
     res.status(500).json({ error: '業態の削除に失敗しました' });
+  } finally {
+    client.release();
   }
 });
 
-// Helper function to create activity log
-const createActivityLog = async (userId: string, storeId: string, businessTypeId: string, actionType: string, resourceType: string, resourceName: string, description: string) => {
-  try {
-    await pool!.query(
-      `INSERT INTO activity_logs (user_id, store_id, business_type_id, action_type, resource_type, resource_name, description)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [userId, storeId, businessTypeId, actionType, resourceType, resourceName, description]
-    );
-  } catch (err) {
-    console.error('活動ログ作成エラー:', err);
-  }
-};
-
-// Activity logs API
 app.get('/api/activity-logs', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { limit = '5' } = req.query;
   const user = (req as any).user;
-  
+
   try {
+    // activity_logsテーブルが存在するかチェック
+    const tableCheck = await pool!.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'activity_logs'
+      );
+    `);
+
+    if (!tableCheck.rows[0].exists) {
+      // テーブルが存在しない場合は空配列を返す
+      res.json({ data: [] });
+      return;
+    }
+
     let query = `
       SELECT al.*, e.full_name as user_name, s.name as store_name, bt.name as business_type_name
       FROM activity_logs al
@@ -554,7 +586,7 @@ app.get('/api/activity-logs', requireDatabase, authenticateToken, async (req: Re
       LEFT JOIN business_types bt ON al.business_type_id = bt.id
     `;
     let params: any[] = [];
-    
+
     if (user.role === 'user') {
       // 一般ユーザーは何も表示しない
       res.json({ data: [] });
@@ -571,10 +603,10 @@ app.get('/api/activity-logs', requireDatabase, authenticateToken, async (req: Re
       params.push(user.storeId);
     }
     // 総管理者は全活動を見る（WHERE句なし）
-    
+
     query += ` ORDER BY al.created_at DESC LIMIT $${params.length + 1}`;
     params.push(parseInt(limit as string));
-    
+
     const result = await pool!.query(query, params);
     const logs = toCamelCase(result.rows);
     res.json({ data: logs });
@@ -603,6 +635,13 @@ app.get('/api/employees', requireDatabase, authenticateToken, async (req: Reques
 
 app.post('/api/employees', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { employeeId, fullName, nickname, storeId, password, role } = req.body;
+
+  // 勤怠番号のバリデーション（4桁まで）
+  if (!employeeId || !/^\d{1,4}$/.test(employeeId)) {
+    res.status(400).json({ error: '勤怠番号は1〜4桁の数字である必要があります' });
+    return;
+  }
+
   try {
     // 既存ユーザーチェック
     const existingUser = await pool!.query(
@@ -665,19 +704,10 @@ app.delete('/api/employees/:id', requireDatabase, authenticateToken, async (req:
 
 // シフト期間管理API
 app.get('/api/shift-periods', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
-  const { storeId } = req.query;
   try {
-    let query = 'SELECT * FROM shift_periods';
-    let params: any[] = [];
-    
-    if (storeId) {
-      query += ' WHERE store_id = $1';
-      params.push(storeId);
-    }
-    
-    query += ' ORDER BY start_date DESC';
-    
-    const result = await pool!.query(query, params);
+    // shift_periodsテーブルにはstore_idカラムがないため、全件取得
+    const query = 'SELECT * FROM shift_periods ORDER BY start_date DESC';
+    const result = await pool!.query(query);
     const periods = toCamelCase(result.rows);
     res.json({ data: periods });
   } catch (err) {
@@ -697,13 +727,13 @@ app.get('/api/shift-submissions', requireDatabase, authenticateToken, async (req
     let query = `
       SELECT ss.*, e.full_name as employee_name, e.employee_id
       FROM shift_submissions ss
-      JOIN employees e ON ss.employee_id = e.id
-      JOIN shift_periods sp ON ss.period_id = sp.id
+      JOIN employees e ON ss.user_id = e.id
+      JOIN shift_periods sp ON ss.shift_period_id = sp.id
     `;
     let params: any[] = [];
     
     if (periodId) {
-      query += ' WHERE ss.period_id = $1';
+      query += ' WHERE ss.shift_period_id = $1';
       params.push(periodId);
     }
     
@@ -722,7 +752,7 @@ app.post('/api/shift-submissions', requireDatabase, authenticateToken, async (re
   const { periodId, employeeId, status } = req.body;
   try {
     const result = await pool!.query(
-      `INSERT INTO shift_submissions (period_id, employee_id, status)
+      `INSERT INTO shift_submissions (shift_period_id, user_id, status)
        VALUES ($1, $2, $3) RETURNING *`,
       [periodId, employeeId, status || 'draft']
     );
@@ -880,13 +910,13 @@ app.post('/api/shift-cleanup', requireDatabase, authenticateToken, async (req: R
       DELETE FROM shift_entries 
       WHERE submission_id IN (
         SELECT id FROM shift_submissions 
-        WHERE period_id = ANY($1)
+        WHERE shift_period_id = ANY($1)
       )
     `, [periodIds]);
     
     // シフト提出データを削除
     const deleteSubmissionsResult = await pool!.query(
-      'DELETE FROM shift_submissions WHERE period_id = ANY($1)',
+      'DELETE FROM shift_submissions WHERE shift_period_id = ANY($1)',
       [periodIds]
     );
     
@@ -941,11 +971,11 @@ const scheduleShiftCleanup = () => {
           DELETE FROM shift_entries 
           WHERE submission_id IN (
             SELECT id FROM shift_submissions 
-            WHERE period_id = ANY($1)
+            WHERE shift_period_id = ANY($1)
           )
         `, [periodIds]);
         
-        await pool!.query('DELETE FROM shift_submissions WHERE period_id = ANY($1)', [periodIds]);
+        await pool!.query('DELETE FROM shift_submissions WHERE shift_period_id = ANY($1)', [periodIds]);
         await pool!.query('DELETE FROM shift_periods WHERE id = ANY($1)', [periodIds]);
         
         console.log(`定期クリーンアップ完了: ${periodIds.length}期間のデータを削除`);
@@ -976,20 +1006,15 @@ app.get('/api/pl', requireDatabase, authenticateToken, async (req: Request, res:
     return;
   }
   try {
-    const statementResult = await pool!.query(
-      'SELECT * FROM pl_statements WHERE year = $1 AND month = $2 AND store_id = $3 LIMIT 1',
+    const result = await pool!.query(
+      'SELECT * FROM profit_loss WHERE year = $1 AND month = $2 AND store_id = $3 LIMIT 1',
       [year, month, storeId]
     );
-    if (statementResult.rows.length === 0) {
+    if (result.rows.length === 0) {
       res.json({ data: null });
       return;
     }
-    const plStatement = statementResult.rows[0];
-    const itemsResult = await pool!.query(
-      'SELECT * FROM pl_items WHERE pl_statement_id = $1 ORDER BY sort_order ASC, created_at ASC',
-      [plStatement.id]
-    );
-    res.json({ data: { statement: plStatement, items: itemsResult.rows } });
+    res.json({ data: toCamelCase(result.rows[0]) });
   } catch (err) {
     console.error('PL取得エラー:', err);
     res.status(500).json({ error: 'PLデータの取得に失敗しました' });
@@ -1136,15 +1161,16 @@ app.put('/api/payments/:id', requireDatabase, authenticateToken, async (req: Req
       
       if (userInfo.rows.length > 0) {
         const { store_id, business_type_id } = userInfo.rows[0];
-        await createActivityLog(
-          user.id, 
-          store_id, 
-          business_type_id, 
-          'update', 
-          'payment', 
-          `${companyName} (${month})`,
-          `支払い管理で ${companyName} の ${month} の支払い金額を ¥${amount.toLocaleString()} に更新しました`
-        );
+        // TODO: Implement createActivityLog function
+        // await createActivityLog(
+        //   user.id,
+        //   store_id,
+        //   business_type_id,
+        //   'update',
+        //   'payment',
+        //   `${companyName} (${month})`,
+        //   `支払い管理で ${companyName} の ${month} の支払い金額を ¥${amount.toLocaleString()} に更新しました`
+        // );
       }
     }
 
@@ -1404,25 +1430,54 @@ app.delete('/api/companies/:id', requireDatabase, authenticateToken, async (req:
 // 売上データ管理API
 app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { year, month, storeId } = req.query;
-  
+
   if (!year || !month || !storeId) {
     res.status(400).json({ success: false, error: 'year, month, storeIdは必須です' });
     return;
   }
-  
+
   try {
+    // salesテーブルから月次データを取得
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endDate = new Date(Number(year), Number(month), 0);
+    const endDateStr = `${year}-${String(month).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+
     const result = await pool!.query(
-      'SELECT * FROM sales_data WHERE year = $1 AND month = $2 AND store_id = $3',
-      [year, month, storeId]
+      `SELECT
+        date,
+        revenue,
+        cost,
+        profit,
+        EXTRACT(DAY FROM date) as day
+      FROM sales
+      WHERE store_id = $1 AND date >= $2 AND date <= $3
+      ORDER BY date`,
+      [storeId, startDate, endDateStr]
     );
-    
-    if (result.rows.length === 0) {
-      res.json({ success: true, data: null });
-      return;
-    }
-    
-    const salesData = result.rows[0];
-    res.json({ success: true, data: salesData });
+
+    // 日別データを整形
+    const dailyData: any = {};
+    result.rows.forEach(row => {
+      const day = Number(row.day);
+      dailyData[day] = {
+        revenue: Number(row.revenue),
+        cost: Number(row.cost),
+        profit: Number(row.profit)
+      };
+    });
+
+    // sales_dataテーブルの形式に合わせて返す
+    const salesData = {
+      id: `${storeId}-${year}-${month}`,
+      year: Number(year),
+      month: Number(month),
+      store_id: Number(storeId),
+      daily_data: JSON.stringify(dailyData),
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+
+    res.json({ success: true, data: result.rows.length > 0 ? salesData : null });
   } catch (err) {
     console.error('売上データ取得エラー:', err);
     res.status(500).json({ success: false, error: '売上データの取得に失敗しました' });
@@ -1432,19 +1487,19 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
 app.post('/api/sales', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { year, month, storeId, dailyData } = req.body;
   const user = (req as any).user;
-  
+
   if (!year || !month || !storeId || !dailyData) {
     res.status(400).json({ success: false, error: 'year, month, storeId, dailyDataは必須です' });
     return;
   }
-  
+
   try {
     // 既存データがあれば更新、なければ新規作成
     const existingResult = await pool!.query(
       'SELECT id FROM sales_data WHERE year = $1 AND month = $2 AND store_id = $3',
       [year, month, storeId]
     );
-    
+
     if (existingResult.rows.length > 0) {
       // 更新
       await pool!.query(
@@ -1458,7 +1513,7 @@ app.post('/api/sales', requireDatabase, authenticateToken, async (req: Request, 
         [storeId, year, month, JSON.stringify(dailyData), user.id, user.id]
       );
     }
-    
+
     res.json({ success: true, message: '売上データが正常に保存されました' });
   } catch (err) {
     console.error('売上データ保存エラー:', err);
@@ -1466,7 +1521,70 @@ app.post('/api/sales', requireDatabase, authenticateToken, async (req: Request, 
   }
 });
 
+// 日別売上データの保存（新規入力・編集用）
+app.put('/api/sales/daily', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { year, month, storeId, date, data } = req.body;
+  const user = (req as any).user;
+
+  if (!year || !month || !storeId || !date || !data) {
+    res.status(400).json({ success: false, error: '必須パラメータが不足しています' });
+    return;
+  }
+
+  try {
+    // 日付から日を抽出
+    const dayMatch = date.match(/\d{4}-\d{2}-(\d{2})/);
+    if (!dayMatch) {
+      res.status(400).json({ success: false, error: '無効な日付形式です' });
+      return;
+    }
+    const day = parseInt(dayMatch[1]);
+
+    // 既存の月次データを取得
+    const existingResult = await pool!.query(
+      'SELECT * FROM sales WHERE store_id = $1 AND date = $2',
+      [storeId, date]
+    );
+
+    // データを保存
+    if (existingResult.rows.length > 0) {
+      // 更新
+      await pool!.query(
+        'UPDATE sales SET revenue = $1, cost = $2, profit = $3, updated_at = NOW() WHERE store_id = $4 AND date = $5',
+        [data.revenue || 0, data.cost || 0, data.profit || 0, storeId, date]
+      );
+    } else {
+      // 新規作成
+      await pool!.query(
+        'INSERT INTO sales (store_id, date, revenue, cost, profit, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())',
+        [storeId, date, data.revenue || 0, data.cost || 0, data.profit || 0]
+      );
+    }
+
+    res.json({ success: true, data: { date, updatedData: data } });
+  } catch (err) {
+    console.error('日別売上データ保存エラー:', err);
+    res.status(500).json({ success: false, error: '売上データの保存に失敗しました' });
+  }
+});
+
+// HTTPサーバーの作成
+const server = http.createServer(app);
+
+// WebSocketサーバーの初期化
+let wsManager: WebSocketManager | null = null;
+if (pool) {
+  try {
+    wsManager = new WebSocketManager(server, pool);
+    console.log('✅ WebSocketサーバー初期化成功');
+  } catch (err) {
+    console.error('❌ WebSocketサーバー初期化失敗:', err);
+  }
+} else {
+  console.log('⚠️  WebSocketサーバーはデータベース接続なしでは起動できません');
+}
+
 // サーバーの起動
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 }); 

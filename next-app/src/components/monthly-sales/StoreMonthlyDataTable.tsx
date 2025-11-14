@@ -35,7 +35,7 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
 
   const selectedStore = availableStores.find(store => store.id === selectedStoreId);
   const currentStoreData = storeData.find(sd => sd.storeId === selectedStoreId);
-  const businessType = selectedStore && businessTypes.find(bt => bt.id === selectedStore.businessTypeId);
+  const businessType = selectedStore && businessTypes.find(bt => String(bt.id) === String(selectedStore.businessTypeId));
 
   // 6月から始まる月の配列
   const months = [

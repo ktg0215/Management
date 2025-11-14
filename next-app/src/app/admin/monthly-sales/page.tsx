@@ -48,14 +48,21 @@ const fetchMonthlyData = async (storeId: string, businessTypeId: string): Promis
 // };
 
 export default function MonthlySalesPage() {
-  const { stores } = useStoreStore();
-  const { isSuperAdmin } = useAuthStore();
+  const { stores, fetchStores } = useStoreStore();
+  const { isSuperAdmin, user } = useAuthStore();
   const [businessTypes, setBusinessTypes] = useLocalStorage<BusinessType[]>('monthly-sales-business-types', []);
   const [storeData, setStoreData] = useLocalStorage<StoreMonthlyData[]>('monthly-sales-store-data', []);
   const [activeTab, setActiveTab] = useState<'data' | 'fields'>('data');
   const [editingData, setEditingData] = useState<MonthlyData | null>(null);
   const [editingStoreId, setEditingStoreId] = useState<string>('');
   const [editingBusinessTypeId, setEditingBusinessTypeId] = useState<string>('');
+
+  // 店舗データを取得
+  useEffect(() => {
+    if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+      fetchStores();
+    }
+  }, [user, fetchStores]);
 
   // 初期デモ業態の作成
   useEffect(() => {

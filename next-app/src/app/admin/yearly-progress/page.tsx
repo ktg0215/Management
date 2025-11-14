@@ -33,7 +33,7 @@ function YearlyProgress() {
   const [plError, setPlError] = useState<string | null>(null);
   const [storeId, setStoreId] = useState<string>(''); // 初期値を空文字列に変更
   const [isStoreDropdownOpen, setIsStoreDropdownOpen] = useState(false);
-  const [currentYear, setCurrentYear] = useState(2024);
+  const [currentYear, setCurrentYear] = useState(2025);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -82,7 +82,58 @@ function YearlyProgress() {
 
         const plData = results.map((r, index) => {
           if (r.success && r.data) {
-            // データ構造を確認し、適切に処理
+            // フラットな構造 (profit_loss テーブル) の場合、PLItem配列に変換
+            const plData: any = r.data;
+            if (plData.revenueEstimate !== undefined || plData.revenueActual !== undefined) {
+              const revenueEst = parseFloat(plData.revenueEstimate || '0');
+              const revenueAct = parseFloat(plData.revenueActual || '0');
+              const costEst = parseFloat(plData.costEstimate || '0');
+              const costAct = parseFloat(plData.costActual || '0');
+              const profitEst = parseFloat(plData.profitEstimate || '0');
+              const profitAct = parseFloat(plData.profitActual || '0');
+
+              const items: PLItem[] = [
+                {
+                  name: '売上高',
+                  subject_name: '売上高',
+                  estimate: revenueEst,
+                  actual: revenueAct,
+                  is_highlighted: false,
+                  is_subtotal: false,
+                  is_indented: false
+                },
+                {
+                  name: '売上原価',
+                  subject_name: '売上原価',
+                  estimate: costEst,
+                  actual: costAct,
+                  is_highlighted: false,
+                  is_subtotal: false,
+                  is_indented: false
+                },
+                {
+                  name: '粗利益',
+                  subject_name: '粗利益',
+                  estimate: revenueEst - costEst,
+                  actual: revenueAct - costAct,
+                  is_highlighted: true,
+                  is_subtotal: true,
+                  is_indented: false
+                },
+                {
+                  name: '営業利益',
+                  subject_name: '営業利益',
+                  estimate: profitEst,
+                  actual: profitAct,
+                  is_highlighted: true,
+                  is_subtotal: false,
+                  is_indented: false
+                }
+              ];
+              return items;
+            }
+
+            // pl_statements/pl_items 構造の場合
             if (Array.isArray(r.data.items)) {
               return r.data.items as PLItem[];
             } else if (Array.isArray(r.data)) {

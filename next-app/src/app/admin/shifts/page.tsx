@@ -9,8 +9,7 @@ import {
 import { useStoreStore } from '@/stores/storeStore';
 import apiClient from '@/lib/api';
 // import ExcelJS from 'exceljs'; // 一時的にコメントアウト（権限エラー回避）
-import type { ShiftEntry } from '@/stores/shiftStore';
-import type { ShiftSubmission } from '@/lib/api';
+import type { ShiftEntry, ShiftSubmission } from '@/types/shift';
 
 interface Employee {
   id: string;

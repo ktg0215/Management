@@ -8,7 +8,7 @@ import { EDW_SALES_FIELDS } from '@/types/sales';
 
 // Hook for fetching monthly sales data with intelligent caching
 export const useSalesData = (storeId: string | undefined, year: number, month: number) => {
-  return useQuery({
+  const result = useQuery({
     queryKey: queryKeys.sales.byMonth(storeId || '', year, month),
     queryFn: async () => {
       if (!storeId) {
@@ -19,10 +19,25 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
       const response = await salesApi.getSales(year, month, storeId);
       
       if (response.success && response.data) {
+        let dailyDataRaw = typeof response.data.daily_data === "string"
+          ? JSON.parse(response.data.daily_data)
+          : (response.data.daily_data || {});
+
+        const transformedDailyData: Record<string, any> = {};
+        for (const dayStr in dailyDataRaw) {
+          const day = parseInt(dayStr);
+          const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          transformedDailyData[dateKey] = {
+            ...dailyDataRaw[dayStr],
+            date: dateKey,
+            dayOfWeek: getDayOfWeek(year, month, day)
+          };
+        }
+
         return {
           year: response.data.year,
           month: response.data.month,
-          dailyData: response.data.daily_data || {},
+          dailyData: transformedDailyData,
         } as MonthlyData;
       } else {
         // Return empty data structure when no data exists
@@ -35,6 +50,21 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
     refetchOnWindowFocus: true,
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes for active queries
   });
+
+  // Debug logging
+  console.log('[useSalesData] Query Result:', {
+    storeId,
+    year,
+    month,
+    isLoading: result.isLoading,
+    isError: result.isError,
+    error: result.error,
+    dataExists: !!result.data,
+    dailyDataKeys: result.data?.dailyData ? Object.keys(result.data.dailyData).length : 0,
+    sampleKeys: result.data?.dailyData ? Object.keys(result.data.dailyData).slice(0, 3) : []
+  });
+
+  return result;
 };
 
 // Optimistic mutation hook for updating sales data

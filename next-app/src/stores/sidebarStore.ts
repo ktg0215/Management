@@ -30,9 +30,6 @@ export const useSidebarStore = create<SidebarState>()(
             }
       ),
       skipHydration: true,
-      onRehydrateStorage: () => (state) => {
-        state?.setHydrated();
-      },
     }
   )
 ); 

@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Bell, Clock } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import apiClient, { ActivityLog } from '@/lib/api';
+import apiClient from '@/lib/api';
+import type { ActivityLog } from '@/types/api';
 
 const Information: React.FC = () => {
   const { user } = useAuthStore();

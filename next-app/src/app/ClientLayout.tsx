@@ -7,11 +7,15 @@ import { registerServiceWorker } from "@/lib/serviceWorker";
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const checkAuth = useAuthStore((state) => state.checkAuth);
+  const setSidebarHydrated = useSidebarStore((state) => state.setHydrated);
 
   useEffect(() => {
     // Manually trigger hydration for all stores
     useAuthStore.persist.rehydrate();
     useSidebarStore.persist.rehydrate();
+
+    // Mark sidebar as hydrated
+    setSidebarHydrated();
 
     // Mark as hydrated
     setIsHydrated(true);

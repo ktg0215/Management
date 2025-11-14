@@ -3,6 +3,7 @@ import { Server } from 'http';
 import jwt from 'jsonwebtoken';
 import { logger } from '../utils/logger';
 import { Pool } from 'pg';
+import { IncomingMessage } from 'http';
 
 interface AuthenticatedWebSocket extends WebSocket {
   user?: {
@@ -13,6 +14,15 @@ interface AuthenticatedWebSocket extends WebSocket {
   };
   subscriptions?: Set<string>;
   lastHeartbeat?: number;
+}
+
+interface AuthenticatedRequest extends IncomingMessage {
+  user?: {
+    id: string;
+    employeeId: string;
+    role: string;
+    storeId: string;
+  };
 }
 
 interface WebSocketMessage {
@@ -53,12 +63,12 @@ export class WebSocketManager {
     logger.logInfo('WebSocket server initialized');
   }
 
-  private verifyClient(info: { req: any }): boolean {
+  private verifyClient(info: { req: AuthenticatedRequest }): boolean {
     try {
-      const token = this.extractTokenFromUrl(info.req.url);
+      const token = this.extractTokenFromUrl(info.req.url || '');
       if (!token) return false;
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret') as any;
       info.req.user = decoded;
       return true;
     } catch (error) {
@@ -73,7 +83,7 @@ export class WebSocketManager {
   }
 
   private setupWebSocketServer(): void {
-    this.wss.on('connection', (ws: AuthenticatedWebSocket, req) => {
+    this.wss.on('connection', (ws: AuthenticatedWebSocket, req: AuthenticatedRequest) => {
       const clientId = this.generateClientId();
       ws.user = req.user;
       ws.subscriptions = new Set();

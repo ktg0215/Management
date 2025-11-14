@@ -2,72 +2,20 @@
 // Docker環境では相対パス（/api）を使用してNginxプロキシ経由でアクセス
 // ローカル開発環境では直接APIサーバーにアクセス
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api'  // プロダクション環境ではNginxプロキシ経由
+  ? '/bb/api'  // プロダクション環境ではNginxプロキシ経由（サブディレクトリデプロイ）
   : process.env.NEXT_PUBLIC_API_URL
     ? `${process.env.NEXT_PUBLIC_API_URL}/api`
     : 'http://localhost:3001/api';
 
 import type { Employee } from '@/types/employee';
 import type { Store } from '@/types/store';
-import type { ShiftEntry, ShiftPeriod } from '@/types/shift';
+import type { ShiftEntry, ShiftPeriod, ShiftSubmission } from '@/types/shift';
 import type { Company } from '@/types/company';
 import type { Payment } from '@/types/payment';
+import type { ApiResponse, ActivityLog, PLItem, BusinessType } from '@/types/api';
 
 // Re-export types for backward compatibility
-export type { Company, Payment };
-
-// BusinessType型を定義
-export interface BusinessType {
-  id: string;
-  name: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// ActivityLog型を定義
-export interface ActivityLog {
-  id: string;
-  storeId: string;
-  userId?: string;
-  businessTypeId?: string;
-  actionType: string; // 'create', 'update', 'delete'
-  resourceType: string; // 'payment', 'shift', 'employee', etc.
-  resourceName?: string;
-  description: string;
-  createdAt: string;
-  userName?: string;
-  storeName?: string;
-}
-
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-  status?: number;
-}
-
-// ShiftSubmission型を定義
-export interface ShiftSubmission {
-  id: string;
-  employeeId: string;
-  status: string; // 'draft', 'submitted', etc.
-  submittedAt: string | null;
-  shiftEntries: ShiftEntry[];
-}
-
-// PLItem型を定義
-export interface PLItem {
-  name: string;
-  estimate: number;
-  actual: number;
-  is_highlighted?: boolean;
-  is_subtotal?: boolean;
-  is_indented?: boolean;
-  subject_name?: string;
-  type?: 'variable' | 'fixed';
-}
+export type { Company, Payment, ActivityLog, PLItem, BusinessType, ApiResponse, ShiftSubmission }
 
 class ApiClient {
   private baseURL: string;
@@ -492,8 +440,12 @@ async function fetchWithRetry<T>(
       });
 
       if (response.ok) {
-        const data = await response.json();
-        return { success: true, data };
+        const responseJson = await response.json();
+        // Backend returns { success, data } structure, extract nested data property
+        return {
+          success: true,
+          data: responseJson.data || responseJson
+        };
       }
 
       // Handle client errors (4xx) - don't retry

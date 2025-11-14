@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
-import { Company } from '@/lib/api';
+import { Company } from '@/types/company';
 import apiClient from '@/lib/api';
 import { formatStoreName } from '@/utils/storeDisplay';
 import { 

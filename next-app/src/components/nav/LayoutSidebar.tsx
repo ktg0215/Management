@@ -140,22 +140,26 @@ export const LayoutSidebar: React.FC = () => {
           </div>
         )}
         <div className="px-2 space-y-1 py-4">
-          <NavItem to="/admin/dashboard" icon={<Clock />} label="ダッシュボード" isCollapsed={actualCollapsed} />
-          <NavItem to="/admin/shifts" icon={<CalendarCheck />} label="シフト管理" isCollapsed={actualCollapsed} />
-          <NavItem to="/admin/sales-management" icon={<BarChart3 />} label="売上管理" isCollapsed={actualCollapsed} />
-          <NavItem to="/admin/monthly-sales" icon={<TrendingUp />} label="月次売上管理" isCollapsed={actualCollapsed} />
-          <NavItem to="/admin/yearly-progress" icon={<PieChart />} label="損益管理" isCollapsed={actualCollapsed} />
-          <NavItem to="/admin/payments" icon={<Receipt />} label="支払い管理" isCollapsed={actualCollapsed} />
-          <NavItem to="/admin/companies" icon={<CreditCard />} label="取引先管理" isCollapsed={actualCollapsed} />
-          <NavItem to="/admin/business-types" icon={<Building2 />} label="業態管理" isCollapsed={actualCollapsed} />
-          <NavItem to="/admin/stores" icon={<Building />} label="店舗管理" isCollapsed={actualCollapsed} />
-          <NavItem to="/admin/employees" icon={<Users />} label="従業員管理" isCollapsed={actualCollapsed} />
-          <NavItem to="/admin/add-admin" icon={<UserPlus />} label="管理者追加" isCollapsed={actualCollapsed} />
-          {/* Employee-specific navigation items are only shown to users with 'user' role */}
+          {/* Admin-specific navigation items */}
+          {isClient && user && (user.role === 'admin' || user.role === 'super_admin') && (
+            <>
+              <NavItem to="/admin/dashboard" icon={<Clock />} label="ダッシュボード" isCollapsed={actualCollapsed} />
+              <NavItem to="/admin/shifts" icon={<CalendarCheck />} label="シフト管理" isCollapsed={actualCollapsed} />
+              <NavItem to="/admin/sales-management" icon={<BarChart3 />} label="売上管理" isCollapsed={actualCollapsed} />
+              <NavItem to="/admin/monthly-sales" icon={<TrendingUp />} label="月次売上管理" isCollapsed={actualCollapsed} />
+              <NavItem to="/admin/yearly-progress" icon={<PieChart />} label="損益管理" isCollapsed={actualCollapsed} />
+              <NavItem to="/admin/payments" icon={<Receipt />} label="支払い管理" isCollapsed={actualCollapsed} />
+              <NavItem to="/admin/companies" icon={<CreditCard />} label="取引先管理" isCollapsed={actualCollapsed} />
+              <NavItem to="/admin/business-types" icon={<Building2 />} label="業態管理" isCollapsed={actualCollapsed} />
+              <NavItem to="/admin/stores" icon={<Building />} label="店舗管理" isCollapsed={actualCollapsed} />
+              <NavItem to="/admin/employees" icon={<Users />} label="従業員管理" isCollapsed={actualCollapsed} />
+              <NavItem to="/admin/add-admin" icon={<UserPlus />} label="管理者追加" isCollapsed={actualCollapsed} />
+            </>
+          )}
+          {/* Employee-specific navigation items - only shown to regular users */}
           {isClient && user?.role === 'user' && (
             <>
-              <NavItem to="/employee/dashboard" icon={<Clock />} label="従業員ダッシュボード" isCollapsed={actualCollapsed} />
-              <NavItem to="/employee/shifts" icon={<CalendarCheck />} label="シフト提出・履歴確認" isCollapsed={actualCollapsed} />
+              <NavItem to="/employee/shifts" icon={<CalendarCheck />} label="シフト提出" isCollapsed={actualCollapsed} />
             </>
           )}
         </div>

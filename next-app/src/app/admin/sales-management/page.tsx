@@ -18,7 +18,19 @@ const SalesManagementPage = () => {
   
   // Use React Query for data fetching
   const { data: monthlyData, isLoading, error, refetch } = useSalesData(selectedStoreId, currentYear, currentMonth);
-  
+
+  // Debug logging
+  console.log('[SalesManagementPage] Render state:', {
+    isLoading,
+    error: error ? String(error) : null,
+    hasMonthlyData: !!monthlyData,
+    dailyDataKeys: monthlyData?.dailyData ? Object.keys(monthlyData.dailyData).length : 0,
+    sampleDates: monthlyData?.dailyData ? Object.keys(monthlyData.dailyData).slice(0, 3) : [],
+    selectedStoreId,
+    currentYear,
+    currentMonth
+  });
+
   // Prefetch adjacent months for better performance
   const { prefetchMonths } = usePrefetchAdjacentMonths(selectedStoreId, currentYear, currentMonth);
 
@@ -124,7 +136,7 @@ const SalesManagementPage = () => {
   // 現在選択されている店舗名を取得
   const getCurrentStoreName = () => {
     if (!selectedStoreId) return '';
-    const selectedStore = stores.find(store => store.id === selectedStoreId);
+    const selectedStore = stores.find(store => String(store.id) === selectedStoreId);
     return selectedStore ? formatStoreName(selectedStore) : '';
   };
 
@@ -183,9 +195,9 @@ const SalesManagementPage = () => {
                 <p className="text-gray-600">データを読み込み中...</p>
               </div>
             </div>
-          ) : selectedStoreId || user.role === 'admin' ? (
-            monthlyData && (
-              <>
+          ) : selectedStoreId || user.role === 'admin' || user.role === 'super_admin' ? (
+            <>
+              {monthlyData && monthlyData.dailyData && (
                 <SimpleSalesTable
                   dailyData={monthlyData.dailyData as { [date: string]: { date: string; dayOfWeek: string; revenue?: number; cost?: number; profit?: number } }}
                   hasData={hasData}
@@ -193,8 +205,15 @@ const SalesManagementPage = () => {
                   currentYear={currentYear}
                   currentMonth={currentMonth}
                 />
-              </>
-            )
+              )}
+              {!monthlyData && !isLoading && (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center text-gray-600">
+                    店舗を選択してください
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">

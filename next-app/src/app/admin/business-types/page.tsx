@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, Building2 } from 'lucide-react';
 import { useBusinessTypeStore } from '@/stores/businessTypeStore';
-import { BusinessType } from '@/lib/api';
+import { BusinessType } from '@/types/business-type';
 
 const BusinessTypesPage = () => {
   const { businessTypes, isLoading, fetchBusinessTypes, createBusinessType, updateBusinessType, deleteBusinessType } = useBusinessTypeStore();
@@ -201,7 +201,7 @@ const BusinessTypesPage = () => {
                         </td>
                       </tr>
                     ) : (
-                      businessTypes.map((businessType) => (
+                      businessTypes.filter(bt => bt.name !== 'Manager').map((businessType) => (
                         <tr key={businessType.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="font-medium text-gray-900 flex items-center">

@@ -39,12 +39,26 @@ const LoginPage = () => {
       const success = await login(employeeId, password);
       
       if (success) {
-        setTimeout(() => {
-          const { isAuthenticated, isAdmin } = useAuthStore.getState();
-          if (isAuthenticated) {
-            router.push(isAdmin() ? '/admin/dashboard' : '/employee/dashboard');
+        // Wait for Zustand persist to complete localStorage write (increased from 100ms to 500ms)
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Verify localStorage write completed before navigation
+        const stored = typeof window !== 'undefined' ? localStorage.getItem('auth-storage') : null;
+        if (stored) {
+          try {
+            const parsedStore = JSON.parse(stored);
+            if (parsedStore?.state?.user) {
+              console.log('[Login] Auth state persisted successfully:', parsedStore.state.user.role);
+            }
+          } catch (e) {
+            console.error('[Login] Failed to parse auth-storage:', e);
           }
-        }, 100);
+        }
+
+        const { isAuthenticated, isAdmin } = useAuthStore.getState();
+        if (isAuthenticated) {
+          router.push(isAdmin() ? '/admin/dashboard' : '/employee/dashboard');
+        }
       } else {
         setError('ログインに失敗しました。勤怠番号またはパスワードを確認してください。');
       }

@@ -8,7 +8,8 @@ import {
   AlertTriangle, ArrowLeft 
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import { useShiftStore, ShiftPeriod, ShiftEntry } from '@/stores/shiftStore';
+import { useShiftStore } from '@/stores/shiftStore';
+import type { ShiftPeriod, ShiftEntry } from '@/types/shift';
 
 const ShiftSubmission = () => {
   const navigate = useRouter();

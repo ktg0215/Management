@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys, invalidateQueries } from '@/lib/queryClient';
+import { useAuthStore } from '@/stores/authStore';
 
 interface WebSocketMessage {
   type: 'sales_update' | 'store_update' | 'system_message' | 'heartbeat';
@@ -23,7 +24,7 @@ interface UseWebSocketOptions {
 }
 
 export const useWebSocket = ({
-  url = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080',
+  url = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001',
   reconnectAttempts = 5,
   reconnectInterval = 5000,
   heartbeatInterval = 30000,
@@ -36,10 +37,14 @@ export const useWebSocket = ({
   const heartbeatTimeoutId = useRef<NodeJS.Timeout | null>(null);
   const reconnectCount = useRef(0);
   const queryClient = useQueryClient();
-  
+  const { user } = useAuthStore();
+
   const [isConnected, setIsConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
+
+  // Construct WebSocket URL (WebSocket is optional)
+  const wsUrl = user ? `${url}/ws?userId=${user.id}` : null;
 
   // Handle incoming WebSocket messages
   const handleMessage = useCallback((event: MessageEvent) => {
@@ -129,12 +134,18 @@ export const useWebSocket = ({
 
   // Connect to WebSocket
   const connect = useCallback(() => {
+    // Don't connect if no user is authenticated
+    if (!wsUrl) {
+      console.log('WebSocket connection skipped: No user authenticated');
+      return;
+    }
+
     if (ws.current?.readyState === WebSocket.OPEN) {
       return; // Already connected
     }
 
     try {
-      ws.current = new WebSocket(url);
+      ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen = () => {
         setIsConnected(true);
@@ -170,7 +181,7 @@ export const useWebSocket = ({
       setIsConnected(false);
       setIsReconnecting(false);
     }
-  }, [url, handleMessage, startHeartbeat, stopHeartbeat, onConnectionChange, onError]);
+  }, [wsUrl, handleMessage, startHeartbeat, stopHeartbeat, onConnectionChange, onError]);
 
   // Attempt to reconnect with exponential backoff
   const attemptReconnect = useCallback(() => {
@@ -218,14 +229,18 @@ export const useWebSocket = ({
     setTimeout(connect, 1000);
   }, [disconnect, connect]);
 
-  // Initialize connection on mount
+  // Initialize connection on mount and when user changes
   useEffect(() => {
-    connect();
-    
+    if (user) {
+      connect();
+    } else {
+      disconnect();
+    }
+
     return () => {
       disconnect();
     };
-  }, [connect, disconnect]);
+  }, [user, connect, disconnect]);
 
   // Handle page visibility change
   useEffect(() => {

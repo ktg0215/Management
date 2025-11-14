@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { 
+import {
   Building, Plus, Edit, Trash, Check, X, AlertCircle, Clock
 } from 'lucide-react';
-import { useStoreStore, Store } from '@/stores/storeStore';
+import { useStoreStore } from '@/stores/storeStore';
+import { Store } from '@/types/store';
 import { useBusinessTypeStore } from '@/stores/businessTypeStore';
 import { formatStoreName, sortStoresByBusinessType } from '@/utils/storeDisplay';
 
@@ -183,7 +184,7 @@ const StoreManagement = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {sortStoresByBusinessType(stores).map((store) => (
+                    {sortStoresByBusinessType(stores).filter(store => store.businessTypeName !== 'Manager').map((store) => (
                       <tr key={store.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -199,15 +200,19 @@ const StoreManagement = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
                             onClick={() => openEditModal(store)}
-                            className="text-indigo-600 hover:text-indigo-900 mr-4"
+                            className="text-indigo-600 hover:text-indigo-900 mr-4 inline-flex items-center"
+                            aria-label="編集"
                           >
                             <Edit className="h-4 w-4" />
+                            <span className="ml-1">編集</span>
                           </button>
                           <button
                             onClick={() => openDeleteModal(store)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 inline-flex items-center"
+                            aria-label="削除"
                           >
                             <Trash className="h-4 w-4" />
+                            <span className="ml-1">削除</span>
                           </button>
                         </td>
                       </tr>
@@ -254,7 +259,7 @@ const StoreManagement = () => {
                     required
                   >
                     <option value="">業態を選択してください</option>
-                    {businessTypes.map((businessType) => (
+                    {businessTypes.filter(bt => bt.name !== 'Manager').map((businessType) => (
                       <option key={businessType.id} value={businessType.id}>
                         {businessType.name}
                       </option>
@@ -319,7 +324,7 @@ const StoreManagement = () => {
                     required
                   >
                     <option value="">業態を選択してください</option>
-                    {businessTypes.map((businessType) => (
+                    {businessTypes.filter(bt => bt.name !== 'Manager').map((businessType) => (
                       <option key={businessType.id} value={businessType.id}>
                         {businessType.name}
                       </option>

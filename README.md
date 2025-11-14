@@ -141,7 +141,75 @@ docker-compose exec frontend npm run type-check
 
 ## 🚀 デプロイ
 
-### 本番環境デプロイ
+### ConoHa VPS デプロイ（推奨）
+
+このプロジェクトはConoHa VPSへの簡単デプロイをサポートしています。
+
+#### クイックスタート（3ステップ）
+
+1. **VPSセットアップ**
+   ```bash
+   ssh root@YOUR_VPS_IP
+   wget https://raw.githubusercontent.com/YOUR_REPO/setup-vps.sh
+   sudo bash setup-vps.sh
+   ```
+
+2. **プロジェクトデプロイ**
+   ```bash
+   # ローカルマシンで実行
+   cd C:\job\project
+   nano deploy.sh  # VPS_IPとVPS_USERを設定
+   bash deploy.sh init
+   ```
+
+3. **アプリケーション起動**
+   ```bash
+   # VPS上で実行
+   cd ~/apps/project
+   pm2 start ecosystem.config.js
+   ```
+
+#### 🔗 MCP接続でリモート管理（推奨）
+
+Claude CodeからVPSに直接接続して、AIによるリモート管理が可能です：
+
+**MCP接続でできること：**
+- ✅ VPS上のファイル編集・読み込み
+- ✅ リモートコマンド実行（デプロイ、再起動など）
+- ✅ ログのリアルタイム分析
+- ✅ 自動トラブルシューティング
+- ✅ 複数サーバーの同時管理
+
+詳細: [MCP_VPS_SETUP.md](MCP_VPS_SETUP.md)
+
+#### 詳細ドキュメント
+
+- **クイックスタート**: [QUICKSTART_DEPLOY.md](QUICKSTART_DEPLOY.md) - 最速デプロイ手順
+- **完全ガイド**: [DEPLOYMENT.md](DEPLOYMENT.md) - 詳細な設定とトラブルシューティング
+- **MCP接続**: [MCP_VPS_SETUP.md](MCP_VPS_SETUP.md) - Claude CodeとVPSのリモート接続
+- **PM2設定**: [ecosystem.config.js](ecosystem.config.js) - プロセス管理設定
+
+#### デプロイスクリプト
+
+```bash
+# 初回デプロイ
+bash deploy.sh init
+
+# アプリ更新
+bash deploy.sh update
+
+# 再起動
+bash deploy.sh restart
+
+# ログ確認
+bash deploy.sh logs
+
+# DBバックアップ
+bash deploy.sh backup
+```
+
+### Docker デプロイ（開発環境）
+
 ```bash
 # 本番ビルド
 docker-compose -f docker-compose.prod.yml up -d

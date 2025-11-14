@@ -2,8 +2,9 @@
 export const registerServiceWorker = async () => {
   if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/',
+      const basePath = '/bb/';
+      const registration = await navigator.serviceWorker.register(`${basePath}sw.js`, {
+        scope: basePath,
       });
       
       console.log('Service Worker registered successfully:', registration);

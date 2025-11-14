@@ -325,13 +325,19 @@ const usePaymentData = () => {
     loadFromStorage(STORAGE_KEYS.PAYMENTS, DEMO_PAYMENTS)
   );
 
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const stored = loadFromStorage(STORAGE_KEYS.SELECTED_MONTH, '');
-    if (stored) return stored;
+  const [selectedMonth, setSelectedMonth] = useState<string>('');
 
-    const now = new Date();
-    return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-  });
+  // Initialize selectedMonth on client side only
+  useEffect(() => {
+    const stored = loadFromStorage(STORAGE_KEYS.SELECTED_MONTH, '');
+    if (stored) {
+      setSelectedMonth(stored);
+    } else {
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+      setSelectedMonth(currentMonth);
+    }
+  }, []);
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(() => {
@@ -777,6 +783,7 @@ function PaymentManagement() {
   };
 
   const formatSelectedMonth = () => {
+    if (!selectedMonth) return '読み込み中...';
     const [year, month] = selectedMonth.split('-').map(Number);
     return new Date(year, month - 1).toLocaleDateString('ja-JP', {
       year: 'numeric',
@@ -1414,8 +1421,11 @@ const YearCalendar: React.FC<YearCalendarProps> = ({
   onMonthSelect,
 }) => {
   const [currentYear, setCurrentYear] = useState(() => {
-    const [year] = selectedMonth.split('-').map(Number);
-    return year;
+    if (selectedMonth) {
+      const [year] = selectedMonth.split('-').map(Number);
+      return year || new Date().getFullYear();
+    }
+    return new Date().getFullYear();
   });
 
   if (!isOpen) return null;

@@ -32,6 +32,24 @@ export class SalesController {
         storeId as string
       );
 
+      console.log('[DEBUG getSalesData] Before parse - salesData exists:', !!salesData);
+      console.log('[DEBUG getSalesData] daily_data type:', typeof salesData?.daily_data);
+
+      // Parse daily_data if it's a JSON string (from PostgreSQL JSONB)
+      if (salesData && typeof salesData.daily_data === 'string') {
+        console.log('[DEBUG getSalesData] Parsing daily_data string...');
+        try {
+          salesData.daily_data = JSON.parse(salesData.daily_data);
+          console.log('[DEBUG getSalesData] Successfully parsed - keys count:', Object.keys(salesData.daily_data).length);
+        } catch (e) {
+          console.error('[DEBUG getSalesData] Parse failed:', e);
+          logger.logError('Failed to parse daily_data', e as Error, { salesData });
+          salesData.daily_data = {};
+        }
+      } else {
+        console.log('[DEBUG getSalesData] No parsing needed - already object or null');
+      }
+
       const projection = (req as any).projection;
       const projectedData = projection ? projectResponse(salesData, projection) : salesData;
 

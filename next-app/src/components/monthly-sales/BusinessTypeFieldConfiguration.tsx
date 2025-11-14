@@ -4,9 +4,7 @@ import { FieldConfiguration } from './FieldConfiguration';
 import { Building2, ChevronDown, Plus, Save, AlertCircle } from 'lucide-react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { useBusinessTypeStore } from '../../stores/businessTypeStore';
-
-// 型の競合を回避するため、APIのBusinessTypeを区別
-type ApiBusinessType = import('../../lib/api').BusinessType;
+import type { BusinessType as ApiBusinessType } from '../../types/api';
 
 interface BusinessTypeFieldConfigurationProps {
   onBusinessTypesChange: (businessTypes: BusinessType[]) => void;
