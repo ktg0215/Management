@@ -1,0 +1,125 @@
+==============================================================================
+  SALES MANAGEMENT PAGE - COMPREHENSIVE TEST SUMMARY
+==============================================================================
+
+TEST DATE: 2025-11-16
+TEST URL: http://localhost:3002/admin/sales-management
+
+------------------------------------------------------------------------------
+OVERALL STATUS: BLOCKED
+------------------------------------------------------------------------------
+
+ISSUE: Authentication/Permission Error
+ERROR MESSAGE: "アクセス権限がありません" (Access Denied)
+REASON: "この機能は管理者のみご利用いただけます" (Admin only)
+
+------------------------------------------------------------------------------
+TESTS EXECUTED:
+------------------------------------------------------------------------------
+
+[1] Direct Navigation Test
+    Result: FAILED - Access Denied
+    Screenshot: sales-direct-01-initial.png
+    Findings:
+      - User appears logged in (sidebar shows "ユーザー")
+      - Main content shows access denied message
+      - No tabs visible ("データ入力", "項目設定")
+      - Only 4 buttons found (including "ログアウト")
+
+[2] Login Flow Test
+    Result: INCOMPLETE - Navigation Timeout
+    Screenshots: admin-test-01-login.png, admin-test-02-credentials.png
+    Findings:
+      - Login page loads correctly
+      - Credentials (0000/admin123) filled successfully
+      - Login button clicked
+      - Navigation after login appears to hang
+
+[3] Manual Navigation Test
+    Result: BLOCKED - Still on Login Page
+    Screenshot: manual-test-01-current-state.png
+    Findings:
+      - Browser did not navigate away from login
+      - 404 error detected
+      - Cannot access sales management page
+
+------------------------------------------------------------------------------
+ROOT CAUSE ANALYSIS:
+------------------------------------------------------------------------------
+
+1. AUTH STORE NOT REHYDRATING PROPERLY
+   - Zustand store with skipHydration: true
+   - Permission checks run before hydration completes
+   - User logged in but role not recognized
+
+2. PERMISSION CHECK FAILING
+   - Page checks for hasPermission('admin')
+   - Check runs during SSR/initial render
+   - Returns false due to missing auth state
+
+3. CLIENT-SIDE ROUTING BROKEN
+   - Login form submission doesn't navigate
+   - Suggests router.push() or redirect is failing
+
+------------------------------------------------------------------------------
+FEATURES UNABLE TO TEST:
+------------------------------------------------------------------------------
+
+✗ Tab Navigation (データ入力 / 項目設定)
+✗ Field Source Dropdowns (連携/日次/月次)
+✗ Visibility Toggles (Daily/Monthly checkboxes)
+✗ Aggregation Method Selector (SUM/AVG/etc)
+✗ Business Type Selector (業種)
+
+------------------------------------------------------------------------------
+SCREENSHOTS CAPTURED:
+------------------------------------------------------------------------------
+
+1. sales-direct-01-initial.png    - Access denied error page
+2. admin-test-01-login.png        - Login page loaded
+3. admin-test-02-credentials.png  - Login credentials filled
+4. manual-test-01-current-state.png - Browser stuck on login
+
+------------------------------------------------------------------------------
+RECOMMENDED FIXES:
+------------------------------------------------------------------------------
+
+PRIORITY 1: Fix Auth Store Rehydration
+  File: next-app/src/stores/authStore.ts
+  File: next-app/src/app/ClientLayout.tsx
+  File: next-app/src/app/admin/sales-management/page.tsx
+
+  Add loading state before permission checks:
+  
+    const [isHydrated, setIsHydrated] = useState(false);
+    
+    useEffect(() => {
+      setIsHydrated(true);
+    }, []);
+    
+    if (!isHydrated) return <Loading />;
+
+PRIORITY 2: Fix Login Navigation
+  File: next-app/src/app/login/page.tsx
+  
+  Ensure router.push() and router.refresh() after successful login
+
+PRIORITY 3: Add Debug Logging
+  Log auth state during hydration to diagnose timing issues
+
+------------------------------------------------------------------------------
+NEXT STEPS:
+------------------------------------------------------------------------------
+
+1. Apply auth store hydration fixes
+2. Test login flow manually in browser
+3. Verify access to /admin/sales-management
+4. Re-run comprehensive test to verify:
+   - Tab navigation works
+   - Field configuration UI appears
+   - All dropdowns and checkboxes function correctly
+
+==============================================================================
+CONCLUSION: Field configuration features exist in code but cannot be tested
+            due to authentication blocking access to the page.
+==============================================================================

@@ -4,12 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { SalesHeader } from '@/components/sales/SalesHeader';
 import { SimpleSalesTable } from '@/components/sales/SimpleSalesTable';
 import { SimpleSalesForm } from '@/components/sales/SimpleSalesForm';
-import { SalesFieldConfiguration } from '@/components/sales/SalesFieldConfiguration';
 import { useSalesData, usePrefetchAdjacentMonths } from '@/hooks/queries/useSalesQueries';
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
+import { useBusinessTypeStore } from '@/stores/businessTypeStore';
 import { formatStoreName } from '@/utils/storeDisplay';
-import { getDefaultFieldConfigs } from '@/types/sales-field-config';
+import { SalesFieldConfig, BusinessTypeSalesConfig, DEFAULT_SALES_FIELDS, EDW_SALES_FIELD_CONFIG } from '@/types/sales-field-config';
+import { BarChart3, Building2, ChevronDown, Plus, Save } from 'lucide-react';
 
 const SalesManagementPage = () => {
   const { user } = useAuthStore();
@@ -18,9 +19,15 @@ const SalesManagementPage = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [activeTab, setActiveTab] = useState<'data' | 'fields'>('data');
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [fieldConfigs, setFieldConfigs] = useState(() => getDefaultFieldConfigs('cafe'));
 
+  // State for business type selection in fields tab
+  const [selectedBusinessTypeId, setSelectedBusinessTypeId] = useState<string>('');
+  const [isAddingBusinessType, setIsAddingBusinessType] = useState(false);
+  const [newBusinessTypeName, setNewBusinessTypeName] = useState('');
+
+  // Field configuration state (stored in localStorage)
+  const [salesFieldConfigs, setSalesFieldConfigs] = useState<BusinessTypeSalesConfig[]>([]);
+  
   // Use React Query for data fetching
   const { data: monthlyData, isLoading, error, refetch } = useSalesData(selectedStoreId, currentYear, currentMonth);
 
@@ -42,10 +49,21 @@ const SalesManagementPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
 
-  // Hydration確認
+  // Load field configurations from localStorage
   useEffect(() => {
-    setIsHydrated(true);
+    const savedConfigs = localStorage.getItem('sales-field-configs');
+    if (savedConfigs) {
+      setSalesFieldConfigs(JSON.parse(savedConfigs));
+    }
   }, []);
+
+  // Save field configurations to localStorage
+  useEffect(() => {
+    if (salesFieldConfigs.length > 0) {
+      localStorage.setItem('sales-field-configs', JSON.stringify(salesFieldConfigs));
+    }
+  }, [salesFieldConfigs]);
+  const [selectedDate, setSelectedDate] = useState('');
 
   // 店舗データを取得
   useEffect(() => {
@@ -174,33 +192,7 @@ const SalesManagementPage = () => {
           currentStoreName={getCurrentStoreName()}
           onStoreChange={handleStoreChange}
         />
-
-        {/* タブナビゲーション */}
-        <div className="w-full px-4 py-4 bg-white border-b">
-          <div className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab('data')}
-              className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'data'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              データ入力
-            </button>
-            <button
-              onClick={() => setActiveTab('fields')}
-              className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'fields'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              項目設定
-            </button>
-          </div>
-        </div>
-
+        
         <main className="w-full px-4 py-6">
           {error ? (
             <div className="flex items-center justify-center h-64">
@@ -233,42 +225,20 @@ const SalesManagementPage = () => {
             </div>
           ) : selectedStoreId || user.role === 'admin' || user.role === 'super_admin' ? (
             <>
-              {activeTab === 'data' ? (
-                <>
-                  {monthlyData && monthlyData.dailyData && (
-                    <SimpleSalesTable
-                      dailyData={monthlyData.dailyData as { [date: string]: { date: string; dayOfWeek: string; revenue?: number; cost?: number; profit?: number } }}
-                      hasData={hasData}
-                      onEditClick={handleOpenForm}
-                      currentYear={currentYear}
-                      currentMonth={currentMonth}
-                    />
-                  )}
-                  {!monthlyData && !isLoading && (
-                    <div className="flex items-center justify-center h-64">
-                      <div className="text-center text-gray-600">
-                        店舗を選択してください
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                // 項目設定タブ
-                <div className="max-w-4xl mx-auto">
-                  {isHydrated && selectedStoreId && (
-                    <SalesFieldConfiguration
-                      fields={fieldConfigs}
-                      onFieldsChange={setFieldConfigs}
-                      businessTypeName={getCurrentStoreName() || 'デフォルト'}
-                    />
-                  )}
-                  {!selectedStoreId && (
-                    <div className="flex items-center justify-center h-64">
-                      <div className="text-center text-gray-600">
-                        店舗を選択してください
-                      </div>
-                    </div>
-                  )}
+              {monthlyData && monthlyData.dailyData && (
+                <SimpleSalesTable
+                  dailyData={monthlyData.dailyData as { [date: string]: { date: string; dayOfWeek: string; revenue?: number; cost?: number; profit?: number } }}
+                  hasData={hasData}
+                  onEditClick={handleOpenForm}
+                  currentYear={currentYear}
+                  currentMonth={currentMonth}
+                />
+              )}
+              {!monthlyData && !isLoading && (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center text-gray-600">
+                    店舗を選択してください
+                  </div>
                 </div>
               )}
             </>

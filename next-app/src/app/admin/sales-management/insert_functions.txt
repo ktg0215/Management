@@ -1,0 +1,167 @@
+  // Get field configuration for the selected business type (when on fields tab) or store's business type (when on data tab)
+  const getCurrentFieldConfig = () => {
+    // When on fields tab, use selectedBusinessTypeId
+    if (activeTab === 'fields') {
+      if (!selectedBusinessTypeId || businessTypes.length === 0) {
+        return DEFAULT_SALES_FIELDS.map((field, index) => ({
+          ...field,
+          id: \`default-field-\${index}\`
+        }));
+      }
+
+      const businessType = businessTypes.find(bt => bt.id === selectedBusinessTypeId);
+      if (!businessType) {
+        return DEFAULT_SALES_FIELDS.map((field, index) => ({
+          ...field,
+          id: \`default-field-\${index}\`
+        }));
+      }
+
+      const config = salesFieldConfigs.find(c => c.businessTypeId === selectedBusinessTypeId);
+      if (config) {
+        return config.fields;
+      }
+
+      // Use EDW config for EDW business types
+      const isEDW = businessType.name.includes('EDW') || businessType.name.includes('エデュワード');
+      const defaultFields = isEDW ? EDW_SALES_FIELD_CONFIG : DEFAULT_SALES_FIELDS;
+
+      return defaultFields.map((field, index) => ({
+        ...field,
+        id: \`\${selectedBusinessTypeId}-field-\${index}\`
+      }));
+    }
+
+    // When on data tab, use store's business type
+    if (!selectedStoreId || stores.length === 0) {
+      return DEFAULT_SALES_FIELDS.map((field, index) => ({
+        ...field,
+        id: \`default-field-\${index}\`
+        }));
+    }
+
+    const selectedStore = stores.find(store => String(store.id) === selectedStoreId);
+    if (!selectedStore || !selectedStore.businessTypeId) {
+      return DEFAULT_SALES_FIELDS.map((field, index) => ({
+        ...field,
+        id: \`default-field-\${index}\`
+      }));
+    }
+
+    const businessType = businessTypes.find(bt => bt.id === selectedStore.businessTypeId);
+    if (!businessType) {
+      return DEFAULT_SALES_FIELDS.map((field, index) => ({
+        ...field,
+        id: \`default-field-\${index}\`
+      }));
+    }
+
+    const config = salesFieldConfigs.find(c => c.businessTypeId === selectedStore.businessTypeId);
+    if (config) {
+      return config.fields;
+    }
+
+    // Use EDW config for EDW business types
+    const isEDW = businessType.name.includes('EDW') || businessType.name.includes('エデュワード');
+    const defaultFields = isEDW ? EDW_SALES_FIELD_CONFIG : DEFAULT_SALES_FIELDS;
+
+    return defaultFields.map((field, index) => ({
+      ...field,
+      id: \`\${selectedStore.businessTypeId}-field-\${index}\`
+    }));
+  };
+
+  const getCurrentBusinessTypeName = () => {
+    // When on fields tab, use selectedBusinessTypeId
+    if (activeTab === 'fields') {
+      if (!selectedBusinessTypeId || businessTypes.length === 0) return 'デフォルト';
+      const businessType = businessTypes.find(bt => bt.id === selectedBusinessTypeId);
+      return businessType ? businessType.name : 'デフォルト';
+    }
+
+    // When on data tab, use store's business type
+    if (!selectedStoreId || stores.length === 0) return 'デフォルト';
+    const selectedStore = stores.find(store => String(store.id) === selectedStoreId);
+    if (!selectedStore || !selectedStore.businessTypeId) return 'デフォルト';
+    const businessType = businessTypes.find(bt => bt.id === selectedStore.businessTypeId);
+    return businessType ? businessType.name : 'デフォルト';
+  };
+
+  const handleFieldsChange = (updatedFields: SalesFieldConfig[]) => {
+    // When on fields tab, save to selected business type
+    if (activeTab === 'fields') {
+      if (!selectedBusinessTypeId || businessTypes.length === 0) return;
+      const businessType = businessTypes.find(bt => bt.id === selectedBusinessTypeId);
+      if (!businessType) return;
+
+      const existingConfigIndex = salesFieldConfigs.findIndex(c => c.businessTypeId === selectedBusinessTypeId);
+      if (existingConfigIndex >= 0) {
+        const updatedConfigs = [...salesFieldConfigs];
+        updatedConfigs[existingConfigIndex] = {
+          businessTypeId: selectedBusinessTypeId,
+          businessTypeName: businessType.name,
+          fields: updatedFields
+        };
+        setSalesFieldConfigs(updatedConfigs);
+      } else {
+        setSalesFieldConfigs([...salesFieldConfigs, {
+          businessTypeId: selectedBusinessTypeId,
+          businessTypeName: businessType.name,
+          fields: updatedFields
+        }]);
+      }
+      return;
+    }
+
+    // When on data tab, save to store's business type
+    if (!selectedStoreId || stores.length === 0) return;
+    const selectedStore = stores.find(store => String(store.id) === selectedStoreId);
+    if (!selectedStore || !selectedStore.businessTypeId) return;
+    const businessType = businessTypes.find(bt => bt.id === selectedStore.businessTypeId);
+    if (!businessType) return;
+
+    const existingConfigIndex = salesFieldConfigs.findIndex(c => c.businessTypeId === selectedStore.businessTypeId);
+    if (existingConfigIndex >= 0) {
+      const updatedConfigs = [...salesFieldConfigs];
+      updatedConfigs[existingConfigIndex] = {
+        businessTypeId: selectedStore.businessTypeId,
+        businessTypeName: businessType.name,
+        fields: updatedFields
+      };
+      setSalesFieldConfigs(updatedConfigs);
+    } else {
+      setSalesFieldConfigs([...salesFieldConfigs, {
+        businessTypeId: selectedStore.businessTypeId,
+        businessTypeName: businessType.name,
+        fields: updatedFields
+      }]);
+    }
+  };
+
+  const handleAddBusinessType = () => {
+    if (newBusinessTypeName.trim()) {
+      const newBusinessType = {
+        id: Date.now().toString(),
+        name: newBusinessTypeName.trim(),
+        description: ''
+      };
+
+      // Create empty field config for the new business type
+      const newConfig: BusinessTypeSalesConfig = {
+        businessTypeId: newBusinessType.id,
+        businessTypeName: newBusinessType.name,
+        fields: DEFAULT_SALES_FIELDS.map((field, index) => ({
+          ...field,
+          id: \`\${newBusinessType.id}-field-\${index}\`
+        }))
+      };
+      setSalesFieldConfigs([...salesFieldConfigs, newConfig]);
+
+      setSelectedBusinessTypeId(newBusinessType.id);
+      setNewBusinessTypeName('');
+      setIsAddingBusinessType(false);
+
+      alert('業態を追加しました。この業態はローカルに保存されます。\nサーバーに保存するには、システム管理者にお問い合わせください。');
+    }
+  };
+
