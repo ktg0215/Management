@@ -50,8 +50,7 @@ export default function SalesFieldSettingsPage() {
     if (existing) return existing;
 
     // 新規作成: 業態名に応じてデフォルト設定を使用
-    const isEDW = businessTypeName.includes('EDW') || businessTypeName.includes('エデュワード');
-    const defaultFields = isEDW ? EDW_SALES_FIELD_CONFIG : DEFAULT_SALES_FIELDS;
+    const defaultFields = getDefaultFieldConfigs(businessTypeName);
 
     return {
       businessTypeId,
