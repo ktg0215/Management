@@ -70,9 +70,10 @@ export const FIELD_SOURCE_LABELS: Record<FieldSource, string> = {
 };
 
 // デフォルトフィールド設定 (全業態共通の基本項目)
-export const DEFAULT_SALES_FIELDS: Omit<SalesFieldConfig, 'id'>[] = [
+export const DEFAULT_SALES_FIELDS: SalesFieldConfig[] = [
   // 基本情報
   {
+    id: 'field_date',
     key: 'date',
     label: '日付',
     category: 'basic',
@@ -87,6 +88,7 @@ export const DEFAULT_SALES_FIELDS: Omit<SalesFieldConfig, 'id'>[] = [
     order: 1
   },
   {
+    id: 'field_dayOfWeek',
     key: 'dayOfWeek',
     label: '曜日',
     category: 'basic',
@@ -103,6 +105,7 @@ export const DEFAULT_SALES_FIELDS: Omit<SalesFieldConfig, 'id'>[] = [
 
   // 売上
   {
+    id: 'field_revenue',
     key: 'revenue',
     label: '売上',
     category: 'sales',
@@ -120,6 +123,7 @@ export const DEFAULT_SALES_FIELDS: Omit<SalesFieldConfig, 'id'>[] = [
 
   // 原価
   {
+    id: 'field_cost',
     key: 'cost',
     label: '原価',
     category: 'cost',
@@ -137,6 +141,7 @@ export const DEFAULT_SALES_FIELDS: Omit<SalesFieldConfig, 'id'>[] = [
 
   // 利益
   {
+    id: 'field_profit',
     key: 'profit',
     label: '利益',
     category: 'profit',
@@ -150,170 +155,14 @@ export const DEFAULT_SALES_FIELDS: Omit<SalesFieldConfig, 'id'>[] = [
     isCalculated: true,
     aggregationMethod: 'sum',
     order: 5
-  },
-
-  // カフェ売上
-  {
-    key: 'cafeRevenue',
-    label: 'カフェ売上',
-    category: 'sales',
-    type: 'currency',
-    fieldSource: 'linked',
-    unit: '円',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 6
-  },
-
-  // カフェ原価
-  {
-    key: 'cafeCost',
-    label: 'カフェ原価',
-    category: 'cost',
-    type: 'currency',
-    fieldSource: 'linked',
-    unit: '円',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 7
-  },
-
-  // カフェ利益
-  {
-    key: 'cafeProfit',
-    label: 'カフェ利益',
-    category: 'profit',
-    type: 'currency',
-    fieldSource: 'linked',
-    unit: '円',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: false,
-    isCalculated: true,
-    aggregationMethod: 'sum',
-    order: 8
-  },
+  }
 ];
 
-// EDW業態用のフィールド設定例
-export const EDW_SALES_FIELD_CONFIG: Omit<SalesFieldConfig, 'id'>[] = [
-  // 基本情報
-  {
-    key: 'date',
-    label: '日付',
-    category: 'basic',
-    type: 'text',
-    fieldSource: 'dailyOnly',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: false,
-    isEditable: false,
-    isCalculated: false,
-    aggregationMethod: 'none',
-    order: 1
-  },
-  {
-    key: 'dayOfWeek',
-    label: '曜日',
-    category: 'basic',
-    type: 'text',
-    fieldSource: 'dailyOnly',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: false,
-    isEditable: false,
-    isCalculated: false,
-    aggregationMethod: 'none',
-    order: 2
-  },
-  {
-    key: 'collectionManager',
-    label: '集計担当者',
-    category: 'basic',
-    type: 'text',
-    fieldSource: 'dailyOnly',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: false,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'none',
-    order: 3
-  },
-
-  // 売上
-  {
-    key: 'storeNetSales',
-    label: '店舗純売上',
-    category: 'sales',
-    type: 'currency',
-    fieldSource: 'linked',
-    unit: '円',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 10
-  },
-  {
-    key: 'edwNetSales',
-    label: 'EDW純売上',
-    category: 'sales',
-    type: 'currency',
-    fieldSource: 'linked',
-    unit: '円',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 11
-  },
-  {
-    key: 'ohbNetSales',
-    label: 'OHB純売上',
-    category: 'sales',
-    type: 'currency',
-    fieldSource: 'linked',
-    unit: '円',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 12
-  },
-  {
-    key: 'totalSales',
-    label: '総売上',
-    category: 'sales',
-    type: 'currency',
-    fieldSource: 'linked',
-    unit: '円',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: false,
-    isCalculated: true,
-    aggregationMethod: 'sum',
-    order: 13
-  },
-
+// カフェ業態用の追加フィールド
+const CAFE_ADDITIONAL_FIELDS: SalesFieldConfig[] = [
   // 客数・組数
   {
+    id: 'field_totalCustomers',
     key: 'totalCustomers',
     label: '客数（計）',
     category: 'customer',
@@ -329,6 +178,7 @@ export const EDW_SALES_FIELD_CONFIG: Omit<SalesFieldConfig, 'id'>[] = [
     order: 20
   },
   {
+    id: 'field_totalGroups',
     key: 'totalGroups',
     label: '組数（計）',
     category: 'customer',
@@ -343,55 +193,11 @@ export const EDW_SALES_FIELD_CONFIG: Omit<SalesFieldConfig, 'id'>[] = [
     aggregationMethod: 'sum',
     order: 21
   },
-  {
-    key: 'dinnerCustomers',
-    label: 'D：客数',
-    category: 'customer',
-    type: 'count',
-    fieldSource: 'linked',
-    unit: '人',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 22
-  },
-  {
-    key: 'dinnerGroups',
-    label: 'D：組数',
-    category: 'customer',
-    type: 'count',
-    fieldSource: 'linked',
-    unit: '組',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 23
-  },
-  {
-    key: 'ohbCustomers',
-    label: 'OHB客数',
-    category: 'customer',
-    type: 'count',
-    fieldSource: 'linked',
-    unit: '人',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 24
-  },
 
   // 単価
   {
-    key: 'customerUnitPrice',
+    id: 'field_averageSpending',
+    key: 'averageSpending',
     label: '客単価',
     category: 'unit_price',
     type: 'currency',
@@ -405,30 +211,16 @@ export const EDW_SALES_FIELD_CONFIG: Omit<SalesFieldConfig, 'id'>[] = [
     aggregationMethod: 'average',
     order: 30
   },
-  {
-    key: 'groupUnitPrice',
-    label: '組単価',
-    category: 'unit_price',
-    type: 'currency',
-    fieldSource: 'linked',
-    unit: '円',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: false,
-    isCalculated: true,
-    aggregationMethod: 'average',
-    order: 31
-  },
 
   // 人件費
   {
-    key: 'employeeHours',
-    label: '社員時間',
+    id: 'field_laborCost',
+    key: 'laborCost',
+    label: '人件費',
     category: 'labor',
-    type: 'number',
+    type: 'currency',
     fieldSource: 'linked',
-    unit: '時間',
+    unit: '円',
     isVisible: true,
     isVisibleInDailySales: true,
     isVisibleInMonthlySales: true,
@@ -436,157 +228,53 @@ export const EDW_SALES_FIELD_CONFIG: Omit<SalesFieldConfig, 'id'>[] = [
     isCalculated: false,
     aggregationMethod: 'sum',
     order: 40
-  },
-  {
-    key: 'asHours',
-    label: 'AS時間',
-    category: 'labor',
-    type: 'number',
-    fieldSource: 'linked',
-    unit: '時間',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 41
-  },
-  {
-    key: 'ohbTotalHours',
-    label: 'OHB総時間',
-    category: 'labor',
-    type: 'number',
-    fieldSource: 'linked',
-    unit: '時間',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 42
-  },
-  {
-    key: 'laborCostAmount',
-    label: '人件費額',
-    category: 'labor',
-    type: 'currency',
-    fieldSource: 'linked',
-    unit: '円',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 43
-  },
-  {
-    key: 'laborCostRate',
-    label: '人件費率',
-    category: 'labor',
-    type: 'percentage',
-    fieldSource: 'linked',
-    unit: '%',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: false,
-    isCalculated: true,
-    aggregationMethod: 'average',
-    order: 44
-  },
-
-  // 生産性
-  {
-    key: 'salesPerLaborHour',
-    label: '人時売上高',
-    category: 'productivity',
-    type: 'currency',
-    fieldSource: 'linked',
-    unit: '円',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: false,
-    isCalculated: true,
-    aggregationMethod: 'average',
-    order: 50
-  },
-  {
-    key: 'edwProductivity',
-    label: 'EDW生産性',
-    category: 'productivity',
-    type: 'number',
-    fieldSource: 'linked',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: false,
-    isCalculated: true,
-    aggregationMethod: 'average',
-    order: 51
-  },
-  {
-    key: 'ohbProductivity',
-    label: 'OHB生産性',
-    category: 'productivity',
-    type: 'number',
-    fieldSource: 'linked',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: false,
-    isCalculated: true,
-    aggregationMethod: 'average',
-    order: 52
-  },
-
-  // その他
-  {
-    key: 'voidCount',
-    label: 'VOID件数',
-    category: 'other',
-    type: 'count',
-    fieldSource: 'linked',
-    unit: '件',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 60
-  },
-  {
-    key: 'voidAmount',
-    label: 'VOID金額',
-    category: 'other',
-    type: 'currency',
-    fieldSource: 'linked',
-    unit: '円',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 61
-  },
-  {
-    key: 'cashDifference',
-    label: '売上金過不足',
-    category: 'other',
-    type: 'currency',
-    fieldSource: 'linked',
-    unit: '円',
-    isVisible: true,
-    isVisibleInDailySales: true,
-    isVisibleInMonthlySales: true,
-    isEditable: true,
-    isCalculated: false,
-    aggregationMethod: 'sum',
-    order: 62
-  },
+  }
 ];
+
+// デフォルトフィールド設定を取得する関数
+export const getDefaultFieldConfigs = (businessType: string = 'cafe'): SalesFieldConfig[] => {
+  // 現時点ではカフェ業態のみサポート
+  // 将来的に他の業態を追加する場合は、ここで分岐
+  switch (businessType) {
+    case 'cafe':
+      return [...DEFAULT_SALES_FIELDS, ...CAFE_ADDITIONAL_FIELDS];
+    default:
+      return DEFAULT_SALES_FIELDS;
+  }
+};
+
+// フィールド設定のバリデーション
+export const validateFieldConfig = (field: Partial<SalesFieldConfig>): string[] => {
+  const errors: string[] = [];
+
+  if (!field.id) errors.push('IDは必須です');
+  if (!field.key) errors.push('キーは必須です');
+  if (!field.label) errors.push('ラベルは必須です');
+  if (!field.category) errors.push('カテゴリーは必須です');
+  if (!field.type) errors.push('タイプは必須です');
+  if (!field.fieldSource) errors.push('フィールドソースは必須です');
+  if (field.order === undefined || field.order < 0) errors.push('表示順序は0以上の数値である必要があります');
+
+  // フィールドソースごとの検証
+  if (field.fieldSource === 'dailyOnly' && field.isVisibleInMonthlySales) {
+    errors.push('日次専用項目は月次売上管理で表示できません');
+  }
+  if (field.fieldSource === 'monthlyOnly' && field.isVisibleInDailySales) {
+    errors.push('月次専用項目は日次売上管理で表示できません');
+  }
+  if (field.fieldSource === 'linked' && field.aggregationMethod === 'none') {
+    errors.push('連携項目には集計方法を設定する必要があります');
+  }
+
+  return errors;
+};
+
+// フィールドの並び順を正規化
+export const normalizeFieldOrder = (fields: SalesFieldConfig[]): SalesFieldConfig[] => {
+  return fields
+    .sort((a, b) => a.order - b.order)
+    .map((field, index) => ({
+      ...field,
+      order: index + 1
+    }));
+};
