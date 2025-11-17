@@ -15,9 +15,17 @@ The system supports role-based access (user, admin, super_admin) with JWT authen
 
 ### Starting Development Environment
 
-Both frontend and backend must be running simultaneously:
+**前提条件**: PostgreSQLをDockerコンテナで起動する必要があります
 
 ```bash
+# PostgreSQLコンテナ起動（初回のみ）
+docker run -d --name management-db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres123 \
+  -e POSTGRES_DB=shift_management \
+  -p 5433:5432 \
+  postgres:15-alpine
+
 # Terminal 1 - Backend (runs on port 3001)
 cd backend
 npm run dev
@@ -53,7 +61,19 @@ npm run debug:browser
 
 ```bash
 cd backend
-npm run migrate:pl   # Run P&L schema migration
+
+# PostgreSQLコンテナが起動していることを確認
+docker ps | grep management-db
+
+# データベース初期化（新規環境の場合）
+PGPASSWORD=postgres123 psql -h localhost -p 5433 -U postgres -d shift_management -f init_db.sql
+PGPASSWORD=postgres123 psql -h localhost -p 5433 -U postgres -d shift_management -f create_missing_tables.sql
+
+# P&Lテーブルのマイグレーション
+PGPASSWORD=postgres123 psql -h localhost -p 5433 -U postgres -d shift_management -f migrations/003_create_pl_tables.sql
+
+# 管理者ユーザー作成
+node create_admin.js
 ```
 
 ## Architecture Overview
@@ -161,7 +181,7 @@ Component → Store → API Client → Backend Route → Controller → Service 
 
 - Frontend: **3002** (not 3000, customized via `--port 3002`)
 - Backend: **3001**
-- PostgreSQL: **5432**
+- PostgreSQL: **5433** (Dockerコンテナで実行、システムのPostgreSQLとの競合を避けるため)
 
 ### Desktop Project Reference
 
@@ -189,10 +209,29 @@ Frontend (`next-app/.env.local`):
 NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
-Backend (environment-specific):
-- Database connection details
-- JWT secret
-- Redis configuration (if using cache)
+Backend (`backend/.env`):
+```env
+# データベース設定（重要: ポート5433を使用）
+DATABASE_URL=postgresql://postgres:postgres123@localhost:5433/shift_management
+DB_HOST=localhost
+DB_NAME=shift_management
+DB_USER=postgres
+DB_PASSWORD=postgres123
+DB_PORT=5433  # ⚠️ 注意: 5432ではなく5433を使用
+
+# アプリケーション設定
+NODE_ENV=development
+PORT=3001
+
+# セキュリティ設定
+JWT_SECRET=your-jwt-secret-key-here
+SESSION_SECRET=your-session-secret-key-here
+```
+
+**重要な注意点**:
+- PostgreSQLは**Dockerコンテナで実行**され、ポート**5433**を使用
+- システムのPostgreSQLとの競合を避けるため、デフォルトの5432は使用しない
+- 本番環境（VPS）でも同じ設定を使用
 
 ## Testing Approach
 
