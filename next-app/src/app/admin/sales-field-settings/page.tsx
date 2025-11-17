@@ -7,7 +7,7 @@ import {
   BusinessTypeSalesConfig,
   SalesFieldConfig,
   DEFAULT_SALES_FIELDS,
-  EDW_SALES_FIELD_CONFIG
+  getDefaultFieldConfigs
 } from '@/types/sales-field-config';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useBusinessTypeStore } from '@/stores/businessTypeStore';
