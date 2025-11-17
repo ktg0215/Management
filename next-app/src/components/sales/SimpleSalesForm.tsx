@@ -9,6 +9,9 @@ interface SimpleSalesFormProps {
     revenue?: number;
     cost?: number;
     profit?: number;
+    cafeRevenue?: number;
+    cafeCost?: number;
+    cafeProfit?: number;
   };
   storeId: string;
   year: number;
@@ -27,6 +30,9 @@ export const SimpleSalesForm: React.FC<SimpleSalesFormProps> = ({
   const [revenue, setRevenue] = useState<string>('');
   const [cost, setCost] = useState<string>('');
   const [profit, setProfit] = useState<string>('');
+  const [cafeRevenue, setCafeRevenue] = useState<string>('');
+  const [cafeCost, setCafeCost] = useState<string>('');
+  const [cafeProfit, setCafeProfit] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -34,10 +40,16 @@ export const SimpleSalesForm: React.FC<SimpleSalesFormProps> = ({
       setRevenue(initialData.revenue?.toString() || '');
       setCost(initialData.cost?.toString() || '');
       setProfit(initialData.profit?.toString() || '');
+      setCafeRevenue(initialData.cafeRevenue?.toString() || '');
+      setCafeCost(initialData.cafeCost?.toString() || '');
+      setCafeProfit(initialData.cafeProfit?.toString() || '');
     } else if (isOpen) {
       setRevenue('');
       setCost('');
       setProfit('');
+      setCafeRevenue('');
+      setCafeCost('');
+      setCafeProfit('');
     }
   }, [isOpen, initialData]);
 
@@ -50,6 +62,16 @@ export const SimpleSalesForm: React.FC<SimpleSalesFormProps> = ({
       setProfit(calculatedProfit.toString());
     }
   }, [revenue, cost]);
+
+  // Auto-calculate cafe profit when cafe revenue or cost changes
+  useEffect(() => {
+    const cafeRevenueNum = parseFloat(cafeRevenue) || 0;
+    const cafeCostNum = parseFloat(cafeCost) || 0;
+    const calculatedCafeProfit = cafeRevenueNum - cafeCostNum;
+    if (!isNaN(calculatedCafeProfit)) {
+      setCafeProfit(calculatedCafeProfit.toString());
+    }
+  }, [cafeRevenue, cafeCost]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +92,9 @@ export const SimpleSalesForm: React.FC<SimpleSalesFormProps> = ({
             revenue: parseFloat(revenue) || 0,
             cost: parseFloat(cost) || 0,
             profit: parseFloat(profit) || 0,
+            cafeRevenue: parseFloat(cafeRevenue) || 0,
+            cafeCost: parseFloat(cafeCost) || 0,
+            cafeProfit: parseFloat(cafeProfit) || 0,
           },
         }),
       });

@@ -1,7 +1,13 @@
 import { Pool, PoolConfig } from 'pg';
 
 const poolConfig: PoolConfig = {
-  connectionString: process.env.DATABASE_URL?.trim(),
+  // Database connection parameters
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || '5432'),
+  database: process.env.DB_NAME || 'shift_management',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'postgres123',
+
   // Connection pool optimization
   max: parseInt(process.env.DB_POOL_MAX || '20'), // Maximum connections
   min: parseInt(process.env.DB_POOL_MIN || '5'),  // Minimum connections
@@ -9,11 +15,11 @@ const poolConfig: PoolConfig = {
   connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000'), // 10s
   acquireTimeoutMillis: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '60000'), // 60s
   maxUses: parseInt(process.env.DB_MAX_USES || '7500'), // Max uses per connection
-  
+
   // Performance tuning
   keepAlive: true,
   keepAliveInitialDelayMillis: 10000,
-  
+
   // Error handling
   allowExitOnIdle: process.env.NODE_ENV !== 'production',
 };

@@ -184,4 +184,8 @@ old/
 
 # Root level package files (project uses monorepo structure)
 /package.json
-/package-lock.json
+/package-lock.json*.png
+*.js
+*.html
+data/
+*.json
