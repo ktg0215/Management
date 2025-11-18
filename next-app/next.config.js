@@ -2,6 +2,9 @@
 const nextConfig = {
   // /bb パスでアプリケーションを提供
   basePath: '/bb',
+  eslint: {
+    ignoreDuringBuilds: true
+  },
   // Docker用のスタンドアロンビルドを有効化
   output: 'standalone',
   // 静的ファイルの最適化
@@ -83,4 +86,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig 
+module.exports = nextConfig

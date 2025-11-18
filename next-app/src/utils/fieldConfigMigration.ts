@@ -123,6 +123,7 @@ export function migrateSingleField(
     ...legacyField,
     isVisibleInDailySales: legacyField.isVisible,  // isVisible maps to daily sales visibility
     isVisibleInMonthlySales,
+    fieldSource: "linked",
     aggregationMethod
   };
 }

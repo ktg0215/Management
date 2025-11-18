@@ -2,11 +2,11 @@ module.exports = {
   apps: [
     {
       name: 'management-backend',
-      script: './backend/src/index.ts',
-      interpreter: 'node',
-      interpreter_args: '--require ts-node/register',
+      script: 'npm',
+      args: 'start',
+      cwd: './backend',
       instances: 1,
-      exec_mode: 'cluster',
+      exec_mode: 'fork',
       watch: false,
       max_memory_restart: '500M',
       env: {
@@ -27,7 +27,7 @@ module.exports = {
       args: 'start',
       cwd: './next-app',
       instances: 1,
-      exec_mode: 'cluster',
+      exec_mode: 'fork',
       watch: false,
       max_memory_restart: '1G',
       env: {

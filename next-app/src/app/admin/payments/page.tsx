@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Building2, Edit2, EyeOff, Building, RotateCcw, Calendar, Plus, X, Save, RefreshCw, Trash2, Eye, Search, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
+import { formatStoreName } from '@/utils/storeDisplay';
 
 // 型定義
 export type PaymentType = 'regular' | 'irregular' | 'specific';
@@ -725,6 +726,7 @@ function PaymentManagement() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { stores, fetchStores } = useStoreStore();
+  const [selectedStoreId, setSelectedStoreId] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | undefined>();
@@ -749,15 +751,23 @@ function PaymentManagement() {
     resetData,
   } = usePaymentData();
 
-  const storeName = user?.storeId ? stores.find(store => store.id === user.storeId)?.name || '株式会社サンプル' : '株式会社サンプル';
-
   useEffect(() => {
     setIsHydrated(true);
   }, []);
 
+  // 店舗データを取得
   useEffect(() => {
-    if (stores.length === 0) fetchStores();
-  }, [stores.length, fetchStores]);
+    if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+      fetchStores();
+    }
+  }, [user, fetchStores]);
+
+  // ユーザーの権限に応じて初期店舗を設定
+  useEffect(() => {
+    if (user && stores.length > 0 && !selectedStoreId) {
+      setSelectedStoreId(String(user.storeId || ''));
+    }
+  }, [user, stores, selectedStoreId]);
 
   const handleSaveCompany = (companyData: Omit<Company, 'id'>) => {
     if (editingCompany) {
@@ -808,6 +818,35 @@ function PaymentManagement() {
                 <div className="flex items-center space-x-3">
                   <Building2 className="w-8 h-8 text-blue-600" />
                   <h1 className="text-xl font-bold text-gray-900">支払い管理システム</h1>
+
+                  {/* 店舗選択/表示 */}
+                  {isHydrated && user && (
+                    user.role === 'super_admin' ? (
+                      // 総管理者：店舗選択ドロップボックス
+                      <select
+                        value={selectedStoreId}
+                        onChange={(e) => setSelectedStoreId(e.target.value)}
+                        className="ml-3 px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">店舗を選択してください</option>
+                        {stores.map(store => (
+                          <option key={store.id} value={store.id}>
+                            {formatStoreName(store)}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      // 管理者：所属店舗名表示
+                      selectedStoreId && stores.length > 0 && (() => {
+                        const store = stores.find(s => String(s.id) === selectedStoreId);
+                        return store ? (
+                          <span className="ml-3 px-3 py-2 bg-gray-100 text-sm font-medium text-gray-700 rounded-lg">
+                            {formatStoreName(store)}
+                          </span>
+                        ) : null;
+                      })()
+                    )
+                  )}
                 </div>
 
                 {/* Year-Month Display with Calendar Button and Total */}
@@ -837,20 +876,16 @@ function PaymentManagement() {
                 </div>
               </div>
 
-              {/* Save Button and Store Name */}
+              {/* Save Button */}
               <div className="flex items-center space-x-6">
-{isHydrated && (
-                <SaveButton
-                  hasUnsavedChanges={hasUnsavedChanges}
-                  lastSaved={lastSaved}
-                  onSave={saveData}
-                  onReset={resetData}
-                />
+                {isHydrated && (
+                  <SaveButton
+                    hasUnsavedChanges={hasUnsavedChanges}
+                    lastSaved={lastSaved}
+                    onSave={saveData}
+                    onReset={resetData}
+                  />
                 )}
-
-                <div className="text-lg font-semibold text-gray-900">
-                  {storeName}
-                </div>
               </div>
             </div>
           </div>

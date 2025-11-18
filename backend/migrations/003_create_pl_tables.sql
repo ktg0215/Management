@@ -4,10 +4,10 @@ BEGIN;
 -- 損益表ヘッダ
 CREATE TABLE IF NOT EXISTS pl_statements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id UUID REFERENCES stores(id) ON DELETE CASCADE,
+  store_id INTEGER REFERENCES stores(id) ON DELETE CASCADE,
   year INTEGER NOT NULL,
   month INTEGER NOT NULL,
-  created_by UUID REFERENCES employees(id) ON DELETE SET NULL,
+  created_by INTEGER REFERENCES employees(id) ON DELETE SET NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(store_id, year, month)

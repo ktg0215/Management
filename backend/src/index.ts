@@ -119,7 +119,7 @@ app.get('/health', (req, res) => {
 // 総管理者アカウント作成API
 app.post('/api/admin/create-account', requireDatabase, async (req, res) => {
   try {
-    const adminCheck = await pool!.query("SELECT COUNT(*) FROM employees WHERE role = 'admin' OR role = 'super_admin'");
+    const adminCheck = await pool!.query("SELECT COUNT(*) FROM users WHERE role = 'admin' OR role = 'super_admin'");
     if (parseInt(adminCheck.rows[0].count, 10) > 0) {
       res.status(400).json({ error: '既に管理者が存在します' });
       return;
@@ -140,8 +140,8 @@ app.post('/api/admin/create-account', requireDatabase, async (req, res) => {
     }
     const role = 'super_admin';
     const result = await pool!.query(
-      `INSERT INTO employees (employee_id, password_hash, full_name, nickname, store_id, role)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      `INSERT INTO users (email, password, name, store_id, role)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id, email as employee_id, name, role, store_id`,
       [employeeId, passwordHash, fullName, nickname, storeId, role]
     );
     const user = toCamelCase(result.rows[0]);
@@ -156,7 +156,7 @@ app.post('/api/admin/create-account', requireDatabase, async (req, res) => {
 // 管理者存在チェックAPI
 app.get('/api/admin/check-existing', requireDatabase, async (req, res) => {
   try {
-    const adminCheck = await pool!.query("SELECT COUNT(*) FROM employees WHERE role = 'admin' OR role = 'super_admin'");
+    const adminCheck = await pool!.query("SELECT COUNT(*) FROM users WHERE role = 'admin' OR role = 'super_admin'");
     const hasAdmins = parseInt(adminCheck.rows[0].count, 10) > 0;
     res.json({ data: { hasAdmins } });
   } catch (err) {
@@ -174,7 +174,7 @@ app.post('/api/auth/login', requireDatabase, async (req: Request, res: Response)
   
   try {
     const userResult = await pool!.query(
-      `SELECT id, employee_id, full_name, nickname, store_id, password_hash, role, is_active FROM employees WHERE employee_id = $1 LIMIT 1`,
+      `SELECT id, email as employee_id, name as full_name, name as nickname, store_id, password as password_hash, role FROM users WHERE email = $1 LIMIT 1`,
       [employeeId]
     );
     
@@ -194,12 +194,6 @@ app.post('/api/auth/login', requireDatabase, async (req: Request, res: Response)
       isActive: user.isActive,
       hasPasswordHash: !!user.passwordHash
     });
-    
-    if (!user.isActive) {
-      console.log('アカウントが無効');
-      res.status(403).json({ error: 'アカウントが無効です' });
-      return;
-    }
     
     // 一時的にパスワードチェックをスキップ（従業員ID 0000 & パスワード toyama2023 の場合）
     let isMatch = false;
@@ -263,7 +257,7 @@ app.get('/api/auth/me', requireDatabase, authenticateToken, async (req: Request,
   try {
     const userPayload = (req as any).user;
     const userResult = await pool!.query(
-      `SELECT id, employee_id, full_name, nickname, store_id, role, is_active FROM employees WHERE id = $1`,
+      `SELECT id, email as employee_id, name as full_name, name as nickname, store_id, role, true as is_active FROM users WHERE id = $1`,
       [userPayload.id]
     );
     if (userResult.rows.length === 0) {
@@ -295,7 +289,7 @@ app.post('/api/auth/register', requireDatabase, async (req: Request, res: Respon
   try {
     // 既存ユーザーチェック
     const existingUser = await pool!.query(
-      'SELECT id FROM employees WHERE employee_id = $1',
+      'SELECT id FROM users WHERE email = $1',
       [employeeId]
     );
     if (existingUser.rows.length > 0) {
@@ -304,8 +298,8 @@ app.post('/api/auth/register', requireDatabase, async (req: Request, res: Respon
     const passwordHash = await bcrypt.hash(password, 10);
     const userRole = role || 'user';
     const result = await pool!.query(
-      `INSERT INTO employees (employee_id, password_hash, full_name, nickname, store_id, role)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      `INSERT INTO users (email, password, name, store_id, role)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id, email as employee_id, name, role, store_id`,
       [employeeId, passwordHash, fullName, nickname, storeId, userRole]
     );
     const user = toCamelCase(result.rows[0]);
@@ -323,15 +317,9 @@ app.post('/api/auth/register', requireDatabase, async (req: Request, res: Respon
 });
 
 // 店舗管理API
-app.get('/api/stores', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+app.get('/api/stores', requireDatabase, async (req: Request, res: Response) => {
   try {
-    const result = await pool!.query(`
-      SELECT s.*, bt.name as business_type_name
-      FROM stores s
-      LEFT JOIN business_types bt ON s.business_type_id = bt.id
-      WHERE LOWER(bt.name) != 'manager' OR bt.name IS NULL
-      ORDER BY s.name
-    `);
+    const result = await pool!.query(`SELECT * FROM stores ORDER BY name`);
     const stores = toCamelCase(result.rows);
     res.json({ data: stores });
   } catch (err) {
@@ -620,10 +608,12 @@ app.get('/api/activity-logs', requireDatabase, authenticateToken, async (req: Re
 app.get('/api/employees', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   try {
     const result = await pool!.query(`
-      SELECT e.*, s.name as store_name 
-      FROM employees e 
-      LEFT JOIN stores s ON e.store_id = s.id 
-      ORDER BY e.employee_id
+      SELECT u.id, u.email as employee_id, u.name as full_name,
+  u.name as nickname, u.store_id, u.role, s.name as store_name
+        FROM users u
+        LEFT JOIN stores s ON u.store_id = s.id
+        ORDER BY u.email
+	
     `);
     const employees = toCamelCase(result.rows);
     res.json({ data: employees });
@@ -645,7 +635,7 @@ app.post('/api/employees', requireDatabase, authenticateToken, async (req: Reque
   try {
     // 既存ユーザーチェック
     const existingUser = await pool!.query(
-      'SELECT id FROM employees WHERE employee_id = $1',
+      'SELECT id FROM users WHERE email = $1',
       [employeeId]
     );
     if (existingUser.rows.length > 0) {
@@ -654,8 +644,8 @@ app.post('/api/employees', requireDatabase, authenticateToken, async (req: Reque
     const passwordHash = await bcrypt.hash(password, 10);
     const userRole = role || 'user';
     const result = await pool!.query(
-      `INSERT INTO employees (employee_id, password_hash, full_name, nickname, store_id, role)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      `INSERT INTO users (email, password, name, store_id, role)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id, email as employee_id, name, role, store_id`,
       [employeeId, passwordHash, fullName, nickname, storeId, userRole]
     );
     const employee = toCamelCase(result.rows[0]);
@@ -706,7 +696,7 @@ app.delete('/api/employees/:id', requireDatabase, authenticateToken, async (req:
 app.get('/api/shift-periods', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   try {
     // shift_periodsテーブルにはstore_idカラムがないため、全件取得
-    const query = 'SELECT * FROM shift_periods ORDER BY start_date DESC';
+    const query = 'SELECT * FROM shift_periods ORDER BY year DESC, month DESC, period DESC';
     const result = await pool!.query(query);
     const periods = toCamelCase(result.rows);
     res.json({ data: periods });
@@ -1007,7 +997,7 @@ app.get('/api/pl', requireDatabase, authenticateToken, async (req: Request, res:
   }
   try {
     const result = await pool!.query(
-      'SELECT * FROM profit_loss WHERE year = $1 AND month = $2 AND store_id = $3 LIMIT 1',
+      'SELECT * FROM pl_statements WHERE year = $1 AND month = $2 AND store_id = $3 LIMIT 1',
       [year, month, storeId]
     );
     if (result.rows.length === 0) {
