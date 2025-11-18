@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // /bb パスでアプリケーションを提供
+  basePath: '/bb',
   // Docker用のスタンドアロンビルドを有効化
   output: 'standalone',
   // 静的ファイルの最適化
