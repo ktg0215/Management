@@ -1427,47 +1427,32 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
   }
 
   try {
-    // salesテーブルから月次データを取得
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const endDate = new Date(Number(year), Number(month), 0);
-    const endDateStr = `${year}-${String(month).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
-
+    // sales_dataテーブルから月次データを取得
     const result = await pool!.query(
-      `SELECT
-        date,
-        revenue,
-        cost,
-        profit,
-        EXTRACT(DAY FROM date) as day
-      FROM sales
-      WHERE store_id = $1 AND date >= $2 AND date <= $3
-      ORDER BY date`,
-      [storeId, startDate, endDateStr]
+      `SELECT id, store_id, year, month, daily_data, created_at, updated_at
+       FROM sales_data
+       WHERE store_id = $1 AND year = $2 AND month = $3`,
+      [storeId, year, month]
     );
 
-    // 日別データを整形
-    const dailyData: any = {};
-    result.rows.forEach(row => {
-      const day = Number(row.day);
-      dailyData[day] = {
-        revenue: Number(row.revenue),
-        cost: Number(row.cost),
-        profit: Number(row.profit)
-      };
+    if (result.rows.length === 0) {
+      res.json({ success: true, data: null });
+      return;
+    }
+
+    const row = result.rows[0];
+    res.json({
+      success: true,
+      data: {
+        id: row.id,
+        year: row.year,
+        month: row.month,
+        store_id: row.store_id,
+        daily_data: row.daily_data,
+        created_at: row.created_at,
+        updated_at: row.updated_at
+      }
     });
-
-    // sales_dataテーブルの形式に合わせて返す
-    const salesData = {
-      id: `${storeId}-${year}-${month}`,
-      year: Number(year),
-      month: Number(month),
-      store_id: Number(storeId),
-      daily_data: JSON.stringify(dailyData),
-      created_at: new Date(),
-      updated_at: new Date()
-    };
-
-    res.json({ success: true, data: result.rows.length > 0 ? salesData : null });
   } catch (err) {
     console.error('売上データ取得エラー:', err);
     res.status(500).json({ success: false, error: '売上データの取得に失敗しました' });
