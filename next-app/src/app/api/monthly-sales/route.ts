@@ -12,6 +12,9 @@ interface MonthlyData {
   updatedAt: Date;
 }
 
+// バックエンドAPIのベースURL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 // GET: 月次データの取得
 export async function GET(request: NextRequest) {
   try {
@@ -26,20 +29,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // TODO: 実際のデータベースクエリに置き換える
-    // const monthlyData = await db.monthlyData.findMany({
-    //   where: {
-    //     storeId,
-    //     businessTypeId,
-    //   },
-    //   orderBy: [
-    //     { year: 'asc' },
-    //     { month: 'asc' }
-    //   ]
-    // });
+    // バックエンドAPIから月次データを取得
+    const response = await fetch(
+      `${API_BASE_URL}/api/sales?storeId=${storeId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-    // 現在は空配列を返す
-    const monthlyData: MonthlyData[] = [];
+    if (!response.ok) {
+      throw new Error('バックエンドからのデータ取得に失敗しました');
+    }
+
+    const result = await response.json();
+
+    // sales_dataテーブルから取得したデータを変換
+    const monthlyData: MonthlyData[] = result.data ? [{
+      id: result.data.id || `${storeId}-${result.data.year}-${result.data.month}`,
+      storeId: storeId,
+      businessTypeId: businessTypeId,
+      year: result.data.year,
+      month: result.data.month,
+      data: typeof result.data.daily_data === 'string'
+        ? JSON.parse(result.data.daily_data)
+        : result.data.daily_data || {},
+      createdAt: new Date(result.data.created_at),
+      updatedAt: new Date(result.data.updated_at)
+    }] : [];
 
     return NextResponse.json({
       success: true,
@@ -68,41 +87,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: 実際のデータベース保存処理に置き換える
-    // const savedData = await db.monthlyData.upsert({
-    //   where: {
-    //     storeId_businessTypeId_year_month: {
-    //       storeId,
-    //       businessTypeId,
-    //       year,
-    //       month
-    //     }
-    //   },
-    //   update: {
-    //     data,
-    //     updatedAt: new Date()
-    //   },
-    //   create: {
-    //     id: generateId(),
-    //     storeId,
-    //     businessTypeId,
-    //     year,
-    //     month,
-    //     data,
-    //     createdAt: new Date(),
-    //     updatedAt: new Date()
-    //   }
-    // });
+    // バックエンドAPIにデータを保存
+    const response = await fetch(`${API_BASE_URL}/api/sales`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        year,
+        month,
+        storeId,
+        dailyData: data, // monthly-salesのdataをdailyDataとして保存
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'バックエンドへの保存に失敗しました');
+    }
+
+    const result = await response.json();
 
     return NextResponse.json({
       success: true,
-      message: 'データが正常に保存されました'
+      message: 'データが正常に保存されました',
+      data: result
     });
 
   } catch (error) {
     console.error('月次データ保存エラー:', error);
+    const errorMessage = error instanceof Error ? error.message : 'データの保存に失敗しました';
     return NextResponse.json(
-      { success: false, error: 'データの保存に失敗しました' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
@@ -113,22 +129,34 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const storeId = searchParams.get('storeId');
-    const businessTypeId = searchParams.get('businessTypeId');
+    const year = searchParams.get('year');
+    const month = searchParams.get('month');
 
-    if (!storeId || !businessTypeId) {
+    if (!storeId || !year || !month) {
       return NextResponse.json(
-        { success: false, error: 'storeIdとbusinessTypeIdが必要です' },
+        { success: false, error: 'storeId、year、monthが必要です' },
         { status: 400 }
       );
     }
 
-    // TODO: 実際のデータベース削除処理に置き換える
-    // await db.monthlyData.deleteMany({
-    //   where: {
-    //     storeId,
-    //     businessTypeId
-    //   }
-    // });
+    // バックエンドAPIでデータを削除
+    // 注: バックエンドに削除エンドポイントがない場合は、空データで上書きする
+    const response = await fetch(`${API_BASE_URL}/api/sales`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        year: parseInt(year),
+        month: parseInt(month),
+        storeId,
+        dailyData: {}, // 空のデータで上書き
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('バックエンドでの削除に失敗しました');
+    }
 
     return NextResponse.json({
       success: true,
@@ -137,8 +165,9 @@ export async function DELETE(request: NextRequest) {
 
   } catch (error) {
     console.error('月次データ削除エラー:', error);
+    const errorMessage = error instanceof Error ? error.message : 'データの削除に失敗しました';
     return NextResponse.json(
-      { success: false, error: 'データの削除に失敗しました' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
