@@ -187,4 +187,14 @@ export const DEFAULT_FIELDS: Omit<Field, 'id'>[] = [
   { name: 'TOドリ売上', category: 'sales', type: 'currency', unit: '円', isRequired: false, isCalculated: false, order: 84 },
   { name: '物販売上', category: 'sales', type: 'currency', unit: '円', isRequired: false, isCalculated: false, order: 85 },
   { name: '焙煎豆売上', category: 'sales', type: 'currency', unit: '円', isRequired: false, isCalculated: false, order: 86 },
-]; 
+
+  // OHB予約関連
+  { name: '予約件数', category: 'sales', type: 'count', unit: '件', isRequired: false, isCalculated: false, order: 87 },
+  { name: 'プレーン', category: 'sales', type: 'count', unit: '個', isRequired: false, isCalculated: false, order: 88 },
+  { name: '純生', category: 'sales', type: 'count', unit: '個', isRequired: false, isCalculated: false, order: 89 },
+  { name: '季節', category: 'sales', type: 'count', unit: '個', isRequired: false, isCalculated: false, order: 90 },
+
+  // アンケート関連
+  { name: 'アンケート取得枚数', category: 'marketing', type: 'count', unit: '枚', isRequired: false, isCalculated: false, order: 91 },
+  { name: 'アンケート取得率', category: 'marketing', type: 'percentage', unit: '%', isRequired: false, isCalculated: true, order: 92 },
+];
