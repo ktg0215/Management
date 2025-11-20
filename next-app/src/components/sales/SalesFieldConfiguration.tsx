@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
   SalesFieldConfig,
   SALES_FIELD_CATEGORIES,
-  SalesFieldCategory
+  SalesFieldCategory,
+  SalesFieldType
 } from '@/types/sales-field-config';
 import {
   Eye,
@@ -11,7 +12,11 @@ import {
   Lock,
   Unlock,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Plus,
+  Trash2,
+  X,
+  Save
 } from 'lucide-react';
 
 interface SalesFieldConfigurationProps {
@@ -28,6 +33,74 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
   const [expandedCategories, setExpandedCategories] = useState<Set<SalesFieldCategory>>(
     new Set(Object.keys(SALES_FIELD_CATEGORIES) as SalesFieldCategory[])
   );
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newField, setNewField] = useState<{
+    label: string;
+    key: string;
+    category: SalesFieldCategory;
+    type: SalesFieldType;
+    unit: string;
+    isCalculated: boolean;
+  }>({
+    label: '',
+    key: '',
+    category: 'other',
+    type: 'number',
+    unit: '',
+    isCalculated: false,
+  });
+
+  const handleAddField = () => {
+    if (!newField.label.trim() || !newField.key.trim()) {
+      alert('項目名とキーは必須です');
+      return;
+    }
+
+    // キーの重複チェック
+    if (fields.some(f => f.key === newField.key)) {
+      alert('このキーは既に使用されています');
+      return;
+    }
+
+    const field: SalesFieldConfig = {
+      id: `custom-${Date.now()}`,
+      key: newField.key,
+      label: newField.label,
+      category: newField.category,
+      type: newField.type,
+      unit: newField.unit || undefined,
+      fieldSource: 'linked',
+      isVisible: true,
+      isVisibleInDailySales: true,
+      isVisibleInMonthlySales: true,
+      isEditable: !newField.isCalculated,
+      isCalculated: newField.isCalculated,
+      aggregationMethod: newField.isCalculated ? 'average' : 'sum',
+      order: fields.length + 1,
+    };
+
+    onFieldsChange([...fields, field]);
+    setShowAddModal(false);
+    setNewField({
+      label: '',
+      key: '',
+      category: 'other',
+      type: 'number',
+      unit: '',
+      isCalculated: false,
+    });
+  };
+
+  const handleDeleteField = (fieldId: string) => {
+    if (window.confirm('この項目を削除しますか？')) {
+      const updatedFields = fields.filter(f => f.id !== fieldId);
+      // Reorder remaining fields
+      updatedFields.forEach((field, index) => {
+        field.order = index + 1;
+      });
+      onFieldsChange(updatedFields);
+    }
+  };
 
   const toggleCategory = (category: SalesFieldCategory) => {
     const newExpanded = new Set(expandedCategories);
@@ -87,12 +160,23 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
   return (
     <div className="space-y-4">
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-medium text-blue-900">
-          {businessTypeName} の売上管理表示項目設定
-        </h3>
-        <p className="text-sm text-blue-700 mt-1">
-          各項目の表示/非表示、編集可否、表示順序を設定できます
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-medium text-blue-900">
+              {businessTypeName} の売上管理表示項目設定
+            </h3>
+            <p className="text-sm text-blue-700 mt-1">
+              各項目の表示/非表示、編集可否、表示順序を設定できます
+            </p>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            項目を追加
+          </button>
+        </div>
       </div>
 
       {Object.entries(SALES_FIELD_CATEGORIES).map(([category, categoryLabel]) => {
@@ -215,6 +299,17 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
                               <Lock className="h-5 w-5" />
                             )}
                           </button>
+
+                          {/* Delete button (only for custom fields) */}
+                          {field.id.startsWith('custom-') && (
+                            <button
+                              onClick={() => handleDeleteField(field.id)}
+                              className="p-2 rounded-lg transition-colors bg-red-100 text-red-600 hover:bg-red-200"
+                              title="項目を削除"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -246,6 +341,128 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
           </div>
         </div>
       </div>
+
+      {/* Add Field Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">新しい項目を追加</h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  項目名 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newField.label}
+                  onChange={(e) => setNewField({ ...newField, label: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="例: 税抜売上"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  キー <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newField.key}
+                  onChange={(e) => setNewField({ ...newField, key: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="例: net_sales"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  英数字とアンダースコアのみ使用可能
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  カテゴリ
+                </label>
+                <select
+                  value={newField.category}
+                  onChange={(e) => setNewField({ ...newField, category: e.target.value as SalesFieldCategory })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {Object.entries(SALES_FIELD_CATEGORIES).map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  タイプ
+                </label>
+                <select
+                  value={newField.type}
+                  onChange={(e) => setNewField({ ...newField, type: e.target.value as SalesFieldType })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="text">テキスト</option>
+                  <option value="number">数値</option>
+                  <option value="currency">金額</option>
+                  <option value="percentage">パーセント</option>
+                  <option value="count">件数</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  単位（任意）
+                </label>
+                <input
+                  type="text"
+                  value={newField.unit}
+                  onChange={(e) => setNewField({ ...newField, unit: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="例: 円, %, 人"
+                />
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="isCalculated"
+                  checked={newField.isCalculated}
+                  onChange={(e) => setNewField({ ...newField, isCalculated: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="isCalculated" className="ml-2 text-sm text-gray-700">
+                  自動計算項目
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleAddField}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                追加する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
