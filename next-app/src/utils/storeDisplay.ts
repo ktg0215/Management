@@ -13,22 +13,23 @@ export function formatStoreName(store: Store): string {
 }
 
 /**
- * 店舗リストを業態毎にソートする
+ * 店舗リストを業態IDでソートする
  * @param stores 店舗リスト
  * @returns ソートされた店舗リスト
  */
 export function sortStoresByBusinessType(stores: Store[]): Store[] {
   return [...stores].sort((a, b) => {
-    // 業態名でソート（業態が設定されていない場合は最後に）
-    const businessTypeA = a.businessTypeName || 'zzz'; // 未設定は最後
-    const businessTypeB = b.businessTypeName || 'zzz';
-    const businessTypeComparison = businessTypeA.localeCompare(businessTypeB, 'ja');
-    
-    // 業態が同じ場合は店舗名でソート
-    if (businessTypeComparison === 0) {
-      return a.name.localeCompare(b.name, 'ja');
+    // 業態IDでソート（業態IDが小さい順、未設定は最後に）
+    const businessTypeIdA = a.businessTypeId ? parseInt(a.businessTypeId, 10) : 9999;
+    const businessTypeIdB = b.businessTypeId ? parseInt(b.businessTypeId, 10) : 9999;
+
+    if (businessTypeIdA !== businessTypeIdB) {
+      return businessTypeIdA - businessTypeIdB;
     }
-    
-    return businessTypeComparison;
+
+    // 業態が同じ場合は店舗IDでソート（数値として）
+    const storeIdA = parseInt(a.id, 10);
+    const storeIdB = parseInt(b.id, 10);
+    return storeIdA - storeIdB;
   });
 } 

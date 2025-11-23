@@ -5,22 +5,43 @@ import { BusinessTypeFieldConfiguration } from '@/components/monthly-sales/Busin
 import { StoreMonthlyDataTable } from '@/components/monthly-sales/StoreMonthlyDataTable';
 import { DataEntryModal } from '@/components/monthly-sales/DataEntryModal';
 import {
-  BusinessType,
   StoreMonthlyData,
   MonthlyData,
-  DEFAULT_FIELDS
+  Field
 } from '@/types/monthly-sales';
-import { generateId } from '../../../utils/calculations';
 import { useLocalStorage } from '../../../hooks/useLocalStorage';
 import { useStoreStore } from '../../../stores/storeStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { BarChart3, Settings, Database, RefreshCw, ShieldCheck } from 'lucide-react';
 
+// API Base URLを取得
+const getApiBaseUrl = (): string => {
+  if (typeof window === 'undefined') {
+    return 'http://localhost:3001/api';
+  }
+  // 本番環境かどうかを判定
+  const hostname = window.location.hostname;
+  const isProduction = hostname !== 'localhost' && hostname !== '127.0.0.1';
+  if (isProduction) {
+    return '/bb/api';
+  }
+  // ローカル開発環境
+  return 'http://localhost:3001/api';
+};
+
 // API連携用のヘルパー関数
 const fetchMonthlyData = async (storeId: string, businessTypeId: string): Promise<MonthlyData[]> => {
   try {
-    // TODO: 実際のAPIエンドポイントに置き換える
-    const response = await fetch(`/api/monthly-sales?storeId=${storeId}&businessTypeId=${businessTypeId}`);
+    // localStorageから認証トークンを取得（auth_tokenキー）
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+
+    // 環境に応じたAPIエンドポイント
+    const apiBase = getApiBaseUrl();
+    const response = await fetch(`${apiBase}/monthly-sales?storeId=${storeId}&businessTypeId=${businessTypeId}`, {
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+    });
     if (response.ok) {
       const data = await response.json();
       return data.success ? data.data : [];
@@ -32,30 +53,16 @@ const fetchMonthlyData = async (storeId: string, businessTypeId: string): Promis
   }
 };
 
-// const saveMonthlyDataAPI = async (data: MonthlyData): Promise<boolean> => {
-//   try {
-//     // TODO: 実際のAPIエンドポイントに置き換える
-//     const response = await fetch('/api/monthly-sales', {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify(data),
-//     });
-//     return response.ok;
-//   } catch (error) {
-//     console.error('月次データ保存エラー:', error);
-//     return false;
-//   }
-// };
-
 export default function MonthlySalesPage() {
   const { stores, fetchStores } = useStoreStore();
   const { isSuperAdmin, user } = useAuthStore();
-  const [businessTypes, setBusinessTypes] = useLocalStorage<BusinessType[]>('monthly-sales-business-types', []);
+  const [masterFields, setMasterFields] = useState<Field[]>([]);
   const [storeData, setStoreData] = useLocalStorage<StoreMonthlyData[]>('monthly-sales-store-data', []);
   const [activeTab, setActiveTab] = useState<'data' | 'fields'>('data');
   const [editingData, setEditingData] = useState<MonthlyData | null>(null);
   const [editingStoreId, setEditingStoreId] = useState<string>('');
-  const [editingBusinessTypeId, setEditingBusinessTypeId] = useState<string>('');
+  // editingBusinessTypeId is used to reset state on modal close
+  const [, setEditingBusinessTypeId] = useState<string>('');
 
   // 店舗データを取得
   useEffect(() => {
@@ -64,36 +71,18 @@ export default function MonthlySalesPage() {
     }
   }, [user, fetchStores]);
 
-  // 初期デモ業態の作成
-  useEffect(() => {
-    if (businessTypes.length === 0 && isSuperAdmin()) {
-      const defaultBusinessType: BusinessType = {
-        id: generateId(),
-        name: 'カフェ・レストラン',
-        fields: DEFAULT_FIELDS.map((field) => ({
-          ...field,
-          id: generateId(),
-        })),
-      };
-      setBusinessTypes([defaultBusinessType]);
-    }
-  }, [businessTypes, setBusinessTypes, isSuperAdmin]);
-
   // 店舗データの初期化
   useEffect(() => {
-    if (stores.length > 0 && businessTypes.length > 0) {
+    if (stores.length > 0) {
       const existingStoreIds = new Set(storeData.map(sd => sd.storeId));
       const newStoreData: StoreMonthlyData[] = [];
 
-            stores.forEach(store => {
+      stores.forEach(store => {
         if (!existingStoreIds.has(store.id)) {
-          // 店舗の業態に対応する BusinessType を探す
-          const businessType = businessTypes.find(bt => bt.id === store.businessTypeId) || businessTypes[0];
-
           newStoreData.push({
             storeId: store.id,
             storeName: store.name,
-            businessTypeId: businessType.id,
+            businessTypeId: store.businessTypeId || '',
             monthlyData: [],
           });
         }
@@ -103,10 +92,10 @@ export default function MonthlySalesPage() {
         setStoreData([...storeData, ...newStoreData]);
       }
     }
-  }, [stores, businessTypes, storeData, setStoreData]);
+  }, [stores, storeData, setStoreData]);
 
-  const handleBusinessTypesChange = (updatedBusinessTypes: BusinessType[]) => {
-    setBusinessTypes(updatedBusinessTypes);
+  const handleFieldsChange = (updatedFields: Field[]) => {
+    setMasterFields(updatedFields);
   };
 
   const handleStoreDataChange = (updatedStoreData: StoreMonthlyData[]) => {
@@ -145,20 +134,11 @@ export default function MonthlySalesPage() {
   };
 
   const handleLoadData = async () => {
-    if (businessTypes.length === 0) {
-      alert('まず業態を設定してください。');
-      return;
-    }
-
     try {
       const updatedStoreData = await Promise.all(
         storeData.map(async (sd) => {
-          const businessType = businessTypes.find(bt => bt.id === sd.businessTypeId);
-          if (businessType && businessType.fields.length > 0) {
-            const monthlyData = await fetchMonthlyData(sd.storeId, sd.businessTypeId);
-            return { ...sd, monthlyData };
-          }
-          return sd;
+          const monthlyData = await fetchMonthlyData(sd.storeId, sd.businessTypeId);
+          return { ...sd, monthlyData };
         })
       );
       setStoreData(updatedStoreData);
@@ -182,7 +162,6 @@ export default function MonthlySalesPage() {
   };
 
   const currentStore = stores.find(store => store.id === editingStoreId);
-  const currentBusinessType = businessTypes.find(bt => bt.id === editingBusinessTypeId);
 
   return (
     
@@ -254,14 +233,13 @@ export default function MonthlySalesPage() {
       {/* Content */}
       {activeTab === 'data' ? (
         <StoreMonthlyDataTable
-          businessTypes={businessTypes}
           storeData={storeData}
           onDataChange={handleStoreDataChange}
           onEditData={handleEditData}
         />
       ) : isSuperAdmin() ? (
         <BusinessTypeFieldConfiguration
-          onBusinessTypesChange={handleBusinessTypesChange}
+          onFieldsChange={handleFieldsChange}
         />
       ) : (
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-16 text-center">
@@ -281,9 +259,9 @@ export default function MonthlySalesPage() {
       )}
 
           {/* Data Entry Modal */}
-          {editingData && currentStore && currentBusinessType && (
+          {editingData && currentStore && masterFields.length > 0 && (
             <DataEntryModal
-              businessType={currentBusinessType}
+              fields={masterFields}
               storeName={currentStore.name}
               data={editingData}
               isOpen={!!editingData}

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
-import { Plus, X, Calculator, TrendingUp, DollarSign, BarChart3, Save, Calendar, Building2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, X, Calculator, TrendingUp, DollarSign, BarChart3, Save, Building2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
 import { formatStoreName, sortStoresByBusinessType } from '@/utils/storeDisplay';
 import apiClient from '@/lib/api';
 import { useSearchParams } from 'next/navigation';
+import YearMonthSelector from '@/components/YearMonthSelector';
 
 // 型定義
 type Payment = {
@@ -462,29 +463,12 @@ PaymentDetailList.displayName = 'PaymentDetailList';
         {/* Compact Controls */}
         <div className="px-4 py-3 bg-gray-50/50">
           <div className="flex flex-wrap items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-indigo-600" />
-              <label className="font-semibold text-gray-700">対象年月</label>
-              <input
-                type="number"
-                className="w-16 px-2 py-1 border border-gray-300 rounded text-center focus:ring-1 focus:ring-indigo-500"
-                min={2000}
-                max={2100}
-                value={year}
-                onChange={e => setYear(Number(e.target.value))}
-              />
-              <span className="text-gray-600">年</span>
-              <select
-                className="w-12 px-1 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500"
-                value={month}
-                onChange={e => setMonth(Number(e.target.value))}
-              >
-                {[...Array(12)].map((_, i) => (
-                  <option key={`month-option-${i + 1}`} value={i + 1}>{i + 1}</option>
-                ))}
-              </select>
-              <span className="text-gray-600">月</span>
-            </div>
+            <YearMonthSelector
+              year={year}
+              month={month}
+              onYearChange={setYear}
+              onMonthChange={setMonth}
+            />
 
             <div className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-indigo-600" />

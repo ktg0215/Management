@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { SalesHeader } from '@/components/sales/SalesHeader';
 import { SimpleSalesTable } from '@/components/sales/SimpleSalesTable';
 import { SimpleSalesForm } from '@/components/sales/SimpleSalesForm';
@@ -9,6 +9,7 @@ import { useSalesData, usePrefetchAdjacentMonths } from '@/hooks/queries/useSale
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
 import { formatStoreName } from '@/utils/storeDisplay';
+import { useBusinessTypeFields } from '@/hooks/useBusinessTypeFields';
 import { getDefaultFieldConfigs } from '@/types/sales-field-config';
 
 const SalesManagementPage = () => {
@@ -19,7 +20,17 @@ const SalesManagementPage = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [activeTab, setActiveTab] = useState<'data' | 'fields'>('data');
   const [isHydrated, setIsHydrated] = useState(false);
-  const [fieldConfigs, setFieldConfigs] = useState(() => getDefaultFieldConfigs('cafe'));
+
+  // Get businessTypeId from selected store
+  const selectedStore = stores.find(store => String(store.id) === selectedStoreId);
+  const businessTypeId = selectedStore?.businessTypeId;
+
+  // Use business type field configuration
+  const {
+    fields: fieldConfigs,
+    saveFields,
+    isLoading: isFieldsLoading
+  } = useBusinessTypeFields(businessTypeId);
 
   // Use React Query for data fetching
   const { data: monthlyData, isLoading, error, refetch } = useSalesData(selectedStoreId, currentYear, currentMonth);
@@ -106,20 +117,104 @@ const SalesManagementPage = () => {
 
   // Helper functions for compatibility with existing components
   const getDailyData = (date: string) => {
-    const data = monthlyData?.dailyData[date];
+    if (!monthlyData?.dailyData) return undefined;
+    const data = monthlyData.dailyData[date];
     if (!data) return undefined;
-    return {
-      revenue: (data as any).revenue,
-      cost: (data as any).cost,
-      profit: (data as any).profit,
-    };
+    return data;
   };
 
   const hasData = (date: string) => {
-    const data = monthlyData?.dailyData[date];
-    // revenue, cost, profitのいずれかがあればデータありと判定
-    return !!(data && ((data as any).revenue !== undefined || (data as any).cost !== undefined || (data as any).profit !== undefined));
+    if (!monthlyData?.dailyData) return false;
+    const data = monthlyData.dailyData[date];
+    // netSales（店舗純売上）があればデータありと判定
+    return !!(data && (data as any).netSales !== undefined);
   };
+  // Transform dailyData to format expected by SimpleSalesTable
+  const transformedDailyData = useMemo(() => {
+    if (!monthlyData?.dailyData) return {};
+
+    const transformed: { [date: string]: any } = {};
+
+    for (const date in monthlyData.dailyData) {
+      const data = monthlyData.dailyData[date] as any;
+
+      transformed[date] = {
+        date: data.date || date,
+        dayOfWeek: data.dayOfWeek || '',
+        // 売上・目標関連
+        salesTarget: data.salesTarget,
+        targetCumulative: data.targetCumulative,
+        targetRatio: data.targetRatio,
+        yearOverYear: data.yearOverYear,
+        edwYearOverYear: data.edwYearOverYear,
+        ohbYearOverYear: data.ohbYearOverYear,
+        aggregator: data.aggregator,
+        // 店舗純売上
+        netSales: data.netSales,
+        netSalesCumulative: data.netSalesCumulative,
+        // EDW・OHB売上
+        edwNetSales: data.edwNetSales,
+        edwNetSalesCumulative: data.edwNetSalesCumulative,
+        ohbNetSales: data.ohbNetSales,
+        ohbNetSalesCumulative: data.ohbNetSalesCumulative,
+        // 客数・組数
+        totalGroups: data.totalGroups,
+        totalCustomers: data.totalCustomers,
+        groupUnitPrice: data.groupUnitPrice,
+        customerUnitPrice: data.customerUnitPrice,
+        // 人件費関連
+        katougi: data.katougi,
+        ishimori: data.ishimori,
+        osawa: data.osawa,
+        washizuka: data.washizuka,
+        employeeHours: data.employeeHours,
+        asHours: data.asHours,
+        salesPerHour: data.salesPerHour,
+        laborCost: data.laborCost,
+        laborCostRate: data.laborCostRate,
+        // EDW営業明細
+        lunchSales: data.lunchSales,
+        dinnerSales: data.dinnerSales,
+        lunchCustomers: data.lunchCustomers,
+        dinnerCustomers: data.dinnerCustomers,
+        lunchGroups: data.lunchGroups,
+        dinnerGroups: data.dinnerGroups,
+        edwCustomerUnitPrice: data.edwCustomerUnitPrice,
+        lunchUnitPrice: data.lunchUnitPrice,
+        dinnerUnitPrice: data.dinnerUnitPrice,
+        // OHB
+        ohbSales: data.ohbSales,
+        ohbCustomers: data.ohbCustomers,
+        ohbGroups: data.ohbGroups,
+        ohbCustomerUnitPrice: data.ohbCustomerUnitPrice,
+        // VOID関連
+        voidCount: data.voidCount,
+        voidAmount: data.voidAmount,
+        salesDiscrepancy: data.salesDiscrepancy,
+        // 生産性
+        totalHours: data.totalHours,
+        edwBaitHours: data.edwBaitHours,
+        ohbBaitHours: data.ohbBaitHours,
+        edwProductivity: data.edwProductivity,
+        ohbProductivity: data.ohbProductivity,
+        totalProductivity: data.totalProductivity,
+        // OHB予約
+        reservationCount: data.reservationCount,
+        plain: data.plain,
+        junsei: data.junsei,
+        seasonal: data.seasonal,
+        // アンケート
+        surveyCount: data.surveyCount,
+        surveyRate: data.surveyRate,
+        // 旧フィールド（互換性のため）
+        revenue: data.netSales,
+        cost: data.laborCost,
+        profit: (data.netSales || 0) - (data.laborCost || 0),
+      };
+    }
+
+    return transformed;
+  }, [monthlyData?.dailyData]);
 
   const handleStoreChange = (storeId: string) => {
     setSelectedStoreId(storeId);
@@ -237,7 +332,7 @@ const SalesManagementPage = () => {
                 <>
                   {monthlyData && monthlyData.dailyData && (
                     <SimpleSalesTable
-                      dailyData={monthlyData.dailyData as { [date: string]: { date: string; dayOfWeek: string; revenue?: number; cost?: number; profit?: number } }}
+                      dailyData={transformedDailyData}
                       hasData={hasData}
                       onEditClick={handleOpenForm}
                       currentYear={currentYear}
@@ -258,9 +353,22 @@ const SalesManagementPage = () => {
                   {isHydrated && selectedStoreId && (
                     <SalesFieldConfiguration
                       fields={fieldConfigs}
-                      onFieldsChange={setFieldConfigs}
-                      businessTypeName={getCurrentStoreName() || 'デフォルト'}
+                      onFieldsChange={async (newFields) => {
+                        const success = await saveFields(newFields);
+                        if (success) {
+                          alert('項目設定を保存しました（同じ業態の全店舗に反映されます）');
+                        }
+                      }}
+                      businessTypeName={selectedStore?.businessTypeName || getCurrentStoreName() || 'デフォルト'}
                     />
+                  )}
+                  {isFieldsLoading && selectedStoreId && (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">項目設定を読み込み中...</p>
+                      </div>
+                    </div>
                   )}
                   {!selectedStoreId && (
                     <div className="flex items-center justify-center h-64">

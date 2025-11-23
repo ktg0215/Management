@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BusinessType, MonthlyData, Field } from '../../types/monthly-sales';
+import { MonthlyData, Field } from '../../types/monthly-sales';
 import { X, Save, Calendar, Sparkles, AlertCircle } from 'lucide-react';
 
 interface DataEntryModalProps {
-  businessType: BusinessType;
+  fields: Field[];
   storeName: string;
   data: MonthlyData | null;
   isOpen: boolean;
@@ -12,7 +12,7 @@ interface DataEntryModalProps {
 }
 
 export const DataEntryModal: React.FC<DataEntryModalProps> = ({
-  businessType,
+  fields,
   storeName,
   data,
   isOpen,
@@ -26,14 +26,14 @@ export const DataEntryModal: React.FC<DataEntryModalProps> = ({
   useEffect(() => {
     if (data) {
       const initialData: Record<string, string> = {};
-      businessType.fields.forEach(field => {
+      fields.forEach(field => {
         const value = data.data[field.id];
         initialData[field.id] = value !== undefined ? String(value) : '';
       });
       setFormData(initialData);
-      
+
       // Set first available category as active
-      const categories = [...new Set(businessType.fields.map(f => f.category))];
+      const categories = [...new Set(fields.map(f => f.category))];
       if (categories.length > 0) {
         setActiveCategory(categories[0]);
       }
@@ -41,12 +41,12 @@ export const DataEntryModal: React.FC<DataEntryModalProps> = ({
       setFormData({});
     }
     setErrors({});
-  }, [data, businessType.fields]);
+  }, [data, fields]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    businessType.fields.forEach(field => {
+    fields.forEach(field => {
       if (field.isRequired && (!formData[field.id] || formData[field.id].trim() === '')) {
         newErrors[field.id] = '必須項目です';
       } else if (formData[field.id] && field.type !== 'text') {
@@ -65,7 +65,7 @@ export const DataEntryModal: React.FC<DataEntryModalProps> = ({
     if (!validateForm() || !data) return;
 
     const processedData: Record<string, number | string> = {};
-    businessType.fields.forEach(field => {
+    fields.forEach(field => {
       const value = formData[field.id];
       if (value !== undefined && value !== '') {
         if (field.type === 'text') {
@@ -135,7 +135,7 @@ export const DataEntryModal: React.FC<DataEntryModalProps> = ({
     }
   };
 
-  const fieldsByCategory = businessType.fields.reduce((acc, field) => {
+  const fieldsByCategory = fields.reduce((acc, field) => {
     if (!acc[field.category]) {
       acc[field.category] = [];
     }

@@ -12,30 +12,6 @@ import { WebSocketManager } from './websocket/WebSocketServer';
 // 環境変数の読み込み
 dotenv.config();
 
-console.log('=== 環境変数デバッグ ===');
-console.log('DATABASE_URL:', process.env.DATABASE_URL);
-console.log('DB_HOST:', process.env.DB_HOST);
-console.log('DB_NAME:', process.env.DB_NAME);
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_PASSWORD:', process.env.DB_PASSWORD);
-console.log('DB_PORT:', process.env.DB_PORT);
-
-// 'base'を含む環境変数を検索
-Object.keys(process.env).forEach(key => {
-  if (process.env[key]?.includes('base')) {
-    console.log(`${key}: ${process.env[key]}`);
-  }
-});
-
-console.log('=== 環境変数の詳細チェック ===');
-console.log('DATABASE_URL:', `"${process.env.DATABASE_URL}"`);
-console.log('先頭文字:', process.env.DATABASE_URL?.charCodeAt(0));
-console.log('長さ:', process.env.DATABASE_URL?.length);
-
-// トリム処理を追加
-const cleanDatabaseUrl = process.env.DATABASE_URL?.trim();
-console.log('トリム後:', `"${cleanDatabaseUrl}"`);
-
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -119,7 +95,7 @@ app.get('/health', (req, res) => {
 // 総管理者アカウント作成API
 app.post('/api/admin/create-account', requireDatabase, async (req, res) => {
   try {
-    const adminCheck = await pool!.query("SELECT COUNT(*) FROM users WHERE role = 'admin' OR role = 'super_admin'");
+    const adminCheck = await pool!.query("SELECT COUNT(*) FROM employees WHERE role = 'admin' OR role = 'super_admin'");
     if (parseInt(adminCheck.rows[0].count, 10) > 0) {
       res.status(400).json({ error: '既に管理者が存在します' });
       return;
@@ -140,7 +116,7 @@ app.post('/api/admin/create-account', requireDatabase, async (req, res) => {
     }
     const role = 'super_admin';
     const result = await pool!.query(
-      `INSERT INTO users (email, password, name, store_id, role)
+      `INSERT INTO employees (email, password, name, store_id, role)
        VALUES ($1, $2, $3, $4, $5) RETURNING id, email as employee_id, name, role, store_id`,
       [employeeId, passwordHash, fullName, nickname, storeId, role]
     );
@@ -156,7 +132,7 @@ app.post('/api/admin/create-account', requireDatabase, async (req, res) => {
 // 管理者存在チェックAPI
 app.get('/api/admin/check-existing', requireDatabase, async (req, res) => {
   try {
-    const adminCheck = await pool!.query("SELECT COUNT(*) FROM users WHERE role = 'admin' OR role = 'super_admin'");
+    const adminCheck = await pool!.query("SELECT COUNT(*) FROM employees WHERE role = 'admin' OR role = 'super_admin'");
     const hasAdmins = parseInt(adminCheck.rows[0].count, 10) > 0;
     res.json({ data: { hasAdmins } });
   } catch (err) {
@@ -174,7 +150,7 @@ app.post('/api/auth/login', requireDatabase, async (req: Request, res: Response)
   
   try {
     const userResult = await pool!.query(
-      `SELECT id, email as employee_id, name as full_name, name as nickname, store_id, password as password_hash, role FROM users WHERE email = $1 LIMIT 1`,
+      `SELECT id, employee_id, full_name, nickname, store_id, password_hash, role, is_active FROM employees WHERE employee_id = $1 LIMIT 1`,
       [employeeId]
     );
     
@@ -195,9 +171,9 @@ app.post('/api/auth/login', requireDatabase, async (req: Request, res: Response)
       hasPasswordHash: !!user.passwordHash
     });
     
-    // 一時的にパスワードチェックをスキップ（従業員ID 0000 & パスワード toyama2023 の場合）
+    // 一時的にパスワードチェックをスキップ（従業員ID 0000 & パスワード admin123 の場合）
     let isMatch = false;
-    if (employeeId === '0000' && password === 'toyama2023') {
+    if (employeeId === '0000' && password === 'admin123') {
       console.log('管理者アカウント: パスワードチェックをスキップ');
       isMatch = true;
     } else {
@@ -257,11 +233,12 @@ app.get('/api/auth/me', requireDatabase, authenticateToken, async (req: Request,
   try {
     const userPayload = (req as any).user;
     const userResult = await pool!.query(
-      `SELECT id, email as employee_id, name as full_name, name as nickname, store_id, role, true as is_active FROM users WHERE id = $1`,
+      `SELECT id, employee_id, full_name, nickname, store_id, role, is_active FROM employees WHERE id = $1`,
       [userPayload.id]
     );
     if (userResult.rows.length === 0) {
       res.status(404).json({ error: 'ユーザーが見つかりません' });
+      return;
     }
     const user = toCamelCase(userResult.rows[0]);
     delete user.passwordHash;
@@ -289,7 +266,7 @@ app.post('/api/auth/register', requireDatabase, async (req: Request, res: Respon
   try {
     // 既存ユーザーチェック
     const existingUser = await pool!.query(
-      'SELECT id FROM users WHERE email = $1',
+      'SELECT id FROM employees WHERE email = $1',
       [employeeId]
     );
     if (existingUser.rows.length > 0) {
@@ -298,7 +275,7 @@ app.post('/api/auth/register', requireDatabase, async (req: Request, res: Respon
     const passwordHash = await bcrypt.hash(password, 10);
     const userRole = role || 'user';
     const result = await pool!.query(
-      `INSERT INTO users (email, password, name, store_id, role)
+      `INSERT INTO employees (email, password, name, store_id, role)
        VALUES ($1, $2, $3, $4, $5) RETURNING id, email as employee_id, name, role, store_id`,
       [employeeId, passwordHash, fullName, nickname, storeId, userRole]
     );
@@ -319,7 +296,13 @@ app.post('/api/auth/register', requireDatabase, async (req: Request, res: Respon
 // 店舗管理API
 app.get('/api/stores', requireDatabase, async (req: Request, res: Response) => {
   try {
-    const result = await pool!.query(`SELECT * FROM stores ORDER BY name`);
+    const result = await pool!.query(`
+      SELECT s.id, s.name, s.business_type_id, s.created_at, s.updated_at,
+             bt.name as business_type_name, bt.description as business_type_description
+      FROM stores s
+      LEFT JOIN business_types bt ON s.business_type_id = bt.id
+      ORDER BY bt.name, s.name
+    `);
     const stores = toCamelCase(result.rows);
     res.json({ data: stores });
   } catch (err) {
@@ -351,10 +334,21 @@ app.post('/api/stores', requireDatabase, authenticateToken, async (req: Request,
     }
     
     const result = await pool!.query(
-      'INSERT INTO stores (name, business_type_id) VALUES ($1, $2) RETURNING *',
+      'INSERT INTO stores (name, business_type_id) VALUES ($1, $2) RETURNING id',
       [name.trim(), businessTypeId]
     );
-    const store = toCamelCase(result.rows[0]);
+    const newStoreId = result.rows[0].id;
+
+    // 業態名を含めて再取得
+    const storeWithBT = await pool!.query(`
+      SELECT s.id, s.name, s.business_type_id, s.created_at, s.updated_at,
+             bt.name as business_type_name, bt.description as business_type_description
+      FROM stores s
+      LEFT JOIN business_types bt ON s.business_type_id = bt.id
+      WHERE s.id = $1
+    `, [newStoreId]);
+
+    const store = toCamelCase(storeWithBT.rows[0]);
     res.json({ data: store });
   } catch (err) {
     console.error('店舗作成エラー:', err);
@@ -390,14 +384,25 @@ app.put('/api/stores/:id', requireDatabase, authenticateToken, async (req: Reque
     }
     
     const result = await pool!.query(
-      'UPDATE stores SET name = $1, business_type_id = $2, updated_at = NOW() WHERE id = $3 RETURNING *',
+      `UPDATE stores SET name = $1, business_type_id = $2, updated_at = NOW() WHERE id = $3
+       RETURNING id, name, business_type_id, created_at, updated_at`,
       [name.trim(), businessTypeId, id]
     );
     if (result.rows.length === 0) {
       res.status(404).json({ error: '店舗が見つかりません' });
       return;
     }
-    const store = toCamelCase(result.rows[0]);
+
+    // 業態名を含めて再取得
+    const storeWithBT = await pool!.query(`
+      SELECT s.id, s.name, s.business_type_id, s.created_at, s.updated_at,
+             bt.name as business_type_name, bt.description as business_type_description
+      FROM stores s
+      LEFT JOIN business_types bt ON s.business_type_id = bt.id
+      WHERE s.id = $1
+    `, [id]);
+
+    const store = toCamelCase(storeWithBT.rows[0]);
     res.json({ data: store });
   } catch (err) {
     console.error('店舗更新エラー:', err);
@@ -608,12 +613,10 @@ app.get('/api/activity-logs', requireDatabase, authenticateToken, async (req: Re
 app.get('/api/employees', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   try {
     const result = await pool!.query(`
-      SELECT u.id, u.email as employee_id, u.name as full_name,
-  u.name as nickname, u.store_id, u.role, s.name as store_name
-        FROM users u
-        LEFT JOIN stores s ON u.store_id = s.id
-        ORDER BY u.email
-	
+      SELECT e.id, e.employee_id, e.full_name, e.nickname, e.store_id, e.role, e.is_active, s.name as store_name
+        FROM employees e
+        LEFT JOIN stores s ON e.store_id = s.id
+        ORDER BY e.employee_id
     `);
     const employees = toCamelCase(result.rows);
     res.json({ data: employees });
@@ -635,7 +638,7 @@ app.post('/api/employees', requireDatabase, authenticateToken, async (req: Reque
   try {
     // 既存ユーザーチェック
     const existingUser = await pool!.query(
-      'SELECT id FROM users WHERE email = $1',
+      'SELECT id FROM employees WHERE email = $1',
       [employeeId]
     );
     if (existingUser.rows.length > 0) {
@@ -644,7 +647,7 @@ app.post('/api/employees', requireDatabase, authenticateToken, async (req: Reque
     const passwordHash = await bcrypt.hash(password, 10);
     const userRole = role || 'user';
     const result = await pool!.query(
-      `INSERT INTO users (email, password, name, store_id, role)
+      `INSERT INTO employees (email, password, name, store_id, role)
        VALUES ($1, $2, $3, $4, $5) RETURNING id, email as employee_id, name, role, store_id`,
       [employeeId, passwordHash, fullName, nickname, storeId, userRole]
     );
@@ -996,15 +999,46 @@ app.get('/api/pl', requireDatabase, authenticateToken, async (req: Request, res:
     return;
   }
   try {
+    // pl_dataテーブルから取得
     const result = await pool!.query(
-      'SELECT * FROM pl_statements WHERE year = $1 AND month = $2 AND store_id = $3 LIMIT 1',
+      'SELECT * FROM pl_data WHERE year = $1 AND month = $2 AND store_id = $3 LIMIT 1',
       [year, month, storeId]
     );
     if (result.rows.length === 0) {
-      res.json({ data: null });
+      res.json({ success: true, data: null });
       return;
     }
-    res.json({ data: toCamelCase(result.rows[0]) });
+
+    const row = result.rows[0];
+    const data = row.data || {};
+
+    // JSONBデータをフラットな構造で返す
+    res.json({
+      success: true,
+      data: {
+        id: row.id,
+        storeId: row.store_id,
+        year: row.year,
+        month: row.month,
+        revenueEstimate: data.targetSales || 0,
+        revenueActual: data.totalSales || 0,
+        costEstimate: data.foodCost || 0,
+        costActual: data.foodCost || 0,
+        profitEstimate: data.targetProfit || 0,
+        profitActual: data.operatingProfit || 0,
+        // 追加の詳細データ
+        grossProfit: data.grossProfit || 0,
+        grossProfitRate: data.grossProfitRate || 0,
+        laborCost: data.laborCost || 0,
+        laborCostRate: data.laborCostRate || 0,
+        foodCostRate: data.foodCostRate || 0,
+        operatingProfitRate: data.operatingProfitRate || 0,
+        salesAchievementRate: data.salesAchievementRate || 0,
+        profitAchievementRate: data.profitAchievementRate || 0,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }
+    });
   } catch (err) {
     console.error('PL取得エラー:', err);
     res.status(500).json({ error: 'PLデータの取得に失敗しました' });
@@ -1026,14 +1060,14 @@ app.post('/api/pl', requireDatabase, authenticateToken, async (req: Request, res
   
   try {
     // 既存データがあれば削除
-    const old = await pool!.query('SELECT id FROM pl_statements WHERE year = $1 AND month = $2 AND store_id = $3', [year, month, storeId]);
+    const old = await pool!.query('SELECT id FROM pl_data WHERE year = $1 AND month = $2 AND store_id = $3', [year, month, storeId]);
     if (old.rows.length > 0) {
       await pool!.query('DELETE FROM pl_items WHERE pl_statement_id = $1', [old.rows[0].id]);
-      await pool!.query('DELETE FROM pl_statements WHERE id = $1', [old.rows[0].id]);
+      await pool!.query('DELETE FROM pl_data WHERE id = $1', [old.rows[0].id]);
     }
     // 新規作成
     const statementResult = await pool!.query(
-      'INSERT INTO pl_statements (store_id, year, month, created_by) VALUES ($1, $2, $3, $4) RETURNING id',
+      'INSERT INTO pl_data (store_id, year, month, created_by) VALUES ($1, $2, $3, $4) RETURNING id',
       [storeId, year, month, user.id]
     );
     const plStatementId = statementResult.rows[0].id;
@@ -1421,29 +1455,52 @@ app.delete('/api/companies/:id', requireDatabase, authenticateToken, async (req:
 app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { year, month, storeId } = req.query;
 
-  if (!year || !month || !storeId) {
-    res.status(400).json({ success: false, error: 'year, month, storeIdは必須です' });
+  if (!storeId) {
+    res.status(400).json({ success: false, error: 'storeIdは必須です' });
     return;
   }
 
   try {
-    // sales_dataテーブルから月次データを取得
-    const result = await pool!.query(
-      `SELECT id, store_id, year, month, daily_data, created_at, updated_at
-       FROM sales_data
-       WHERE store_id = $1 AND year = $2 AND month = $3`,
-      [storeId, year, month]
-    );
+    let result;
 
-    if (result.rows.length === 0) {
-      res.json({ success: true, data: null });
-      return;
-    }
+    if (year && month) {
+      // 特定の年月のデータを取得
+      result = await pool!.query(
+        `SELECT id, store_id, year, month, daily_data, created_at, updated_at
+         FROM sales_data
+         WHERE store_id = $1 AND year = $2 AND month = $3`,
+        [storeId, year, month]
+      );
 
-    const row = result.rows[0];
-    res.json({
-      success: true,
-      data: {
+      if (result.rows.length === 0) {
+        res.json({ success: true, data: null });
+        return;
+      }
+
+      const row = result.rows[0];
+      res.json({
+        success: true,
+        data: {
+          id: row.id,
+          year: row.year,
+          month: row.month,
+          store_id: row.store_id,
+          daily_data: row.daily_data,
+          created_at: row.created_at,
+          updated_at: row.updated_at
+        }
+      });
+    } else {
+      // 全期間のデータを取得
+      result = await pool!.query(
+        `SELECT id, store_id, year, month, daily_data, created_at, updated_at
+         FROM sales_data
+         WHERE store_id = $1
+         ORDER BY year DESC, month DESC`,
+        [storeId]
+      );
+
+      const data = result.rows.map(row => ({
         id: row.id,
         year: row.year,
         month: row.month,
@@ -1451,8 +1508,13 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
         daily_data: row.daily_data,
         created_at: row.created_at,
         updated_at: row.updated_at
-      }
-    });
+      }));
+
+      res.json({
+        success: true,
+        data: data
+      });
+    }
   } catch (err) {
     console.error('売上データ取得エラー:', err);
     res.status(500).json({ success: false, error: '売上データの取得に失敗しました' });
@@ -1493,6 +1555,147 @@ app.post('/api/sales', requireDatabase, authenticateToken, async (req: Request, 
   } catch (err) {
     console.error('売上データ保存エラー:', err);
     res.status(500).json({ success: false, error: '売上データの保存に失敗しました' });
+  }
+});
+
+// 月間累計データ取得API（月次売上管理用）
+app.get('/api/sales/monthly-summary', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { year, month, storeId } = req.query;
+
+  if (!year || !month || !storeId) {
+    res.status(400).json({ success: false, error: 'year, month, storeIdは必須です' });
+    return;
+  }
+
+  try {
+    // 売上データを取得
+    const result = await pool!.query(
+      `SELECT daily_data FROM sales_data
+       WHERE store_id = $1 AND year = $2 AND month = $3`,
+      [storeId, year, month]
+    );
+
+    if (result.rows.length === 0) {
+      res.json({ success: true, data: null });
+      return;
+    }
+
+    const dailyData = result.rows[0].daily_data;
+
+    // 日次データを集計
+    const dataArray = Object.values(dailyData).filter((d: any) => d && d.netSales !== undefined);
+
+    if (dataArray.length === 0) {
+      res.json({ success: true, data: null });
+      return;
+    }
+
+    // 合計フィールド
+    const sumFields = [
+      'netSales', 'edwNetSales', 'ohbNetSales', 'totalGroups', 'totalCustomers',
+      'laborCost', 'lunchSales', 'dinnerSales', 'lunchCustomers', 'dinnerCustomers',
+      'lunchGroups', 'dinnerGroups', 'ohbSales', 'ohbCustomers', 'ohbGroups',
+      'voidCount', 'voidAmount', 'salesDiscrepancy', 'totalHours', 'edwBaitHours', 'ohbBaitHours',
+      'reservationCount', 'plain', 'junsei', 'seasonal', 'surveyCount',
+      'employeeHours', 'asHours', 'katougi', 'ishimori', 'osawa', 'washizuka', 'salesTarget'
+    ];
+
+    // 平均フィールド
+    const avgFields = [
+      'laborCostRate', 'groupUnitPrice', 'customerUnitPrice', 'edwCustomerUnitPrice',
+      'lunchUnitPrice', 'dinnerUnitPrice', 'ohbCustomerUnitPrice',
+      'edwProductivity', 'ohbProductivity', 'totalProductivity', 'surveyRate',
+      'targetRatio', 'yearOverYear', 'edwYearOverYear', 'ohbYearOverYear'
+    ];
+
+    const summary: Record<string, number> = {};
+
+    // 合計を計算
+    sumFields.forEach(field => {
+      const total = dataArray.reduce((sum: number, day: any) => {
+        const value = parseFloat(day[field]) || 0;
+        return sum + value;
+      }, 0);
+      summary[field] = total;
+    });
+
+    // 平均を計算
+    avgFields.forEach(field => {
+      const values = dataArray
+        .map((day: any) => parseFloat(day[field]))
+        .filter((v: number) => !isNaN(v) && v !== 0);
+
+      if (values.length > 0) {
+        summary[field] = values.reduce((a: number, b: number) => a + b, 0) / values.length;
+      } else {
+        summary[field] = 0;
+      }
+    });
+
+    // 単価系は累計から再計算
+    if (summary.totalCustomers > 0) {
+      summary.customerUnitPrice = summary.netSales / summary.totalCustomers;
+    }
+    if (summary.totalGroups > 0) {
+      summary.groupUnitPrice = summary.netSales / summary.totalGroups;
+    }
+    if (summary.lunchCustomers > 0) {
+      summary.lunchUnitPrice = summary.lunchSales / summary.lunchCustomers;
+    }
+    if (summary.dinnerCustomers > 0) {
+      summary.dinnerUnitPrice = summary.dinnerSales / summary.dinnerCustomers;
+    }
+
+    // EDW客単価
+    const edwCustomers = (summary.lunchCustomers || 0) + (summary.dinnerCustomers || 0);
+    if (edwCustomers > 0) {
+      summary.edwCustomerUnitPrice = summary.edwNetSales / edwCustomers;
+    }
+
+    // OHB客単価
+    if (summary.ohbCustomers > 0) {
+      summary.ohbCustomerUnitPrice = summary.ohbNetSales / summary.ohbCustomers;
+    }
+
+    // 人件費率
+    if (summary.netSales > 0) {
+      summary.laborCostRate = (summary.laborCost / summary.netSales) * 100;
+    }
+
+    // 生産性
+    if (summary.edwBaitHours > 0) {
+      summary.edwProductivity = summary.edwNetSales / summary.edwBaitHours;
+    }
+    if (summary.ohbBaitHours > 0) {
+      summary.ohbProductivity = summary.ohbNetSales / summary.ohbBaitHours;
+    }
+    if (summary.totalHours > 0) {
+      summary.totalProductivity = summary.netSales / summary.totalHours;
+    }
+
+    // アンケート取得率
+    if (summary.totalCustomers > 0) {
+      summary.surveyRate = (summary.surveyCount / summary.totalCustomers) * 100;
+    }
+
+    // 予算比
+    if (summary.salesTarget > 0) {
+      summary.targetRatio = (summary.netSales / summary.salesTarget) * 100;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        year: parseInt(year as string),
+        month: parseInt(month as string),
+        storeId: storeId as string,
+        summary,
+        dataCount: dataArray.length
+      }
+    });
+  } catch (err) {
+    console.error('月間累計データ取得エラー:', err);
+    res.status(500).json({ success: false, error: '月間累計データの取得に失敗しました' });
   }
 });
 

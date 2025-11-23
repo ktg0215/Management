@@ -55,6 +55,11 @@ export interface ProfitData {
   profitRate?: number;
 }
 
+export interface StoreFieldVisibility {
+  storeId: string;
+  visibleFieldIds: string[];
+}
+
 export const FIELD_CATEGORIES: Record<FieldCategory, string> = {
   sales: '売上関連',
   customer: '客数・客単価',

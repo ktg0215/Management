@@ -189,3 +189,21 @@ old/
 *.html
 data/
 *.json
+
+# Debug screenshots
+*.png
+debug-*.png
+test-*.png
+verify-*.png
+vps-*.png
+production-*.png
+
+# Test results
+next-app/test-results/
+next-app/playwright-report/
+
+# Temporary files
+*.xlsx
+HANDOFF.md
+*デバッグ*.md
+

@@ -5,6 +5,7 @@ import { Building2, TrendingUp, Calendar, ArrowRight, BarChart3, Eye, EyeOff, Do
 import { useAuthStore } from '@/stores/authStore';
 import apiClient from '@/lib/api';
 import { useStoreStore } from '@/stores/storeStore';
+import { sortStoresByBusinessType, formatStoreName } from '@/utils/storeDisplay';
 
 const monthNames = [
   '1月', '2月', '3月', '4月', '5月', '6月',
@@ -41,27 +42,34 @@ function YearlyProgress() {
     }
   }, []);
 
+  // 利用可能な店舗をソート済みで取得
+  const availableStores = React.useMemo(() => {
+    const filteredStores = stores.filter(store =>
+      store.name !== '無所属' && store.name !== 'Manager'
+    );
+    return sortStoresByBusinessType(filteredStores);
+  }, [stores]);
+
   React.useEffect(() => {
     if (stores.length === 0) fetchStores();
-    if (!storeId && user?.storeId && user?.role !== 'super_admin') setStoreId(user.storeId);
-  }, [stores.length, user, storeId, fetchStores]);
+  }, [stores.length, fetchStores]);
 
-  // stores取得後、storeIdが空なら非Manager店舗をセット(総管理者対応)
+  // stores取得後、storeIdを初期化
+  // 優先順位: 1) 利用可能な店舗の最初の店舗 2) user.storeId
   React.useEffect(() => {
-    if (stores.length > 0 && !storeId) {
-      // Manager以外の最初の店舗を選択
-      const nonManagerStores = stores.filter(store =>
-        store.name !== '無所属' && store.name !== 'Manager'
-      );
-      if (nonManagerStores.length > 0) {
-        setStoreId(nonManagerStores[0].id);
-      } else {
-        // 本店があれば本店を選択(フォールバック)
-        const mainStore = stores.find(s => s.name === '本店');
-        if (mainStore) setStoreId(mainStore.id);
+    if (availableStores.length > 0 && !storeId) {
+      // super_adminの場合は最初の利用可能な店舗を使用
+      // それ以外の場合はuser.storeIdが利用可能な店舗に含まれていればそれを使用
+      if (user?.storeId) {
+        const userStore = availableStores.find(s => s.id === user.storeId);
+        if (userStore) {
+          setStoreId(userStore.id);
+          return;
+        }
       }
+      setStoreId(availableStores[0].id);
     }
-  }, [stores, storeId]);
+  }, [availableStores, storeId, user?.storeId]);
 
   // 今年の全月分PLデータを取得
   React.useEffect(() => {
@@ -73,8 +81,7 @@ function YearlyProgress() {
       try {
         const results = await Promise.all(
           Array.from({ length: 12 }, (_, i) =>
-            apiClient.getPL(currentYear, i + 1, storeId).catch(error => {
-              console.warn(`月${i + 1}のPLデータ取得失敗:`, error);
+            apiClient.getPL(currentYear, i + 1, storeId).catch(() => {
               return { success: false, data: null };
             })
           )
@@ -140,8 +147,6 @@ function YearlyProgress() {
               return r.data as PLItem[];
             }
           }
-          // デバッグ用ログ
-          console.log(`月${index + 1}のPLデータ:`, r);
           return [];
         });
 
@@ -165,11 +170,16 @@ function YearlyProgress() {
     fetchYearlyPL();
   }, [storeId, currentYear]);
 
-  if (!storeId) {
-    return <div>店舗情報が取得できません。</div>;
-  }
-  if (loading) {
-    return <div>年間損益データを読み込み中...</div>;
+  // storeIdが設定されるまでローディング表示
+  if (!storeId || loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="text-gray-600">年間損益データを読み込み中...</div>
+        </div>
+      </div>
+    );
   }
   if (plError) {
     return <div className="text-red-600">{plError}</div>;
@@ -386,12 +396,11 @@ function YearlyProgress() {
                         >
                           <span className="font-semibold text-gray-800 group-hover:text-blue-800 transition-colors">
                             {(() => {
-                              const currentStore = stores.find(store => store.id === storeId);
-                              if (currentStore && currentStore.name !== 'Manager') {
-                                return currentStore.name;
+                              const currentStore = availableStores.find(store => store.id === storeId);
+                              if (currentStore) {
+                                return formatStoreName(currentStore);
                               }
-                              const fallbackStore = stores.find(s => s.name !== '無所属' && s.name !== 'Manager');
-                              return fallbackStore?.name || '選択してください';
+                              return '選択してください';
                             })()}
                           </span>
                           <ChevronDown className={`h-4 w-4 text-gray-600 group-hover:text-blue-600 transition-all duration-300 ${isStoreDropdownOpen ? 'rotate-180' : ''}`} />
@@ -404,7 +413,7 @@ function YearlyProgress() {
                     <div className="absolute top-full left-0 right-0 mt-2 z-50 animate-in slide-in-from-top-2 duration-200">
                       <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
                         <div className="p-2">
-                          {stores.filter(store => store.name !== '無所属' && store.name !== 'Manager').map((store, index) => (
+                          {availableStores.map((store, index) => (
                             <button
                               key={store.id}
                               onClick={() => { setStoreId(store.id); setIsStoreDropdownOpen(false); }}
@@ -426,7 +435,7 @@ function YearlyProgress() {
                                     : 'h-4 w-4 text-gray-600 group-hover:text-blue-600'
                                 } />
                               </div>
-                              <span className="font-semibold flex-1">{store.name}</span>
+                              <span className="font-semibold flex-1">{formatStoreName(store)}</span>
                               {storeId === store.id && (
                                 <div className="p-1 bg-white/20 rounded-full">
                                   <Check className="h-4 w-4 text-white" />
