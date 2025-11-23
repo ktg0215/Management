@@ -1748,7 +1748,7 @@ app.put('/api/sales/daily', requireDatabase, authenticateToken, async (req: Requ
 
 // 月次売上データAPI（monthly_salesテーブルから取得）
 app.get('/api/monthly-sales', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
-  const { storeId, businessTypeId } = req.query;
+  const { storeId, year, month } = req.query;
   try {
     let query = `
       SELECT
@@ -1756,8 +1756,7 @@ app.get('/api/monthly-sales', requireDatabase, authenticateToken, async (req: Re
         store_id as "storeId",
         year,
         month,
-        business_type_id as "businessTypeId",
-        field_values as "fieldValues",
+        daily_data as "dailyData",
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM monthly_sales
@@ -1772,9 +1771,15 @@ app.get('/api/monthly-sales', requireDatabase, authenticateToken, async (req: Re
       paramIndex++;
     }
 
-    if (businessTypeId) {
-      query += ` AND business_type_id = $${paramIndex}`;
-      params.push(businessTypeId);
+    if (year) {
+      query += ` AND year = $${paramIndex}`;
+      params.push(year);
+      paramIndex++;
+    }
+
+    if (month) {
+      query += ` AND month = $${paramIndex}`;
+      params.push(month);
       paramIndex++;
     }
 
@@ -1790,7 +1795,7 @@ app.get('/api/monthly-sales', requireDatabase, authenticateToken, async (req: Re
 
 // 月次売上データの保存
 app.post('/api/monthly-sales', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
-  const { storeId, year, month, businessTypeId, fieldValues } = req.body;
+  const { storeId, year, month, dailyData } = req.body;
 
   if (!storeId || !year || !month) {
     res.status(400).json({ success: false, error: '必須パラメータが不足しています' });
@@ -1808,16 +1813,16 @@ app.post('/api/monthly-sales', requireDatabase, authenticateToken, async (req: R
       // 更新
       await pool!.query(
         `UPDATE monthly_sales
-         SET business_type_id = $1, field_values = $2, updated_at = NOW()
-         WHERE store_id = $3 AND year = $4 AND month = $5`,
-        [businessTypeId || null, JSON.stringify(fieldValues || {}), storeId, year, month]
+         SET daily_data = $1, updated_at = NOW()
+         WHERE store_id = $2 AND year = $3 AND month = $4`,
+        [JSON.stringify(dailyData || {}), storeId, year, month]
       );
     } else {
       // 新規作成
       await pool!.query(
-        `INSERT INTO monthly_sales (store_id, year, month, business_type_id, field_values, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
-        [storeId, year, month, businessTypeId || null, JSON.stringify(fieldValues || {})]
+        `INSERT INTO monthly_sales (store_id, year, month, daily_data, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+        [storeId, year, month, JSON.stringify(dailyData || {})]
       );
     }
 
@@ -1838,12 +1843,11 @@ app.get('/api/pl-data', requireDatabase, authenticateToken, async (req: Request,
         store_id as "storeId",
         year,
         month,
-        category,
-        item_name as "itemName",
-        estimate,
-        actual,
+        data,
         created_at as "createdAt",
-        updated_at as "updatedAt"
+        updated_at as "updatedAt",
+        created_by as "createdBy",
+        updated_by as "updatedBy"
       FROM pl_data
       WHERE 1=1
     `;
@@ -1868,7 +1872,7 @@ app.get('/api/pl-data', requireDatabase, authenticateToken, async (req: Request,
       paramIndex++;
     }
 
-    query += ' ORDER BY year DESC, month DESC, category, item_name';
+    query += ' ORDER BY year DESC, month DESC';
 
     const result = await pool!.query(query, params);
     res.json({ success: true, data: result.rows });
@@ -1880,9 +1884,10 @@ app.get('/api/pl-data', requireDatabase, authenticateToken, async (req: Request,
 
 // P&Lデータの保存
 app.post('/api/pl-data', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
-  const { storeId, year, month, category, itemName, estimate, actual } = req.body;
+  const { storeId, year, month, data } = req.body;
+  const user = (req as any).user;
 
-  if (!storeId || !year || !month || !category || !itemName) {
+  if (!storeId || !year || !month) {
     res.status(400).json({ success: false, error: '必須パラメータが不足しています' });
     return;
   }
@@ -1890,24 +1895,24 @@ app.post('/api/pl-data', requireDatabase, authenticateToken, async (req: Request
   try {
     // 既存データの確認
     const existingResult = await pool!.query(
-      'SELECT id FROM pl_data WHERE store_id = $1 AND year = $2 AND month = $3 AND category = $4 AND item_name = $5',
-      [storeId, year, month, category, itemName]
+      'SELECT id FROM pl_data WHERE store_id = $1 AND year = $2 AND month = $3',
+      [storeId, year, month]
     );
 
     if (existingResult.rows.length > 0) {
       // 更新
       await pool!.query(
         `UPDATE pl_data
-         SET estimate = $1, actual = $2, updated_at = NOW()
-         WHERE store_id = $3 AND year = $4 AND month = $5 AND category = $6 AND item_name = $7`,
-        [estimate || 0, actual || 0, storeId, year, month, category, itemName]
+         SET data = $1, updated_at = NOW(), updated_by = $2
+         WHERE store_id = $3 AND year = $4 AND month = $5`,
+        [JSON.stringify(data || {}), user.id, storeId, year, month]
       );
     } else {
       // 新規作成
       await pool!.query(
-        `INSERT INTO pl_data (store_id, year, month, category, item_name, estimate, actual, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
-        [storeId, year, month, category, itemName, estimate || 0, actual || 0]
+        `INSERT INTO pl_data (store_id, year, month, data, created_by, updated_by)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [storeId, year, month, JSON.stringify(data || {}), user.id, user.id]
       );
     }
 
