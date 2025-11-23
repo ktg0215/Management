@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, Building2 } from 'lucide-react';
 import { useBusinessTypeStore } from '@/stores/businessTypeStore';
 import { BusinessType } from '@/types/business-type';
+import apiClient from '@/lib/api';
 
 const BusinessTypesPage = () => {
   const { businessTypes, isLoading, fetchBusinessTypes, createBusinessType, updateBusinessType, deleteBusinessType } = useBusinessTypeStore();
@@ -88,16 +89,8 @@ const BusinessTypesPage = () => {
 
     // 認証確認
     try {
-      const authResponse = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ employeeId, password }),
-      });
+      const authData = await apiClient.login(employeeId, password);
 
-      const authData = await authResponse.json();
-      
       if (!authData.success) {
         setErrorMessage('認証に失敗しました。勤怠番号またはパスワードが正しくありません。');
         setTimeout(() => setErrorMessage(''), 5000);
