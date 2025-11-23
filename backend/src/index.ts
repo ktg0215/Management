@@ -1746,6 +1746,178 @@ app.put('/api/sales/daily', requireDatabase, authenticateToken, async (req: Requ
   }
 });
 
+// 月次売上データAPI（monthly_salesテーブルから取得）
+app.get('/api/monthly-sales', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { storeId, businessTypeId } = req.query;
+  try {
+    let query = `
+      SELECT
+        id,
+        store_id as "storeId",
+        year,
+        month,
+        business_type_id as "businessTypeId",
+        field_values as "fieldValues",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM monthly_sales
+      WHERE 1=1
+    `;
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (storeId) {
+      query += ` AND store_id = $${paramIndex}`;
+      params.push(storeId);
+      paramIndex++;
+    }
+
+    if (businessTypeId) {
+      query += ` AND business_type_id = $${paramIndex}`;
+      params.push(businessTypeId);
+      paramIndex++;
+    }
+
+    query += ' ORDER BY year DESC, month DESC';
+
+    const result = await pool!.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('月次売上データ取得エラー:', err);
+    res.status(500).json({ success: false, error: '月次売上データの取得に失敗しました' });
+  }
+});
+
+// 月次売上データの保存
+app.post('/api/monthly-sales', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { storeId, year, month, businessTypeId, fieldValues } = req.body;
+
+  if (!storeId || !year || !month) {
+    res.status(400).json({ success: false, error: '必須パラメータが不足しています' });
+    return;
+  }
+
+  try {
+    // 既存データの確認
+    const existingResult = await pool!.query(
+      'SELECT id FROM monthly_sales WHERE store_id = $1 AND year = $2 AND month = $3',
+      [storeId, year, month]
+    );
+
+    if (existingResult.rows.length > 0) {
+      // 更新
+      await pool!.query(
+        `UPDATE monthly_sales
+         SET business_type_id = $1, field_values = $2, updated_at = NOW()
+         WHERE store_id = $3 AND year = $4 AND month = $5`,
+        [businessTypeId || null, JSON.stringify(fieldValues || {}), storeId, year, month]
+      );
+    } else {
+      // 新規作成
+      await pool!.query(
+        `INSERT INTO monthly_sales (store_id, year, month, business_type_id, field_values, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
+        [storeId, year, month, businessTypeId || null, JSON.stringify(fieldValues || {})]
+      );
+    }
+
+    res.json({ success: true, message: '月次売上データを保存しました' });
+  } catch (err) {
+    console.error('月次売上データ保存エラー:', err);
+    res.status(500).json({ success: false, error: '月次売上データの保存に失敗しました' });
+  }
+});
+
+// P&LデータAPI
+app.get('/api/pl-data', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { year, month, storeId } = req.query;
+  try {
+    let query = `
+      SELECT
+        id,
+        store_id as "storeId",
+        year,
+        month,
+        category,
+        item_name as "itemName",
+        estimate,
+        actual,
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM pl_data
+      WHERE 1=1
+    `;
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (year) {
+      query += ` AND year = $${paramIndex}`;
+      params.push(year);
+      paramIndex++;
+    }
+
+    if (month) {
+      query += ` AND month = $${paramIndex}`;
+      params.push(month);
+      paramIndex++;
+    }
+
+    if (storeId) {
+      query += ` AND store_id = $${paramIndex}`;
+      params.push(storeId);
+      paramIndex++;
+    }
+
+    query += ' ORDER BY year DESC, month DESC, category, item_name';
+
+    const result = await pool!.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('P&Lデータ取得エラー:', err);
+    res.status(500).json({ success: false, error: 'P&Lデータの取得に失敗しました' });
+  }
+});
+
+// P&Lデータの保存
+app.post('/api/pl-data', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { storeId, year, month, category, itemName, estimate, actual } = req.body;
+
+  if (!storeId || !year || !month || !category || !itemName) {
+    res.status(400).json({ success: false, error: '必須パラメータが不足しています' });
+    return;
+  }
+
+  try {
+    // 既存データの確認
+    const existingResult = await pool!.query(
+      'SELECT id FROM pl_data WHERE store_id = $1 AND year = $2 AND month = $3 AND category = $4 AND item_name = $5',
+      [storeId, year, month, category, itemName]
+    );
+
+    if (existingResult.rows.length > 0) {
+      // 更新
+      await pool!.query(
+        `UPDATE pl_data
+         SET estimate = $1, actual = $2, updated_at = NOW()
+         WHERE store_id = $3 AND year = $4 AND month = $5 AND category = $6 AND item_name = $7`,
+        [estimate || 0, actual || 0, storeId, year, month, category, itemName]
+      );
+    } else {
+      // 新規作成
+      await pool!.query(
+        `INSERT INTO pl_data (store_id, year, month, category, item_name, estimate, actual, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+        [storeId, year, month, category, itemName, estimate || 0, actual || 0]
+      );
+    }
+
+    res.json({ success: true, message: 'P&Lデータを保存しました' });
+  } catch (err) {
+    console.error('P&Lデータ保存エラー:', err);
+    res.status(500).json({ success: false, error: 'P&Lデータの保存に失敗しました' });
+  }
+});
+
 // HTTPサーバーの作成
 const server = http.createServer(app);
 
