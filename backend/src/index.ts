@@ -1004,15 +1004,76 @@ app.get('/api/pl', requireDatabase, authenticateToken, async (req: Request, res:
       'SELECT * FROM pl_data WHERE year = $1 AND month = $2 AND store_id = $3 LIMIT 1',
       [year, month, storeId]
     );
+
+    // データがない場合は空の配列を返す（新規作成用）
     if (result.rows.length === 0) {
-      res.json({ success: true, data: null });
+      res.json({ success: true, data: { items: [] } });
       return;
     }
 
     const row = result.rows[0];
+
+    // pl_itemsテーブルからアイテムを取得
+    const itemsResult = await pool!.query(
+      'SELECT * FROM pl_items WHERE pl_statement_id = $1 ORDER BY sort_order',
+      [row.id]
+    );
+
+    // pl_itemsにデータがある場合はそれを使用
+    if (itemsResult.rows.length > 0) {
+      const items = itemsResult.rows.map(item => ({
+        name: item.subject_name,
+        estimate: item.estimate || 0,
+        actual: item.actual || 0,
+        is_highlighted: item.is_highlighted,
+        is_subtotal: item.is_subtotal,
+        is_indented: item.is_indented
+      }));
+
+      res.json({
+        success: true,
+        data: {
+          id: row.id,
+          storeId: row.store_id,
+          year: row.year,
+          month: row.month,
+          items: items,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at
+        }
+      });
+      return;
+    }
+
+    // pl_itemsにデータがない場合はpl_dataのdataカラムから取得（後方互換性）
     const data = row.data || {};
 
-    // JSONBデータをフラットな構造で返す
+    // dataがitems配列を持っている場合はそのまま返す
+    if (Array.isArray(data.items)) {
+      res.json({
+        success: true,
+        data: {
+          id: row.id,
+          storeId: row.store_id,
+          year: row.year,
+          month: row.month,
+          items: data.items,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at
+        }
+      });
+      return;
+    }
+
+    // 旧形式のデータをitems形式に変換
+    const items: any[] = [];
+    if (data.targetSales || data.totalSales) {
+      items.push({ name: '売上', estimate: data.targetSales || 0, actual: data.totalSales || 0 });
+    }
+    if (data.foodCost) {
+      items.push({ name: '原価', estimate: data.foodCost || 0, actual: data.foodCost || 0 });
+    }
+
     res.json({
       success: true,
       data: {
@@ -1020,21 +1081,7 @@ app.get('/api/pl', requireDatabase, authenticateToken, async (req: Request, res:
         storeId: row.store_id,
         year: row.year,
         month: row.month,
-        revenueEstimate: data.targetSales || 0,
-        revenueActual: data.totalSales || 0,
-        costEstimate: data.foodCost || 0,
-        costActual: data.foodCost || 0,
-        profitEstimate: data.targetProfit || 0,
-        profitActual: data.operatingProfit || 0,
-        // 追加の詳細データ
-        grossProfit: data.grossProfit || 0,
-        grossProfitRate: data.grossProfitRate || 0,
-        laborCost: data.laborCost || 0,
-        laborCostRate: data.laborCostRate || 0,
-        foodCostRate: data.foodCostRate || 0,
-        operatingProfitRate: data.operatingProfitRate || 0,
-        salesAchievementRate: data.salesAchievementRate || 0,
-        profitAchievementRate: data.profitAchievementRate || 0,
+        items: items,
         createdAt: row.created_at,
         updatedAt: row.updated_at
       }
