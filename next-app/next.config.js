@@ -2,8 +2,8 @@
 const nextConfig = {
   // /bb パスでアプリケーションを提供
   basePath: '/bb',
-  // Nginxのトレイリングスラッシュ設定と一致させる
-  trailingSlash: true,
+  // トレイリングスラッシュは自動処理に任せる
+  // trailingSlash: true,
   eslint: {
     ignoreDuringBuilds: true
   },
@@ -26,6 +26,17 @@ const nextConfig = {
   // 環境変数の設定
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  },
+  // リダイレクト設定
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/login',
+        basePath: false,
+        permanent: false,
+      },
+    ];
   },
   // 最適化されたキャッシュ設定
   generateEtags: true,
