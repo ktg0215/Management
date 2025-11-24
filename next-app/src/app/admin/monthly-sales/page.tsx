@@ -63,6 +63,7 @@ export default function MonthlySalesPage() {
   const [editingStoreId, setEditingStoreId] = useState<string>('');
   // editingBusinessTypeId is used to reset state on modal close
   const [, setEditingBusinessTypeId] = useState<string>('');
+  const [isDataLoading, setIsDataLoading] = useState<boolean>(false);
 
   // 店舗データを取得
   useEffect(() => {
@@ -134,6 +135,7 @@ export default function MonthlySalesPage() {
   };
 
   const handleLoadData = async () => {
+    setIsDataLoading(true);
     try {
       const updatedStoreData = await Promise.all(
         storeData.map(async (sd) => {
@@ -145,6 +147,8 @@ export default function MonthlySalesPage() {
     } catch (error) {
       console.error('データ読み込みエラー:', error);
       alert('データの読み込みに失敗しました。');
+    } finally {
+      setIsDataLoading(false);
     }
   };
 
@@ -231,7 +235,14 @@ export default function MonthlySalesPage() {
       </div>
 
       {/* Content */}
-      {activeTab === 'data' ? (
+      {isDataLoading ? (
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-16 text-center">
+          <div className="flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+            <p className="text-gray-600 font-medium">データを読み込み中...</p>
+          </div>
+        </div>
+      ) : activeTab === 'data' ? (
         <StoreMonthlyDataTable
           storeData={storeData}
           onDataChange={handleStoreDataChange}
