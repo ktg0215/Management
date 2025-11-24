@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // /bb パスでアプリケーションを提供
-  basePath: '/bb',
+  // Nginxが /bb パスを処理するため、Next.js側ではbasePathを設定しない
+  // basePath: '/bb',
   // トレイリングスラッシュは自動処理に任せる
   // trailingSlash: true,
   eslint: {
@@ -27,17 +27,17 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   },
-  // リダイレクト設定
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/login',
-        basePath: false,
-        permanent: false,
-      },
-    ];
-  },
+  // リダイレクト設定は削除（page.tsxで処理）
+  // async redirects() {
+  //   return [
+  //     {
+  //       source: '/',
+  //       destination: '/login',
+  //       basePath: false,
+  //       permanent: false,
+  //     },
+  //   ];
+  // },
   // 最適化されたキャッシュ設定
   generateEtags: true,
   headers: async () => {
