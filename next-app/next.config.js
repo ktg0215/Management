@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Nginxが /bb パスを処理するため、Next.js側ではbasePathを設定しない
-  // basePath: '/bb',
+  // /bb パスでアプリケーションを提供
+  basePath: '/bb',
   // トレイリングスラッシュは自動処理に任せる
   // trailingSlash: true,
   eslint: {
