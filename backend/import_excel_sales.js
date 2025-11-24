@@ -11,77 +11,107 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD || 'postgres123'
 });
 
-// Excelの列番号とシステムのフィールドキーのマッピング (24年度シート用)
-const COLUMN_MAPPING = {
-  0: 'date',                    // 日付
-  1: 'dayOfWeek',               // 曜日
-  2: 'salesTarget',             // 売上目標
-  3: 'targetCumulative',        // 目標累計
-  4: 'targetRatio',             // 対目標比
-  5: 'yearOverYear',            // 前年比
-  6: 'edwYearOverYear',         // EDW前年比
-  7: 'ohbYearOverYear',         // OHB前年比
-  8: 'aggregator',              // 集計担当者
-  9: 'netSales',                // 店舗純売上
-  10: 'netSalesCumulative',     // 店舗純売上累計
-  11: 'edwNetSales',            // EDW純売上
-  12: 'edwNetSalesCumulative',  // EDW純売上累計
-  13: 'ohbNetSales',            // OHB純売上
-  14: 'ohbNetSalesCumulative',  // OHB純売上累計
-  15: 'totalGroups',            // 組数（計）
-  16: 'totalCustomers',         // 客数（計）
-  17: 'groupUnitPrice',         // 組単価
-  18: 'customerUnitPrice',      // 客単価
-  // 人件費関連 (19-27)
-  19: 'katougi',                // 加藤木
-  20: 'ishimori',               // 石森
-  21: 'osawa',                  // 大澤
-  22: 'washizuka',              // 鷲塚
-  23: 'employeeHours',          // 社員時間
-  24: 'asHours',                // AS時間
-  25: 'salesPerHour',           // 人時売上高
-  26: 'laborCost',              // 人件費額
-  27: 'laborCostRate',          // 人件費率
-  // EDW営業明細 (28-36)
-  28: 'lunchSales',             // L：売上
-  29: 'dinnerSales',            // D：売上
-  30: 'lunchCustomers',         // L：客数
-  31: 'dinnerCustomers',        // D：客数
-  32: 'lunchGroups',            // L：組数
-  33: 'dinnerGroups',           // D：組数
-  34: 'edwCustomerUnitPrice',   // 客単価
-  35: 'lunchUnitPrice',         // L：単価
-  36: 'dinnerUnitPrice',        // D：単価
-  // OHB (37-40)
-  37: 'ohbSales',               // 売上
-  38: 'ohbCustomers',           // 客数
-  39: 'ohbGroups',              // 組数
-  40: 'ohbCustomerUnitPrice',   // 客単価
-  // VOID関連 (41-43)
-  41: 'voidCount',              // VOID件数
-  42: 'voidAmount',             // VOID金額
-  43: 'salesDiscrepancy',       // 売上金過不足
-  // 生産性 (44-49)
-  44: 'totalHours',             // 総時間
-  45: 'edwBaitHours',           // EDWバイト時間
-  46: 'ohbBaitHours',           // OHBバイト時間
-  47: 'edwProductivity',        // EDW生産性
-  48: 'ohbProductivity',        // OHB生産性
-  49: 'totalProductivity',      // 総生産性
-  // OHB予約 (50-53)
-  50: 'reservationCount',       // 予約件数
-  51: 'plain',                  // プレーン
-  52: 'junsei',                 // 純生
-  53: 'seasonal',               // 季節
-  // アンケート (61-62)
-  61: 'surveyCount',            // 取得枚数
-  62: 'surveyRate'              // 取得率
+// 項目名からフィールドキーへのマッピング
+const HEADER_TO_FIELD = {
+  '日付': 'date',
+  '曜': 'dayOfWeek',
+  '売上目標': 'salesTarget',
+  '目標累計': 'targetCumulative',
+  '対目標比': 'targetRatio',
+  '前年比': 'yearOverYear',
+  'EDW前年比': 'edwYearOverYear',
+  'OHB前年比': 'ohbYearOverYear',
+  '集計担当者': 'aggregator',
+  '店舗純売上': 'netSales',
+  '店舗純売上累計': 'netSalesCumulative',
+  'EDW純売上': 'edwNetSales',
+  'EDW純売上累計': 'edwNetSalesCumulative',
+  'OHB純売上': 'ohbNetSales',
+  'OHB純売上累計': 'ohbNetSalesCumulative',
+  '組数（計）': 'totalGroups',
+  '客数（計）': 'totalCustomers',
+  '組単価': 'groupUnitPrice',
+  '客単価': 'customerUnitPrice',
+  // 人名（時間）
+  '加藤木': 'katougi',
+  '石森': 'ishimori',
+  '大澤': 'osawa',
+  '鷲塚': 'washizuka',
+  '渡邉': 'watanabe',
+  '役員時間': 'executiveHours',
+  '社員時間': 'employeeHours',
+  'AS時間': 'asHours',
+  '人時売上高': 'salesPerHour',
+  '人件費額': 'laborCost',
+  '人件費率': 'laborCostRate',
+  // EDW営業明細
+  'L：売上': 'lunchSales',
+  'D：売上': 'dinnerSales',
+  'L：客数': 'lunchCustomers',
+  'D：客数': 'dinnerCustomers',
+  'L：組数': 'lunchGroups',
+  'D：組数': 'dinnerGroups',
+  'L：単価': 'lunchUnitPrice',
+  'D：単価': 'dinnerUnitPrice',
+  // OHB
+  '売上': 'ohbSales',
+  '客数': 'ohbCustomers',
+  '組数': 'ohbGroups',
+  // VOID関連
+  'VOID件数': 'voidCount',
+  'VOID金額': 'voidAmount',
+  '売上金過不足': 'salesDiscrepancy',
+  // 生産性
+  '総時間': 'totalHours',
+  'EDＷﾊﾞｲﾄ時間': 'edwBaitHours',
+  'OHBﾊﾞｲﾄ時間': 'ohbBaitHours',
+  'EDW生産性': 'edwProductivity',
+  'OHB生産性': 'ohbProductivity',
+  '総生産性': 'totalProductivity',
+  // OHB予約
+  '予約件数': 'reservationCount',
+  'プレーン': 'plain',
+  '純生': 'junsei',
+  '季節': 'seasonal',
+  // アンケート
+  '取得枚数': 'surveyCount',
+  '取得率': 'surveyRate',
+  // その他
+  'Uber': 'uberSales'
 };
+
+// ヘッダー行から列番号とフィールドキーのマッピングを作成
+function createColumnMapping(headerRow) {
+  const mapping = {};
+
+  for (let i = 0; i < headerRow.length; i++) {
+    let headerName = headerRow[i];
+    if (!headerName) continue;
+
+    // 改行を除去
+    headerName = headerName.toString().replace(/\n/g, '').trim();
+
+    // マッピングを検索
+    const fieldKey = HEADER_TO_FIELD[headerName];
+    if (fieldKey) {
+      mapping[i] = fieldKey;
+    } else {
+      // 部分一致で検索
+      for (const [key, value] of Object.entries(HEADER_TO_FIELD)) {
+        if (headerName.includes(key) || key.includes(headerName)) {
+          mapping[i] = value;
+          break;
+        }
+      }
+    }
+  }
+
+  return mapping;
+}
 
 // Excelの日付シリアル値をJavaScriptの日付に変換
 function excelDateToJSDate(serial) {
   if (typeof serial === 'number') {
-    // Excelの日付シリアル値（1900年1月1日からの日数）
     const utc_days = Math.floor(serial - 25569);
     const utc_value = utc_days * 86400;
     const date_info = new Date(utc_value * 1000);
@@ -94,6 +124,29 @@ function excelDateToJSDate(serial) {
 function getDayOfWeek(date) {
   const days = ['日', '月', '火', '水', '木', '金', '土'];
   return days[date.getDay()];
+}
+
+// 数値の処理
+function processNumericValue(fieldKey, value) {
+  if (typeof value !== 'number') return value;
+
+  // 比率系はパーセンテージに変換（小数点2桁）
+  if (fieldKey.includes('Rate') || fieldKey.includes('Ratio') || fieldKey.includes('YearOverYear')) {
+    return Math.round(value * 10000) / 100;
+  }
+  // 単価・生産性は小数点2桁
+  if (fieldKey.includes('Productivity') || fieldKey.includes('UnitPrice') || fieldKey.includes('PerHour')) {
+    return Math.round(value * 100) / 100;
+  }
+  // 時間関連は小数点2桁を保持
+  if (fieldKey.includes('Hours') || fieldKey.includes('時間') ||
+      fieldKey === 'katougi' || fieldKey === 'ishimori' ||
+      fieldKey === 'osawa' || fieldKey === 'washizuka' ||
+      fieldKey === 'watanabe' || fieldKey === 'executiveHours') {
+    return Math.round(value * 100) / 100;
+  }
+  // 金額・人数は整数に
+  return Math.round(value);
 }
 
 async function importExcelData() {
@@ -129,7 +182,13 @@ async function importExcelData() {
     console.log(`シート "${sheetInfo.name}" を読み込みました`);
     console.log(`総行数: ${data.length}`);
 
-    // データ行は3行目から開始 (0-indexed で 3)
+    // ヘッダー行（3行目、0-indexed で 2）から列マッピングを作成
+    const headerRow = data[2];
+    const columnMapping = createColumnMapping(headerRow);
+
+    console.log(`  マッピングされた列数: ${Object.keys(columnMapping).length}`);
+
+    // データ行は4行目から開始 (0-indexed で 3)
     const dataStartRow = 3;
 
     for (let i = dataStartRow; i < data.length; i++) {
@@ -166,46 +225,23 @@ async function importExcelData() {
       }
 
       // 日次データを作成
-      const dayData = {};
+      const dayData = {
+        date: `${month}/${day}`,
+        dayOfWeek: getDayOfWeek(date)
+      };
 
-      for (const [colIndex, fieldKey] of Object.entries(COLUMN_MAPPING)) {
+      for (const [colIndex, fieldKey] of Object.entries(columnMapping)) {
         const value = row[parseInt(colIndex)];
         if (value !== null && value !== undefined && value !== '') {
-          // 日付の場合はフォーマット
-          if (fieldKey === 'date') {
-            dayData[fieldKey] = `${month}/${day}`;
-          } else if (fieldKey === 'dayOfWeek') {
-            dayData[fieldKey] = getDayOfWeek(date);
-          } else {
-            // 数値の場合の処理
-            if (typeof value === 'number') {
-              // 比率系はパーセンテージに変換（小数点2桁）
-              if (fieldKey.includes('Rate') || fieldKey.includes('Ratio') || fieldKey.includes('YearOverYear')) {
-                dayData[fieldKey] = Math.round(value * 10000) / 100; // パーセンテージに変換
-              }
-              // 単価・生産性は小数点2桁
-              else if (fieldKey.includes('Productivity') || fieldKey.includes('UnitPrice') || fieldKey.includes('PerHour')) {
-                dayData[fieldKey] = Math.round(value * 100) / 100;
-              }
-              // 時間関連は小数点2桁を保持
-              else if (fieldKey.includes('Hours') || fieldKey.includes('時間') ||
-                       fieldKey === 'katougi' || fieldKey === 'ishimori' ||
-                       fieldKey === 'osawa' || fieldKey === 'washizuka') {
-                dayData[fieldKey] = Math.round(value * 100) / 100;
-              }
-              // 金額・人数は整数に
-              else {
-                dayData[fieldKey] = Math.round(value);
-              }
-            } else {
-              dayData[fieldKey] = value;
-            }
-          }
+          // dateとdayOfWeekは既に設定済み
+          if (fieldKey === 'date' || fieldKey === 'dayOfWeek') continue;
+
+          dayData[fieldKey] = processNumericValue(fieldKey, value);
         }
       }
 
-      // 空のデータは保存しない
-      if (Object.keys(dayData).length > 2) { // date と dayOfWeek 以外にデータがある場合
+      // 空のデータは保存しない（date と dayOfWeek 以外にデータがある場合）
+      if (Object.keys(dayData).length > 2) {
         monthlyData[monthKey].days[day] = dayData;
       }
     }
@@ -221,14 +257,12 @@ async function importExcelData() {
   const client = await pool.connect();
   try {
     // 店舗IDを取得（EDW富山二口店）
-    // まず店舗が存在するか確認
     const storeResult = await client.query(
       "SELECT id FROM stores WHERE name LIKE '%富山%' OR name LIKE '%EDW%' LIMIT 1"
     );
 
     let storeId;
     if (storeResult.rows.length === 0) {
-      // 店舗が存在しない場合は作成
       console.log('店舗が見つかりません。新規作成します...');
       const insertResult = await client.query(
         "INSERT INTO stores (name, address, business_type_id) VALUES ($1, $2, $3) RETURNING id",
