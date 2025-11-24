@@ -2,8 +2,8 @@
 const nextConfig = {
   // /bb パスでアプリケーションを提供
   basePath: '/bb',
-  // トレイリングスラッシュは自動処理に任せる
-  // trailingSlash: true,
+  // Nginxのトレイリングスラッシュ設定と一致させる
+  trailingSlash: true,
   eslint: {
     ignoreDuringBuilds: true
   },
