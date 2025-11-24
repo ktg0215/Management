@@ -105,11 +105,11 @@ async function importExcelData() {
 
   const workbook = XLSX.readFile(filePath);
 
-  // 処理するシートと対応する年度
+  // 処理するシートと対応する年度範囲（年度は6月〜翌年5月）
   const sheets = [
-    { name: '23年度', expectedYear: 2023 },
-    { name: '24年度', expectedYear: 2024 },
-    { name: '25年度', expectedYear: 2025 }
+    { name: '23年度', startYear: 2023, startMonth: 6, endYear: 2024, endMonth: 5 },
+    { name: '24年度', startYear: 2024, startMonth: 6, endYear: 2025, endMonth: 5 },
+    { name: '25年度', startYear: 2025, startMonth: 6, endYear: 2026, endMonth: 5 }
   ];
 
   // 月ごとにデータを集計
@@ -147,8 +147,13 @@ async function importExcelData() {
       const month = date.getMonth() + 1;
       const day = date.getDate();
 
-      // 該当年度のデータのみ処理
-      if (year !== sheetInfo.expectedYear) continue;
+      // 該当年度範囲のデータのみ処理（年度は6月〜翌年5月）
+      const isInRange = (
+        (year === sheetInfo.startYear && month >= sheetInfo.startMonth) ||
+        (year === sheetInfo.endYear && month <= sheetInfo.endMonth) ||
+        (year > sheetInfo.startYear && year < sheetInfo.endYear)
+      );
+      if (!isInRange) continue;
 
       const monthKey = `${year}-${month}`;
 
