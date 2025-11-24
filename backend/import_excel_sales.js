@@ -105,91 +105,108 @@ async function importExcelData() {
 
   const workbook = XLSX.readFile(filePath);
 
-  // 24年度シートを読み込む
-  const sheetName = '24年度';
-  const sheet = workbook.Sheets[sheetName];
-
-  if (!sheet) {
-    console.error('24年度シートが見つかりません');
-    return;
-  }
-
-  // シートをJSONに変換
-  const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
-
-  console.log(`シート "${sheetName}" を読み込みました`);
-  console.log(`総行数: ${data.length}\n`);
-
-  // データ行は3行目から開始 (0-indexed で 3)
-  const dataStartRow = 3;
+  // 処理するシートと対応する年度
+  const sheets = [
+    { name: '23年度', expectedYear: 2023 },
+    { name: '24年度', expectedYear: 2024 },
+    { name: '25年度', expectedYear: 2025 }
+  ];
 
   // 月ごとにデータを集計
   const monthlyData = {};
 
-  for (let i = dataStartRow; i < data.length; i++) {
-    const row = data[i];
-    if (!row || row.length === 0) continue;
+  for (const sheetInfo of sheets) {
+    const sheet = workbook.Sheets[sheetInfo.name];
 
-    // 日付を取得
-    const dateValue = row[0];
-    if (!dateValue || typeof dateValue !== 'number') continue;
-
-    const date = excelDateToJSDate(dateValue);
-    if (!date) continue;
-
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-
-    // 2024年のデータのみ処理
-    if (year !== 2024) continue;
-
-    const monthKey = `${year}-${month}`;
-
-    if (!monthlyData[monthKey]) {
-      monthlyData[monthKey] = {
-        year,
-        month,
-        days: {}
-      };
+    if (!sheet) {
+      console.error(`${sheetInfo.name}シートが見つかりません`);
+      continue;
     }
 
-    // 日次データを作成
-    const dayData = {};
+    // シートをJSONに変換
+    const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
 
-    for (const [colIndex, fieldKey] of Object.entries(COLUMN_MAPPING)) {
-      const value = row[parseInt(colIndex)];
-      if (value !== null && value !== undefined && value !== '') {
-        // 日付の場合はフォーマット
-        if (fieldKey === 'date') {
-          dayData[fieldKey] = `${month}/${day}`;
-        } else if (fieldKey === 'dayOfWeek') {
-          dayData[fieldKey] = getDayOfWeek(date);
-        } else {
-          // 数値の場合は丸める
-          if (typeof value === 'number') {
-            // 金額や人数は整数に、比率は小数点2桁に
-            if (fieldKey.includes('Rate') || fieldKey.includes('Ratio') || fieldKey.includes('YearOverYear')) {
-              dayData[fieldKey] = Math.round(value * 10000) / 100; // パーセンテージに変換
-            } else if (fieldKey.includes('Productivity') || fieldKey.includes('UnitPrice') || fieldKey.includes('PerHour')) {
-              dayData[fieldKey] = Math.round(value * 100) / 100;
-            } else {
-              dayData[fieldKey] = Math.round(value);
-            }
+    console.log(`シート "${sheetInfo.name}" を読み込みました`);
+    console.log(`総行数: ${data.length}`);
+
+    // データ行は3行目から開始 (0-indexed で 3)
+    const dataStartRow = 3;
+
+    for (let i = dataStartRow; i < data.length; i++) {
+      const row = data[i];
+      if (!row || row.length === 0) continue;
+
+      // 日付を取得
+      const dateValue = row[0];
+      if (!dateValue || typeof dateValue !== 'number') continue;
+
+      const date = excelDateToJSDate(dateValue);
+      if (!date) continue;
+
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+
+      // 該当年度のデータのみ処理
+      if (year !== sheetInfo.expectedYear) continue;
+
+      const monthKey = `${year}-${month}`;
+
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = {
+          year,
+          month,
+          days: {}
+        };
+      }
+
+      // 日次データを作成
+      const dayData = {};
+
+      for (const [colIndex, fieldKey] of Object.entries(COLUMN_MAPPING)) {
+        const value = row[parseInt(colIndex)];
+        if (value !== null && value !== undefined && value !== '') {
+          // 日付の場合はフォーマット
+          if (fieldKey === 'date') {
+            dayData[fieldKey] = `${month}/${day}`;
+          } else if (fieldKey === 'dayOfWeek') {
+            dayData[fieldKey] = getDayOfWeek(date);
           } else {
-            dayData[fieldKey] = value;
+            // 数値の場合の処理
+            if (typeof value === 'number') {
+              // 比率系はパーセンテージに変換（小数点2桁）
+              if (fieldKey.includes('Rate') || fieldKey.includes('Ratio') || fieldKey.includes('YearOverYear')) {
+                dayData[fieldKey] = Math.round(value * 10000) / 100; // パーセンテージに変換
+              }
+              // 単価・生産性は小数点2桁
+              else if (fieldKey.includes('Productivity') || fieldKey.includes('UnitPrice') || fieldKey.includes('PerHour')) {
+                dayData[fieldKey] = Math.round(value * 100) / 100;
+              }
+              // 時間関連は小数点2桁を保持
+              else if (fieldKey.includes('Hours') || fieldKey.includes('時間') ||
+                       fieldKey === 'katougi' || fieldKey === 'ishimori' ||
+                       fieldKey === 'osawa' || fieldKey === 'washizuka') {
+                dayData[fieldKey] = Math.round(value * 100) / 100;
+              }
+              // 金額・人数は整数に
+              else {
+                dayData[fieldKey] = Math.round(value);
+              }
+            } else {
+              dayData[fieldKey] = value;
+            }
           }
         }
       }
-    }
 
-    // 空のデータは保存しない
-    if (Object.keys(dayData).length > 2) { // date と dayOfWeek 以外にデータがある場合
-      monthlyData[monthKey].days[day] = dayData;
+      // 空のデータは保存しない
+      if (Object.keys(dayData).length > 2) { // date と dayOfWeek 以外にデータがある場合
+        monthlyData[monthKey].days[day] = dayData;
+      }
     }
   }
 
-  console.log('月別データ集計完了:');
+  console.log('\n月別データ集計完了:');
   for (const [monthKey, data] of Object.entries(monthlyData)) {
     console.log(`  ${monthKey}: ${Object.keys(data.days).length}日分`);
   }
