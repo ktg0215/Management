@@ -1,14 +1,25 @@
 // Service Worker registration and management
 export const registerServiceWorker = async () => {
-  if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+  // Service Workerは開発環境では無効化（404エラーを防ぐため）
+  if ('serviceWorker' in navigator && typeof window !== 'undefined') {
+    // 本番環境のみで有効化（ローカル開発環境では無効）
+    const hostname = window.location.hostname;
+    const isProduction = hostname !== 'localhost' && hostname !== '127.0.0.1';
+
+    // 開発環境ではService Workerは登録しない
+    if (!isProduction) {
+      console.log('Service Worker is disabled in development environment');
+      return;
+    }
+
     try {
       const basePath = '/bb/';
       const registration = await navigator.serviceWorker.register(`${basePath}sw.js`, {
         scope: basePath,
       });
-      
+
       console.log('Service Worker registered successfully:', registration);
-      
+
       // Handle service worker updates
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
@@ -22,7 +33,7 @@ export const registerServiceWorker = async () => {
           });
         }
       });
-      
+
       return registration;
     } catch (error) {
       console.error('Service Worker registration failed:', error);

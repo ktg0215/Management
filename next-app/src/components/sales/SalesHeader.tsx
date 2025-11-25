@@ -1,5 +1,5 @@
 import React, { useMemo, memo } from 'react';
-import { Plus, RefreshCw, Database, TrendingUp, Settings } from 'lucide-react';
+import { RefreshCw, TrendingUp, Settings } from 'lucide-react';
 import { Store } from '@/types/store';
 import { formatStoreName } from '@/utils/storeDisplay';
 import Link from 'next/link';
@@ -9,9 +9,7 @@ interface SalesHeaderProps {
   currentMonth: number;
   onYearChange: (year: number) => void;
   onMonthChange: (month: number) => void;
-  onOpenForm: () => void;
   onDataReload: () => void;
-  onLoadDemoData: () => void;
   // 店舗関連のprops
   userRole: 'admin' | 'super_admin';
   stores: Store[];
@@ -25,9 +23,7 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
   currentMonth,
   onYearChange,
   onMonthChange,
-  onOpenForm,
   onDataReload,
-  onLoadDemoData,
   userRole,
   stores,
   selectedStoreId,
@@ -127,29 +123,13 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
           {/* アクションボタン */}
           <div className="flex items-center space-x-3">
             <button
-              onClick={onLoadDemoData}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-            >
-              <Database className="w-4 h-4 mr-2" />
-              デモデータ
-            </button>
-            
-            <button
               onClick={onDataReload}
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               更新
             </button>
-            
-            <button
-              onClick={onOpenForm}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              新規入力
-            </button>
-            
+
             <Link
               href="/admin/sales-field-settings"
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"

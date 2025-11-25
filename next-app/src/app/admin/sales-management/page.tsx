@@ -253,16 +253,7 @@ const SalesManagementPage = () => {
           currentMonth={currentMonth}
           onYearChange={handleYearChange}
           onMonthChange={handleMonthChange}
-          onOpenForm={() => handleOpenForm()}
           onDataReload={handleDataReload}
-          onLoadDemoData={() => {
-            if (!selectedStoreId) {
-              alert('店舗を選択してください。');
-              return;
-            }
-            // Demo data loading would be implemented here
-            console.log('Demo data loading not implemented in optimized version');
-          }}
           userRole={user.role}
           stores={stores}
           selectedStoreId={selectedStoreId}

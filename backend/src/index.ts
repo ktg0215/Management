@@ -1598,7 +1598,36 @@ app.post('/api/sales', requireDatabase, authenticateToken, async (req: Request, 
       );
     }
 
-    res.json({ success: true, message: '売上データが正常に保存されました' });
+    // 月次売上管理（monthly_sales）テーブルにも自動反映
+    try {
+      const monthlyExistingResult = await pool!.query(
+        'SELECT id FROM monthly_sales WHERE store_id = $1 AND year = $2 AND month = $3',
+        [storeId, year, month]
+      );
+
+      if (monthlyExistingResult.rows.length > 0) {
+        // 既存データを更新
+        await pool!.query(
+          `UPDATE monthly_sales
+           SET daily_data = $1, updated_at = NOW()
+           WHERE store_id = $2 AND year = $3 AND month = $4`,
+          [JSON.stringify(dailyData), storeId, year, month]
+        );
+      } else {
+        // 新規作成
+        await pool!.query(
+          `INSERT INTO monthly_sales (store_id, year, month, daily_data, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+          [storeId, year, month, JSON.stringify(dailyData)]
+        );
+      }
+      console.log(`✅ 月次売上管理テーブルへの自動反映完了: store_id=${storeId}, year=${year}, month=${month}`);
+    } catch (syncErr) {
+      console.error('⚠️ 月次売上管理テーブルへの反映でエラー（メイン処理は成功）:', syncErr);
+      // メイン処理は成功しているのでエラーを返さない
+    }
+
+    res.json({ success: true, message: '売上データが正常に保存されました（月次売上管理にも反映）' });
   } catch (err) {
     console.error('売上データ保存エラー:', err);
     res.status(500).json({ success: false, error: '売上データの保存に失敗しました' });
@@ -1877,6 +1906,60 @@ app.post('/api/monthly-sales', requireDatabase, authenticateToken, async (req: R
   } catch (err) {
     console.error('月次売上データ保存エラー:', err);
     res.status(500).json({ success: false, error: '月次売上データの保存に失敗しました' });
+  }
+});
+
+// 売上管理から月次売上管理へのデータ同期API
+app.post('/api/sync-sales-to-monthly', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  try {
+    // sales_dataテーブルから全データを取得
+    const salesResult = await pool!.query(
+      'SELECT store_id, year, month, daily_data FROM sales_data'
+    );
+
+    let syncedCount = 0;
+    let errorCount = 0;
+
+    for (const salesRow of salesResult.rows) {
+      try {
+        // monthly_salesテーブルに既存データがあるか確認
+        const existingResult = await pool!.query(
+          'SELECT id FROM monthly_sales WHERE store_id = $1 AND year = $2 AND month = $3',
+          [salesRow.store_id, salesRow.year, salesRow.month]
+        );
+
+        if (existingResult.rows.length > 0) {
+          // 既存データを更新
+          await pool!.query(
+            `UPDATE monthly_sales
+             SET daily_data = $1, updated_at = NOW()
+             WHERE store_id = $2 AND year = $3 AND month = $4`,
+            [JSON.stringify(salesRow.daily_data), salesRow.store_id, salesRow.year, salesRow.month]
+          );
+        } else {
+          // 新規作成
+          await pool!.query(
+            `INSERT INTO monthly_sales (store_id, year, month, daily_data, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+            [salesRow.store_id, salesRow.year, salesRow.month, JSON.stringify(salesRow.daily_data)]
+          );
+        }
+        syncedCount++;
+      } catch (syncErr) {
+        console.error(`同期エラー: store_id=${salesRow.store_id}, year=${salesRow.year}, month=${salesRow.month}`, syncErr);
+        errorCount++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `同期完了: ${syncedCount}件成功, ${errorCount}件失敗`,
+      syncedCount,
+      errorCount
+    });
+  } catch (err) {
+    console.error('データ同期エラー:', err);
+    res.status(500).json({ success: false, error: 'データ同期に失敗しました' });
   }
 });
 
