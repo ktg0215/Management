@@ -18,14 +18,33 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
       
       const response = await salesApi.getSales(year, month, storeId);
       
+      console.log(`[useSalesData] API response for ${year}/${month}:`, {
+        success: response.success,
+        hasData: !!response.data,
+        dailyDataType: typeof response.data?.daily_data,
+        dailyDataKeys: response.data?.daily_data ? Object.keys(response.data.daily_data).length : 0,
+        sampleKeys: response.data?.daily_data ? Object.keys(response.data.daily_data).slice(0, 5) : []
+      });
+      
       if (response.success && response.data) {
         let dailyDataRaw = typeof response.data.daily_data === "string"
           ? JSON.parse(response.data.daily_data)
           : (response.data.daily_data || {});
 
+        console.log(`[useSalesData] dailyDataRaw after parsing:`, {
+          type: typeof dailyDataRaw,
+          keysCount: Object.keys(dailyDataRaw).length,
+          sampleKeys: Object.keys(dailyDataRaw).slice(0, 5),
+          firstValue: dailyDataRaw[Object.keys(dailyDataRaw)[0]]
+        });
+
         const transformedDailyData: Record<string, any> = {};
         for (const dayStr in dailyDataRaw) {
           const day = parseInt(dayStr);
+          if (isNaN(day)) {
+            console.warn(`[useSalesData] Invalid day key: ${dayStr}`);
+            continue;
+          }
           const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
           transformedDailyData[dateKey] = {
             ...dailyDataRaw[dayStr],
@@ -33,6 +52,11 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
             dayOfWeek: getDayOfWeek(year, month, day)
           };
         }
+        
+        console.log(`[useSalesData] transformedDailyData:`, {
+          keysCount: Object.keys(transformedDailyData).length,
+          sampleKeys: Object.keys(transformedDailyData).slice(0, 5)
+        });
 
         return {
           year: response.data.year,
