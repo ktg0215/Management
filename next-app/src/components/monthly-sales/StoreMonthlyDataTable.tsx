@@ -547,19 +547,32 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
                               }
                               // Safely get monthData.data with multiple fallbacks
                               let monthDataData: Record<string, any> = {};
-                              if (monthData && monthData.data) {
-                                if (typeof monthData.data === 'object' && !Array.isArray(monthData.data)) {
-                                  monthDataData = monthData.data;
+                              try {
+                                if (monthData && monthData.data) {
+                                  if (typeof monthData.data === 'object' && !Array.isArray(monthData.data)) {
+                                    monthDataData = monthData.data;
+                                  }
                                 }
+                              } catch (e) {
+                                console.warn(`Error accessing monthData.data for month ${month.value}:`, e);
+                                monthDataData = {};
                               }
+                              
                               // Double-check monthDataData is an object before accessing
                               if (!monthDataData || typeof monthDataData !== 'object' || Array.isArray(monthDataData)) {
                                 monthDataData = {};
                               }
+                              
                               // Ensure monthDataData is not undefined before accessing field.id
-                              const rawValue = (monthDataData && typeof monthDataData === 'object' && !Array.isArray(monthDataData)) 
-                                ? (monthDataData[field.id] || undefined)
-                                : undefined;
+                              let rawValue: any = undefined;
+                              try {
+                                if (monthDataData && typeof monthDataData === 'object' && !Array.isArray(monthDataData) && field.id) {
+                                  rawValue = monthDataData[field.id];
+                                }
+                              } catch (e) {
+                                console.warn(`Error accessing monthDataData[${field.id}] for month ${month.value}:`, e);
+                                rawValue = undefined;
+                              }
                               const value = getValueWithSalesIntegration(rawValue, field, month.value);
                             const hasData = monthData && monthData.data && typeof monthData.data === 'object' && Object.keys(monthData.data).length > 0;
                             const isAutoField = isAutoFromSales(field.name);
