@@ -556,8 +556,11 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
                               if (!monthDataData || typeof monthDataData !== 'object' || Array.isArray(monthDataData)) {
                                 monthDataData = {};
                               }
-                              const rawValue = monthDataData[field.id];
-                            const value = getValueWithSalesIntegration(rawValue, field, month.value);
+                              // Ensure monthDataData is not undefined before accessing field.id
+                              const rawValue = (monthDataData && typeof monthDataData === 'object' && !Array.isArray(monthDataData)) 
+                                ? (monthDataData[field.id] || undefined)
+                                : undefined;
+                              const value = getValueWithSalesIntegration(rawValue, field, month.value);
                             const hasData = monthData && monthData.data && typeof monthData.data === 'object' && Object.keys(monthData.data).length > 0;
                             const isAutoField = isAutoFromSales(field.name);
                             const hasSalesValue = getValueFromSalesData(field.name, month.value) !== null;
@@ -601,6 +604,14 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
                                 </div>
                               </td>
                             );
+                            } catch (error) {
+                              console.error(`Error rendering month ${month.value} for field ${field?.id || 'unknown'}:`, error);
+                              return (
+                                <td key={month.value} className="px-4 py-2 whitespace-nowrap text-center">
+                                  <span className="text-gray-400">-</span>
+                                </td>
+                              );
+                            }
                           })}
                         </tr>
                       ))}
