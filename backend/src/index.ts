@@ -1520,11 +1520,19 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
       );
 
       if (result.rows.length === 0) {
+        console.log(`[API /api/sales] No data found for storeId=${storeId}, year=${year}, month=${month}`);
         res.json({ success: true, data: null });
         return;
       }
 
       const row = result.rows[0];
+      const dailyDataKeys = row.daily_data ? Object.keys(row.daily_data).length : 0;
+      console.log(`[API /api/sales] Data found for storeId=${storeId}, year=${year}, month=${month}:`, {
+        hasDailyData: !!row.daily_data,
+        dailyDataKeys,
+        sampleKeys: row.daily_data ? Object.keys(row.daily_data).slice(0, 5) : []
+      });
+      
       res.json({
         success: true,
         data: {

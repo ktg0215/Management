@@ -35,9 +35,21 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
       }, null, 2));
       
       if (response.success && response.data) {
+        // Check if daily_data exists and is not null/undefined
+        if (!response.data.daily_data) {
+          console.warn(`[useSalesData] No daily_data in response for ${year}/${month}:`, response.data);
+          return createEmptyMonthlyData(year, month);
+        }
+
         let dailyDataRaw = typeof response.data.daily_data === "string"
           ? JSON.parse(response.data.daily_data)
           : (response.data.daily_data || {});
+
+        // Check if dailyDataRaw is empty
+        if (!dailyDataRaw || Object.keys(dailyDataRaw).length === 0) {
+          console.warn(`[useSalesData] dailyDataRaw is empty for ${year}/${month}`);
+          return createEmptyMonthlyData(year, month);
+        }
 
         console.log(`[useSalesData] dailyDataRaw after parsing:`, JSON.stringify({
           type: typeof dailyDataRaw,
@@ -47,10 +59,12 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
         }, null, 2));
 
         const transformedDailyData: Record<string, any> = {};
+        let skippedCount = 0;
         for (const dayStr in dailyDataRaw) {
           const day = parseInt(dayStr);
           if (isNaN(day)) {
-            console.warn(`[useSalesData] Invalid day key: ${dayStr}`);
+            console.warn(`[useSalesData] Invalid day key: ${dayStr} for ${year}/${month}`);
+            skippedCount++;
             continue;
           }
           const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -61,9 +75,14 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
           };
         }
         
+        if (skippedCount > 0) {
+          console.warn(`[useSalesData] Skipped ${skippedCount} invalid day keys for ${year}/${month}`);
+        }
+        
         console.log(`[useSalesData] transformedDailyData:`, JSON.stringify({
           keysCount: Object.keys(transformedDailyData).length,
           sampleKeys: Object.keys(transformedDailyData).slice(0, 5),
+          skippedCount,
           firstEntry: Object.keys(transformedDailyData).length > 0 ? {
             key: Object.keys(transformedDailyData)[0],
             value: transformedDailyData[Object.keys(transformedDailyData)[0]]
@@ -76,6 +95,12 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
           dailyData: transformedDailyData,
         } as MonthlyData;
       } else {
+        // Log why data is not available
+        console.warn(`[useSalesData] No data available for ${year}/${month}:`, {
+          success: response.success,
+          hasData: !!response.data,
+          response: response
+        });
         // Return empty data structure when no data exists
         return createEmptyMonthlyData(year, month);
       }
