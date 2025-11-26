@@ -227,6 +227,9 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
   };
 
   const visibleFields = getVisibleFields();
+  
+  // Ensure visibleFields is always an array and fields have valid IDs
+  const safeVisibleFields = visibleFields.filter(field => field && field.id);
 
   // 6月から始まる月の配列
   const months = [
@@ -290,7 +293,7 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
   };
 
   const getCategoryFields = (category: string) => {
-    return visibleFields.filter(field => field.category === category).sort((a, b) => a.order - b.order);
+    return safeVisibleFields.filter(field => field && field.category === category).sort((a, b) => (a.order || 0) - (b.order || 0));
   };
 
   const fieldCategories = [...new Set(visibleFields.map(field => field.category))];
@@ -533,8 +536,15 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
                           </td>
                           {months.map((month) => {
                             const monthData = getDataForMonth(month.value);
-                            // Ensure monthData.data exists and is an object
-                            const monthDataData = monthData?.data || {};
+                            // Ensure monthData.data exists and is an object, and field.id exists
+                            if (!field || !field.id) {
+                              return (
+                                <td key={month.value} className="px-4 py-2 whitespace-nowrap text-center">
+                                  <span className="text-gray-400">-</span>
+                                </td>
+                              );
+                            }
+                            const monthDataData = (monthData && monthData.data && typeof monthData.data === 'object') ? monthData.data : {};
                             const rawValue = monthDataData[field.id];
                             const value = getValueWithSalesIntegration(rawValue, field, month.value);
                             const hasData = monthData && monthData.data && typeof monthData.data === 'object' && Object.keys(monthData.data).length > 0;
