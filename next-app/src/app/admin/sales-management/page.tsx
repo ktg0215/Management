@@ -67,10 +67,25 @@ const SalesManagementPage = () => {
 
   // ユーザーの権限に応じて初期店舗を設定
   useEffect(() => {
+    console.log('[SalesManagementPage] Store selection effect:', {
+      hasUser: !!user,
+      userStoreId: user?.storeId,
+      storesCount: stores.length,
+      currentSelectedStoreId: selectedStoreId,
+      stores: stores.map(s => ({ id: s.id, name: s.name }))
+    });
+    
     if (user && stores.length > 0 && !selectedStoreId) {
       // 管理者・総管理者の場合：所属する店舗を自動選択
       // 総管理者は後で他の店舗に変更可能
-      setSelectedStoreId(String(user.storeId));
+      if (user.storeId) {
+        console.log('[SalesManagementPage] Setting storeId from user:', String(user.storeId));
+        setSelectedStoreId(String(user.storeId));
+      } else if (stores.length > 0) {
+        // user.storeIdがない場合は、最初の店舗を選択
+        console.log('[SalesManagementPage] User has no storeId, selecting first store:', String(stores[0].id));
+        setSelectedStoreId(String(stores[0].id));
+      }
     }
   }, [user, stores, selectedStoreId, setSelectedStoreId]);
 
