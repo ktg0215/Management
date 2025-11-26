@@ -161,33 +161,24 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes for active queries
   });
 
-  // Debug logging with detailed information
-  if (result.data) {
-    console.log('[useSalesData] Query Result:', {
-      storeId,
-      year,
-      month,
-      isLoading: result.isLoading,
-      isError: result.isError,
-      error: result.error ? String(result.error) : null,
-      dataExists: !!result.data,
-      dailyDataKeys: result.data?.dailyData ? Object.keys(result.data.dailyData).length : 0,
-      sampleKeys: result.data?.dailyData ? Object.keys(result.data.dailyData).slice(0, 5) : [],
-      dailyDataSample: result.data?.dailyData ? Object.keys(result.data.dailyData).slice(0, 3).map(key => ({
-        key,
-        hasNetSales: !!(result.data!.dailyData[key] as any)?.netSales
-      })) : []
-    });
-  } else {
-    console.log('[useSalesData] Query Result (no data):', {
-      storeId,
-      year,
-      month,
-      isLoading: result.isLoading,
-      isError: result.isError,
-      error: result.error ? String(result.error) : null
-    });
-  }
+  // Debug logging with detailed information (using JSON.stringify for better visibility)
+  const logData = {
+    storeId,
+    year,
+    month,
+    isLoading: result.isLoading,
+    isError: result.isError,
+    error: result.error ? String(result.error) : null,
+    dataExists: !!result.data,
+    dailyDataKeys: result.data?.dailyData ? Object.keys(result.data.dailyData).length : 0,
+    sampleKeys: result.data?.dailyData ? Object.keys(result.data.dailyData).slice(0, 5) : [],
+    dailyDataSample: result.data?.dailyData ? Object.keys(result.data.dailyData).slice(0, 3).map(key => ({
+      key,
+      hasNetSales: !!(result.data!.dailyData[key] as any)?.netSales
+    })) : []
+  };
+  
+  console.log(`[useSalesData] Query Result for ${year}/${month}:`, JSON.stringify(logData, null, 2));
 
   return result;
 };

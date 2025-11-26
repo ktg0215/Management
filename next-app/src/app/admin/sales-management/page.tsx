@@ -35,8 +35,8 @@ const SalesManagementPage = () => {
   // Use React Query for data fetching
   const { data: monthlyData, isLoading, error, refetch } = useSalesData(selectedStoreId, currentYear, currentMonth);
 
-  // Debug logging
-  console.log('[SalesManagementPage] Render state:', {
+  // Debug logging (using JSON.stringify for better visibility)
+  const renderState = {
     isLoading,
     error: error ? String(error) : null,
     hasMonthlyData: !!monthlyData,
@@ -45,7 +45,8 @@ const SalesManagementPage = () => {
     selectedStoreId,
     currentYear,
     currentMonth
-  });
+  };
+  console.log(`[SalesManagementPage] Render state for ${currentYear}/${currentMonth}:`, JSON.stringify(renderState, null, 2));
 
   // Prefetch adjacent months for better performance
   const { prefetchMonths } = usePrefetchAdjacentMonths(selectedStoreId, currentYear, currentMonth);
