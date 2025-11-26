@@ -48,6 +48,19 @@ export function useBusinessTypeFields(businessTypeId: string | undefined): UseBu
         },
       });
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.warn('フィールド設定APIがJSONを返していません。デフォルト設定を使用します。', {
+          status: response.status,
+          contentType,
+          url: `${apiBase}/business-type-fields?businessTypeId=${businessTypeId}`
+        });
+        setFields(getDefaultFieldConfigs('cafe'));
+        setIsLoading(false);
+        return;
+      }
+
       const result = await response.json();
 
       if (result.success) {
@@ -91,6 +104,17 @@ export function useBusinessTypeFields(businessTypeId: string | undefined): UseBu
           fields: newFields,
         }),
       });
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.warn('フィールド設定保存APIがJSONを返していません。', {
+          status: response.status,
+          contentType
+        });
+        setError('フィールド設定の保存に失敗しました（APIエンドポイントが存在しません）');
+        return false;
+      }
 
       const result = await response.json();
 
