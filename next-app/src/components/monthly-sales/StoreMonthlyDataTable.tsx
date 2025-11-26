@@ -173,8 +173,11 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
 
       if (response.ok) {
         const data = await response.json();
+        console.log(`[fetchSalesMonthlySummary] API response for ${year}/${month}:`, data);
         if (data.success && data.data) {
           return data.data;
+        } else {
+          console.warn(`[fetchSalesMonthlySummary] No data returned for ${year}/${month}:`, data);
         }
       } else {
         console.error(`API error: ${response.status} ${response.statusText}`);

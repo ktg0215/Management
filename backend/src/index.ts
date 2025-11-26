@@ -1657,11 +1657,16 @@ app.get('/api/sales/monthly-summary', requireDatabase, authenticateToken, async 
     }
 
     const dailyData = result.rows[0].daily_data;
+    console.log(`[monthly-summary] Found data for storeId=${storeId}, year=${year}, month=${month}`);
+    console.log(`[monthly-summary] dailyData type:`, typeof dailyData);
+    console.log(`[monthly-summary] dailyData keys count:`, dailyData ? Object.keys(dailyData).length : 0);
 
     // 日次データを集計
     const dataArray = Object.values(dailyData).filter((d: any) => d && d.netSales !== undefined);
+    console.log(`[monthly-summary] dataArray length:`, dataArray.length);
 
     if (dataArray.length === 0) {
+      console.log(`[monthly-summary] No data with netSales, returning null`);
       res.json({ success: true, data: null });
       return;
     }
