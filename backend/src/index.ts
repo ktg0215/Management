@@ -1527,10 +1527,19 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
 
       const row = result.rows[0];
       const dailyDataKeys = row.daily_data ? Object.keys(row.daily_data).length : 0;
+      
+      // Validate daily_data structure
+      if (!row.daily_data || typeof row.daily_data !== 'object') {
+        console.error(`[API /api/sales] Invalid daily_data structure for storeId=${storeId}, year=${year}, month=${month}`);
+        res.json({ success: true, data: null });
+        return;
+      }
+      
       console.log(`[API /api/sales] Data found for storeId=${storeId}, year=${year}, month=${month}:`, {
         hasDailyData: !!row.daily_data,
         dailyDataKeys,
-        sampleKeys: row.daily_data ? Object.keys(row.daily_data).slice(0, 5) : []
+        sampleKeys: row.daily_data ? Object.keys(row.daily_data).slice(0, 5) : [],
+        dailyDataType: typeof row.daily_data
       });
       
       res.json({
