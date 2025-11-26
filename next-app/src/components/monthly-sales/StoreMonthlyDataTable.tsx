@@ -244,7 +244,8 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
     { name: '5月', value: 5, color: 'from-teal-400 to-green-500' },
   ];
 
-  const currentYearData = currentStoreData?.monthlyData.filter(data => data.year === selectedYear) || [];
+  // Safely get current year data with null checks
+  const currentYearData = currentStoreData?.monthlyData?.filter(data => data && data.year === selectedYear) || [];
 
   const formatValue = (value: string | number | null | undefined, field: Field): string => {
     if (value === undefined || value === null || value === '') return '-';
@@ -265,7 +266,11 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
   };
 
   const getDataForMonth = (month: number): MonthlyData | null => {
-    return currentYearData.find(data => data.month === month) || null;
+    if (!currentYearData || !Array.isArray(currentYearData)) {
+      return null;
+    }
+    const found = currentYearData.find(data => data && data.month === month);
+    return found || null;
   };
 
   const createNewDataForMonth = (month: number) => {
