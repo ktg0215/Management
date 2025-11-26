@@ -18,25 +18,33 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
       
       const response = await salesApi.getSales(year, month, storeId);
       
-      console.log(`[useSalesData] API response for ${year}/${month}:`, {
+      console.log(`[useSalesData] API response for ${year}/${month}:`, JSON.stringify({
         success: response.success,
         hasData: !!response.data,
+        hasDailyData: !!response.data?.daily_data,
         dailyDataType: typeof response.data?.daily_data,
         dailyDataKeys: response.data?.daily_data ? Object.keys(response.data.daily_data).length : 0,
-        sampleKeys: response.data?.daily_data ? Object.keys(response.data.daily_data).slice(0, 5) : []
-      });
+        sampleKeys: response.data?.daily_data ? Object.keys(response.data.daily_data).slice(0, 5) : [],
+        firstKeyValue: response.data?.daily_data ? (() => {
+          const keys = Object.keys(response.data.daily_data);
+          return keys.length > 0 ? {
+            key: keys[0],
+            value: response.data.daily_data[keys[0]]
+          } : null;
+        })() : null
+      }, null, 2));
       
       if (response.success && response.data) {
         let dailyDataRaw = typeof response.data.daily_data === "string"
           ? JSON.parse(response.data.daily_data)
           : (response.data.daily_data || {});
 
-        console.log(`[useSalesData] dailyDataRaw after parsing:`, {
+        console.log(`[useSalesData] dailyDataRaw after parsing:`, JSON.stringify({
           type: typeof dailyDataRaw,
           keysCount: Object.keys(dailyDataRaw).length,
           sampleKeys: Object.keys(dailyDataRaw).slice(0, 5),
-          firstValue: dailyDataRaw[Object.keys(dailyDataRaw)[0]]
-        });
+          firstValue: Object.keys(dailyDataRaw).length > 0 ? dailyDataRaw[Object.keys(dailyDataRaw)[0]] : null
+        }, null, 2));
 
         const transformedDailyData: Record<string, any> = {};
         for (const dayStr in dailyDataRaw) {
@@ -53,10 +61,14 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
           };
         }
         
-        console.log(`[useSalesData] transformedDailyData:`, {
+        console.log(`[useSalesData] transformedDailyData:`, JSON.stringify({
           keysCount: Object.keys(transformedDailyData).length,
-          sampleKeys: Object.keys(transformedDailyData).slice(0, 5)
-        });
+          sampleKeys: Object.keys(transformedDailyData).slice(0, 5),
+          firstEntry: Object.keys(transformedDailyData).length > 0 ? {
+            key: Object.keys(transformedDailyData)[0],
+            value: transformedDailyData[Object.keys(transformedDailyData)[0]]
+          } : null
+        }, null, 2));
 
         return {
           year: response.data.year,
@@ -75,18 +87,33 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes for active queries
   });
 
-  // Debug logging
-  console.log('[useSalesData] Query Result:', {
-    storeId,
-    year,
-    month,
-    isLoading: result.isLoading,
-    isError: result.isError,
-    error: result.error,
-    dataExists: !!result.data,
-    dailyDataKeys: result.data?.dailyData ? Object.keys(result.data.dailyData).length : 0,
-    sampleKeys: result.data?.dailyData ? Object.keys(result.data.dailyData).slice(0, 3) : []
-  });
+  // Debug logging with detailed information
+  if (result.data) {
+    console.log('[useSalesData] Query Result:', {
+      storeId,
+      year,
+      month,
+      isLoading: result.isLoading,
+      isError: result.isError,
+      error: result.error ? String(result.error) : null,
+      dataExists: !!result.data,
+      dailyDataKeys: result.data?.dailyData ? Object.keys(result.data.dailyData).length : 0,
+      sampleKeys: result.data?.dailyData ? Object.keys(result.data.dailyData).slice(0, 5) : [],
+      dailyDataSample: result.data?.dailyData ? Object.keys(result.data.dailyData).slice(0, 3).map(key => ({
+        key,
+        hasNetSales: !!(result.data!.dailyData[key] as any)?.netSales
+      })) : []
+    });
+  } else {
+    console.log('[useSalesData] Query Result (no data):', {
+      storeId,
+      year,
+      month,
+      isLoading: result.isLoading,
+      isError: result.isError,
+      error: result.error ? String(result.error) : null
+    });
+  }
 
   return result;
 };
