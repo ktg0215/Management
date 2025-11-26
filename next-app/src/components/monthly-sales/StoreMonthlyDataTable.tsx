@@ -528,9 +528,11 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
                           </td>
                           {months.map((month) => {
                             const monthData = getDataForMonth(month.value);
-                            const rawValue = monthData?.data[field.id];
+                            // Ensure monthData.data exists and is an object
+                            const monthDataData = monthData?.data || {};
+                            const rawValue = monthDataData[field.id];
                             const value = getValueWithSalesIntegration(rawValue, field, month.value);
-                            const hasData = monthData && Object.keys(monthData.data).length > 0;
+                            const hasData = monthData && monthData.data && typeof monthData.data === 'object' && Object.keys(monthData.data).length > 0;
                             const isAutoField = isAutoFromSales(field.name);
                             const hasSalesValue = getValueFromSalesData(field.name, month.value) !== null;
 
