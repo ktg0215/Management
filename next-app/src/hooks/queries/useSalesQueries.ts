@@ -37,16 +37,33 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
       if (response.success && response.data) {
         // Check if daily_data exists and is not null/undefined
         if (!response.data.daily_data) {
-          console.warn(`[useSalesData] No daily_data in response for ${year}/${month}:`, response.data);
+          console.warn(`[useSalesData] No daily_data in response for ${year}/${month}:`, JSON.stringify(response.data, null, 2));
           return createEmptyMonthlyData(year, month);
         }
 
-        let dailyDataRaw = typeof response.data.daily_data === "string"
-          ? JSON.parse(response.data.daily_data)
-          : (response.data.daily_data || {});
+        let dailyDataRaw;
+        try {
+          dailyDataRaw = typeof response.data.daily_data === "string"
+            ? JSON.parse(response.data.daily_data)
+            : (response.data.daily_data || {});
+        } catch (parseError) {
+          console.error(`[useSalesData] Failed to parse daily_data for ${year}/${month}:`, parseError);
+          console.error(`[useSalesData] daily_data type: ${typeof response.data.daily_data}`, response.data.daily_data);
+          return createEmptyMonthlyData(year, month);
+        }
 
-        // Check if dailyDataRaw is empty
-        if (!dailyDataRaw || Object.keys(dailyDataRaw).length === 0) {
+        // Check if dailyDataRaw is empty or invalid
+        if (!dailyDataRaw || typeof dailyDataRaw !== 'object' || Array.isArray(dailyDataRaw)) {
+          console.warn(`[useSalesData] dailyDataRaw is invalid for ${year}/${month}:`, {
+            type: typeof dailyDataRaw,
+            isArray: Array.isArray(dailyDataRaw),
+            value: dailyDataRaw
+          });
+          return createEmptyMonthlyData(year, month);
+        }
+
+        const rawKeys = Object.keys(dailyDataRaw);
+        if (rawKeys.length === 0) {
           console.warn(`[useSalesData] dailyDataRaw is empty for ${year}/${month}`);
           return createEmptyMonthlyData(year, month);
         }
@@ -60,23 +77,55 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
 
         const transformedDailyData: Record<string, any> = {};
         let skippedCount = 0;
+        let processedCount = 0;
+        
         for (const dayStr in dailyDataRaw) {
+          // Skip null/undefined values
+          if (dailyDataRaw[dayStr] == null) {
+            skippedCount++;
+            continue;
+          }
+          
           const day = parseInt(dayStr);
-          if (isNaN(day)) {
+          if (isNaN(day) || day < 1 || day > 31) {
             console.warn(`[useSalesData] Invalid day key: ${dayStr} for ${year}/${month}`);
             skippedCount++;
             continue;
           }
+          
+          // Validate date is within the month's range
+          const daysInMonth = getDaysInMonth(year, month);
+          if (day > daysInMonth) {
+            console.warn(`[useSalesData] Day ${day} exceeds days in month (${daysInMonth}) for ${year}/${month}`);
+            skippedCount++;
+            continue;
+          }
+          
           const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          
+          // Ensure dayData is an object
+          const dayData = dailyDataRaw[dayStr];
+          if (typeof dayData !== 'object' || Array.isArray(dayData)) {
+            console.warn(`[useSalesData] Invalid day data type for day ${dayStr} in ${year}/${month}:`, typeof dayData);
+            skippedCount++;
+            continue;
+          }
+          
           transformedDailyData[dateKey] = {
-            ...dailyDataRaw[dayStr],
+            ...dayData,
             date: dateKey,
             dayOfWeek: getDayOfWeek(year, month, day)
           };
+          processedCount++;
         }
         
         if (skippedCount > 0) {
-          console.warn(`[useSalesData] Skipped ${skippedCount} invalid day keys for ${year}/${month}`);
+          console.warn(`[useSalesData] Skipped ${skippedCount} invalid entries for ${year}/${month}, processed ${processedCount}`);
+        }
+        
+        if (processedCount === 0) {
+          console.warn(`[useSalesData] No valid data processed for ${year}/${month}, returning empty data`);
+          return createEmptyMonthlyData(year, month);
         }
         
         console.log(`[useSalesData] transformedDailyData:`, JSON.stringify({
