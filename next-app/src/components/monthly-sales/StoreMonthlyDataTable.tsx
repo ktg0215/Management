@@ -535,23 +535,28 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
                             </div>
                           </td>
                           {months.map((month) => {
-                            const monthData = getDataForMonth(month.value);
-                            // Ensure monthData.data exists and is an object, and field.id exists
-                            if (!field || !field.id) {
-                              return (
-                                <td key={month.value} className="px-4 py-2 whitespace-nowrap text-center">
-                                  <span className="text-gray-400">-</span>
-                                </td>
-                              );
-                            }
-                            // Safely get monthData.data with multiple fallbacks
-                            let monthDataData: Record<string, any> = {};
-                            if (monthData) {
-                              if (monthData.data && typeof monthData.data === 'object' && !Array.isArray(monthData.data)) {
-                                monthDataData = monthData.data;
+                            try {
+                              const monthData = getDataForMonth(month.value);
+                              // Ensure monthData.data exists and is an object, and field.id exists
+                              if (!field || !field.id) {
+                                return (
+                                  <td key={month.value} className="px-4 py-2 whitespace-nowrap text-center">
+                                    <span className="text-gray-400">-</span>
+                                  </td>
+                                );
                               }
-                            }
-                            const rawValue = monthDataData && typeof monthDataData === 'object' ? monthDataData[field.id] : undefined;
+                              // Safely get monthData.data with multiple fallbacks
+                              let monthDataData: Record<string, any> = {};
+                              if (monthData && monthData.data) {
+                                if (typeof monthData.data === 'object' && !Array.isArray(monthData.data)) {
+                                  monthDataData = monthData.data;
+                                }
+                              }
+                              // Double-check monthDataData is an object before accessing
+                              if (!monthDataData || typeof monthDataData !== 'object' || Array.isArray(monthDataData)) {
+                                monthDataData = {};
+                              }
+                              const rawValue = monthDataData[field.id];
                             const value = getValueWithSalesIntegration(rawValue, field, month.value);
                             const hasData = monthData && monthData.data && typeof monthData.data === 'object' && Object.keys(monthData.data).length > 0;
                             const isAutoField = isAutoFromSales(field.name);
