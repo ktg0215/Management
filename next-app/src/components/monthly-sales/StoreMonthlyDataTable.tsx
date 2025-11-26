@@ -332,7 +332,13 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
     const cacheKey = `${selectedStoreId}-${selectedYear}-${month}`;
     const summary = salesSummaryCache[cacheKey];
 
-    if (!summary?.summary) {
+    if (!summary) {
+      console.log(`[getValueFromSalesData] No cache for ${cacheKey}`);
+      return null;
+    }
+
+    if (!summary.summary) {
+      console.log(`[getValueFromSalesData] No summary in cache for ${cacheKey}:`, summary);
       return null;
     }
 
