@@ -544,8 +544,14 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
                                 </td>
                               );
                             }
-                            const monthDataData = (monthData && monthData.data && typeof monthData.data === 'object') ? monthData.data : {};
-                            const rawValue = monthDataData[field.id];
+                            // Safely get monthData.data with multiple fallbacks
+                            let monthDataData: Record<string, any> = {};
+                            if (monthData) {
+                              if (monthData.data && typeof monthData.data === 'object' && !Array.isArray(monthData.data)) {
+                                monthDataData = monthData.data;
+                              }
+                            }
+                            const rawValue = monthDataData && typeof monthDataData === 'object' ? monthDataData[field.id] : undefined;
                             const value = getValueWithSalesIntegration(rawValue, field, month.value);
                             const hasData = monthData && monthData.data && typeof monthData.data === 'object' && Object.keys(monthData.data).length > 0;
                             const isAutoField = isAutoFromSales(field.name);
