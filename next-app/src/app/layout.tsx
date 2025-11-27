@@ -21,7 +21,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="theme-color" content="#2563eb" />
-        <link rel="manifest" href="/bb/manifest.json" />
+        {/* Manifest link is disabled until manifest.json is created */}
+        {/* <link rel="manifest" href="/bb/manifest.json" /> */}
       </head>
       <body className={inter.className}>
         <ErrorBoundary>

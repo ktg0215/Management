@@ -1,12 +1,17 @@
 // Service Worker registration and management
 export const registerServiceWorker = async () => {
-  // Service Workerは開発環境では無効化（404エラーを防ぐため）
+  // Service Workerは現在無効化されています（sw.jsファイルが存在しないため）
+  // 将来的にPWA機能が必要になった場合は、sw.jsファイルを作成して有効化してください
   if ('serviceWorker' in navigator && typeof window !== 'undefined') {
-    // 本番環境のみで有効化（ローカル開発環境では無効）
+    // Service Worker登録をスキップ（404エラーを防ぐため）
+    console.log('Service Worker registration is disabled (sw.js not found)');
+    return;
+    
+    // 以下のコードは将来の実装用にコメントアウト
+    /*
     const hostname = window.location.hostname;
     const isProduction = hostname !== 'localhost' && hostname !== '127.0.0.1';
 
-    // 開発環境ではService Workerは登録しない
     if (!isProduction) {
       console.log('Service Worker is disabled in development environment');
       return;
