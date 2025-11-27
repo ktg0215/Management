@@ -631,7 +631,7 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
                               const hasSalesValue = getValueFromSalesData(field.name, month.value) !== null;
 
                               return (
-                              <td key={month.value} className="px-4 py-2 whitespace-nowrap text-center">
+                                <td key={month.value} className="px-4 py-2 whitespace-nowrap text-center">
                                 <div className="flex items-center justify-center space-x-2">
                                   {loadingSummary && isAutoField ? (
                                     <Loader2 className="w-3 h-3 animate-spin text-blue-400" />
