@@ -626,11 +626,11 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
                                 rawValue = undefined;
                               }
                               const value = getValueWithSalesIntegration(rawValue, field, month.value);
-                            const hasData = monthData && monthData.data && typeof monthData.data === 'object' && Object.keys(monthData.data).length > 0;
-                            const isAutoField = isAutoFromSales(field.name);
-                            const hasSalesValue = getValueFromSalesData(field.name, month.value) !== null;
+                              const hasData = monthData && monthData.data && typeof monthData.data === 'object' && Object.keys(monthData.data).length > 0;
+                              const isAutoField = isAutoFromSales(field.name);
+                              const hasSalesValue = getValueFromSalesData(field.name, month.value) !== null;
 
-                            return (
+                              return (
                               <td key={month.value} className="px-4 py-2 whitespace-nowrap text-center">
                                 <div className="flex items-center justify-center space-x-2">
                                   {loadingSummary && isAutoField ? (
