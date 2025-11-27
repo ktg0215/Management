@@ -314,39 +314,6 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
                   )}
                 </>
               )}
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        支払い月を選択（複数選択可）
-                      </label>
-                      <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3 bg-gray-50">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => (
-                          <label key={month} className="flex items-center space-x-2 cursor-pointer hover:bg-white p-1 rounded transition-colors">
-                            <input
-                              type="checkbox"
-                              checked={(formData.specificMonths || []).includes(month)}
-                              onChange={(e) => {
-                                const currentMonths = formData.specificMonths || [];
-                                const newMonths = e.target.checked
-                                  ? [...currentMonths, month]
-                                  : currentMonths.filter((m) => m !== month);
-                                console.log('[CompanyModal] Specific months changed:', newMonths);
-                                handleChange('specificMonths', newMonths.sort((a, b) => a - b));
-                              }}
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-700">{month}月</span>
-                          </label>
-                        ))}
-                      </div>
-                      {formData.specificMonths && formData.specificMonths.length > 0 && (
-                        <p className="mt-2 text-xs text-gray-500">
-                          選択中: {formData.specificMonths.map(m => `${m}月`).join(', ')}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
 
               {user?.role === 'super_admin' && (
                 <div>
