@@ -260,9 +260,9 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="regular">定期支払い（毎月）</option>
-                  <option value="specific">定期支払い（選択した月）</option>
+                  <option value="regular">定期支払い</option>
                   <option value="irregular">不定期支払い</option>
+                  <option value="specific">特定月のみ</option>
                 </select>
               </div>
 
