@@ -3,13 +3,28 @@ const path = require('path');
 const { Pool } = require('pg');
 
 // データベース接続
-const pool = new Pool({
+// Windows環境では host.docker.internal を使用してDockerコンテナに接続
+const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5433,
+  port: parseInt(process.env.DB_PORT || '5433'),
   database: process.env.DB_NAME || 'shift_management',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres123'
+  password: process.env.DB_PASSWORD || 'postgres123',
+  // 接続タイムアウトを長めに設定
+  connectionTimeoutMillis: 30000,
+  // SSLを無効化（ローカル開発環境）
+  ssl: false
+};
+
+console.log('データベース接続設定:', {
+  host: dbConfig.host,
+  port: dbConfig.port,
+  database: dbConfig.database,
+  user: dbConfig.user,
+  password: '***'
 });
+
+const pool = new Pool(dbConfig);
 
 // 項目名からフィールドキーへのマッピング
 const HEADER_TO_FIELD = {
@@ -149,6 +164,14 @@ function processNumericValue(fieldKey, value) {
   return Math.round(value);
 }
 
+// 日付をYYYY-MM-DD形式に変換
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 async function importExcelData() {
   console.log('=== Excelデータインポート開始 ===\n');
 
@@ -156,7 +179,21 @@ async function importExcelData() {
   const filePath = path.join(__dirname, '..', '計数管理表2024【EDW富山】.xlsx');
   console.log('ファイル読み込み:', filePath);
 
-  const workbook = XLSX.readFile(filePath);
+  // ファイル存在確認
+  const fs = require('fs');
+  if (!fs.existsSync(filePath)) {
+    console.error('❌ エラー: Excelファイルが見つかりません:', filePath);
+    console.error('   ファイルパスを確認してください');
+    process.exit(1);
+  }
+
+  let workbook;
+  try {
+    workbook = XLSX.readFile(filePath);
+  } catch (error) {
+    console.error('❌ エラー: Excelファイルの読み込みに失敗しました:', error.message);
+    process.exit(1);
+  }
 
   // 処理するシートと対応する年度範囲（年度は6月〜翌年5月）
   const sheets = [
@@ -226,7 +263,7 @@ async function importExcelData() {
 
       // 日次データを作成
       const dayData = {
-        date: `${month}/${day}`,
+        date: formatDate(date),
         dayOfWeek: getDayOfWeek(date)
       };
 
@@ -238,6 +275,18 @@ async function importExcelData() {
 
           dayData[fieldKey] = processNumericValue(fieldKey, value);
         }
+      }
+
+      // netSalesフィールドの検証
+      if (!dayData.netSales && dayData.netSales !== 0) {
+        console.warn(`⚠️  警告: ${formatDate(date)}のデータにnetSalesフィールドがありません。スキップします。`);
+        continue;
+      }
+
+      // netSalesが数値であることを確認
+      if (typeof dayData.netSales !== 'number') {
+        console.warn(`⚠️  警告: ${formatDate(date)}のnetSalesが数値ではありません (${typeof dayData.netSales})。スキップします。`);
+        continue;
       }
 
       // 空のデータは保存しない（date と dayOfWeek 以外にデータがある場合）
@@ -253,52 +302,157 @@ async function importExcelData() {
   }
   console.log('');
 
+  // データ検証
+  if (Object.keys(monthlyData).length === 0) {
+    console.error('❌ エラー: インポート可能なデータがありません');
+    console.error('   シート名、データ開始行、列マッピングを確認してください');
+    process.exit(1);
+  }
+
+  // 各月のデータにnetSalesが含まれているか確認
+  let validationErrors = [];
+  for (const [monthKey, monthData] of Object.entries(monthlyData)) {
+    const { year, month, days } = monthData;
+    let missingNetSalesDays = [];
+    
+    for (const [day, dayData] of Object.entries(days)) {
+      if (!dayData.netSales && dayData.netSales !== 0) {
+        missingNetSalesDays.push(day);
+      }
+    }
+    
+    if (missingNetSalesDays.length > 0) {
+      validationErrors.push(`${year}年${month}月: ${missingNetSalesDays.length}日分のデータにnetSalesがありません (日: ${missingNetSalesDays.join(', ')})`);
+    }
+  }
+
+  if (validationErrors.length > 0) {
+    console.error('\n❌ データ検証エラー:');
+    validationErrors.forEach(err => console.error(`   - ${err}`));
+    console.error('\nインポートを続行しますが、データが不完全な可能性があります。\n');
+  }
+
   // データベースに保存
-  const client = await pool.connect();
+  let client;
+  let retries = 3;
+  let connected = false;
+  
+  while (retries > 0 && !connected) {
+    try {
+      client = await pool.connect();
+      // データベース接続確認
+      await client.query('SELECT 1');
+      console.log('✅ データベース接続成功\n');
+      connected = true;
+    } catch (error) {
+      retries--;
+      console.error(`❌ データベース接続エラー (残り試行回数: ${retries}):`, error.message);
+      if (retries > 0) {
+        console.log('5秒後に再試行します...\n');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      } else {
+        throw error;
+      }
+    }
+  }
+  
   try {
+
     // 店舗IDを取得（EDW富山二口店）
-    const storeResult = await client.query(
-      "SELECT id FROM stores WHERE name LIKE '%富山%' OR name LIKE '%EDW%' LIMIT 1"
-    );
+    let storeResult;
+    try {
+      storeResult = await client.query(
+        "SELECT id FROM stores WHERE name LIKE '%富山%' OR name LIKE '%EDW%' LIMIT 1"
+      );
+    } catch (error) {
+      console.error('❌ エラー: 店舗検索に失敗しました:', error.message);
+      throw error;
+    }
 
     let storeId;
     if (storeResult.rows.length === 0) {
       console.log('店舗が見つかりません。新規作成します...');
-      const insertResult = await client.query(
-        "INSERT INTO stores (name, address, business_type_id) VALUES ($1, $2, $3) RETURNING id",
-        ['EDW富山二口店', '富山県', 1]
-      );
-      storeId = insertResult.rows[0].id;
-      console.log(`店舗を作成しました: ID=${storeId}\n`);
+      try {
+        const insertResult = await client.query(
+          "INSERT INTO stores (name, address, business_type_id) VALUES ($1, $2, $3) RETURNING id",
+          ['EDW富山二口店', '富山県', 1]
+        );
+        storeId = insertResult.rows[0].id;
+        console.log(`✅ 店舗を作成しました: ID=${storeId}\n`);
+      } catch (error) {
+        console.error('❌ エラー: 店舗の作成に失敗しました:', error.message);
+        throw error;
+      }
     } else {
       storeId = storeResult.rows[0].id;
-      console.log(`既存の店舗を使用: ID=${storeId}\n`);
+      console.log(`✅ 既存の店舗を使用: ID=${storeId}\n`);
     }
+
+    // トランザクション開始
+    await client.query('BEGIN');
 
     // 各月のデータを保存
     let savedCount = 0;
+    let errorCount = 0;
+    const savedMonths = [];
+
     for (const [monthKey, monthData] of Object.entries(monthlyData)) {
       const { year, month, days } = monthData;
 
-      // UPSERT (存在する場合は更新、しない場合は挿入)
-      const query = `
-        INSERT INTO sales_data (store_id, year, month, daily_data, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, NOW(), NOW())
-        ON CONFLICT (store_id, year, month)
-        DO UPDATE SET daily_data = $4, updated_at = NOW()
-        RETURNING id
-      `;
+      try {
+        // sales_dataテーブルへのUPSERT
+        const salesQuery = `
+          INSERT INTO sales_data (store_id, year, month, daily_data, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, NOW(), NOW())
+          ON CONFLICT (store_id, year, month)
+          DO UPDATE SET daily_data = $4, updated_at = NOW()
+          RETURNING id
+        `;
 
-      const result = await client.query(query, [storeId, year, month, JSON.stringify(days)]);
-      console.log(`保存: ${year}年${month}月 (ID: ${result.rows[0].id})`);
-      savedCount++;
+        const salesResult = await client.query(salesQuery, [storeId, year, month, JSON.stringify(days)]);
+        console.log(`✅ sales_data保存: ${year}年${month}月 (ID: ${salesResult.rows[0].id})`);
+
+        // monthly_salesテーブルへの自動同期
+        try {
+          const monthlyQuery = `
+            INSERT INTO monthly_sales (store_id, year, month, daily_data, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, NOW(), NOW())
+            ON CONFLICT (store_id, year, month)
+            DO UPDATE SET daily_data = $4, updated_at = NOW()
+            RETURNING id
+          `;
+
+          const monthlyResult = await client.query(monthlyQuery, [storeId, year, month, JSON.stringify(days)]);
+          console.log(`✅ monthly_sales同期: ${year}年${month}月 (ID: ${monthlyResult.rows[0].id})`);
+        } catch (syncError) {
+          console.error(`⚠️  警告: monthly_salesへの同期でエラー (${year}年${month}月):`, syncError.message);
+          // メイン処理は成功しているので続行
+        }
+
+        savedCount++;
+        savedMonths.push(`${year}年${month}月`);
+      } catch (error) {
+        console.error(`❌ エラー: ${year}年${month}月の保存に失敗しました:`, error.message);
+        errorCount++;
+      }
     }
 
-    console.log(`\n=== インポート完了 ===`);
-    console.log(`保存した月数: ${savedCount}`);
+    // トランザクションコミット
+    if (errorCount === 0) {
+      await client.query('COMMIT');
+      console.log(`\n✅ === インポート完了 ===`);
+      console.log(`保存した月数: ${savedCount}`);
+      console.log(`保存した月: ${savedMonths.join(', ')}`);
+    } else {
+      await client.query('ROLLBACK');
+      console.error(`\n❌ === インポート失敗 ===`);
+      console.error(`成功: ${savedCount}件, 失敗: ${errorCount}件`);
+      throw new Error(`${errorCount}件のエラーが発生しました`);
+    }
 
   } catch (error) {
-    console.error('データベースエラー:', error);
+    console.error('\n❌ データベースエラー:', error.message);
+    console.error('スタックトレース:', error.stack);
     throw error;
   } finally {
     client.release();
@@ -307,4 +461,8 @@ async function importExcelData() {
 }
 
 // 実行
-importExcelData().catch(console.error);
+importExcelData().catch(error => {
+  console.error('\n❌ 致命的なエラーが発生しました:');
+  console.error(error);
+  process.exit(1);
+});

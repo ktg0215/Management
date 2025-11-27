@@ -7,9 +7,9 @@ export interface Company {
   accountType: string;
   accountNumber: string;
   category: string;
-  paymentType: 'regular' | 'irregular';
+  paymentType: 'regular' | 'irregular' | 'specific';
   regularAmount?: number;
-  specificMonths?: string[];
+  specificMonths?: number[]; // 数値配列に変更
   isVisible: boolean;
   storeId: string;
   storeName?: string;

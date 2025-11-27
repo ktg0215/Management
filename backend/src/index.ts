@@ -1378,6 +1378,12 @@ app.put('/api/companies/:id', requireDatabase, authenticateToken, async (req, re
   const { id } = req.params;
   const { name, bankName, branchName, accountType, accountNumber, category, paymentType, regularAmount, specificMonths, isVisible, storeId } = req.body;
   try {
+    // PostgreSQL配列形式に変換
+    let specificMonthsArray = null;
+    if (specificMonths && Array.isArray(specificMonths) && specificMonths.length > 0) {
+      specificMonthsArray = `{${specificMonths.join(',')}}`;
+    }
+    
     const result = await pool!.query(
       `UPDATE companies SET
         name = $1,
@@ -1388,12 +1394,12 @@ app.put('/api/companies/:id', requireDatabase, authenticateToken, async (req, re
         category = $6,
         payment_type = $7,
         regular_amount = $8,
-        specific_months = $9,
+        specific_months = $9::integer[],
         is_visible = $10,
         store_id = $11,
         updated_at = NOW()
       WHERE id = $12 RETURNING *`,
-      [name, bankName, branchName, accountType, accountNumber, category, paymentType, regularAmount, specificMonths, isVisible, storeId, id]
+      [name, bankName, branchName, accountType, accountNumber, category, paymentType, regularAmount, specificMonthsArray, isVisible, storeId, id]
     );
     if (result.rows.length === 0) {
       res.status(404).json({ success: false, error: '企業が見つかりません' });
@@ -1421,8 +1427,8 @@ app.post('/api/companies', requireDatabase, authenticateToken, async (req, res) 
     res.status(400).json({ success: false, error: '科目は必須です' });
     return;
   }
-  if (!paymentType || !['regular', 'irregular'].includes(paymentType)) {
-    res.status(400).json({ success: false, error: '支払いタイプは regular または irregular である必要があります' });
+  if (!paymentType || !['regular', 'irregular', 'specific'].includes(paymentType)) {
+    res.status(400).json({ success: false, error: '支払いタイプは regular, irregular, または specific である必要があります' });
     return;
   }
   if (!storeId) {
@@ -1467,7 +1473,7 @@ app.post('/api/companies', requireDatabase, authenticateToken, async (req, res) 
     
     const result = await pool!.query(
       `INSERT INTO companies (name, bank_name, branch_name, account_type, account_number, category, payment_type, regular_amount, specific_months, is_visible, store_id, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()) RETURNING *`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::integer[], $10, $11, NOW(), NOW()) RETURNING *`,
       [name, bankName, branchName, accountType, accountNumber, category, paymentType, regularAmount, specificMonthsArray, isVisible, storeId]
     );
     

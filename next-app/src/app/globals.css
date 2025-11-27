@@ -12,6 +12,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: #111827; /* text-gray-900 を明示的に指定（ブラウザモードとの差異を防ぐ） */
   
   /* パフォーマンス最適化 - transform除去でサイドバー固定を有効化 */
   will-change: scroll-position;
@@ -89,6 +90,25 @@ a {
 @layer base {
   html {
     font-family: 'Inter', 'Noto Sans JP', sans-serif;
+    color: #111827; /* text-gray-900 を明示的に指定（ブラウザモードとの差異を防ぐ） */
+  }
+  
+  /* テーブルセルのテキスト色を明示的に指定 */
+  table {
+    color: #111827 !important; /* text-gray-900 */
+  }
+  
+  table td,
+  table th {
+    color: #111827 !important; /* text-gray-900 を強制適用 */
+  }
+  
+  tbody {
+    color: #111827 !important; /* text-gray-900 を強制適用 */
+  }
+  
+  tbody td {
+    color: #111827 !important; /* text-gray-900 を強制適用 */
   }
   h1 {
     /* @apply text-3xl font-bold; 削除 */

@@ -106,8 +106,11 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
     return sorted;
   }, [dailyData]);
 
+  // ブラウザモードでも確実に黒色を適用するためのインラインスタイル
+  const cellTextStyle: React.CSSProperties = { color: '#111827' };
+
   const getCellClassName = (date: string, dayOfWeek: string, index: number) => {
-    const baseClass = "px-1 py-1 text-right border-r border-gray-200 text-xs whitespace-nowrap";
+    const baseClass = "px-1 py-1 text-right border-r border-gray-200 text-xs whitespace-nowrap text-gray-900";
     const isEvenRow = index % 2 === 0;
 
     if (isSaturday(dayOfWeek)) {
@@ -120,7 +123,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
   };
 
   const getDateCellClassName = (date: string, dayOfWeek: string, index: number) => {
-    const baseClass = "px-1 py-1 text-center font-medium border-r border-gray-300 text-xs";
+    const baseClass = "px-1 py-1 text-center font-medium border-r border-gray-300 text-xs text-gray-900";
     const isEvenRow = index % 2 === 0;
 
     if (isSaturday(dayOfWeek)) {
@@ -146,7 +149,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
   };
 
   const getActionCellClassName = (index: number) => {
-    const baseClass = "px-1 py-1 text-center border-l border-gray-200";
+    const baseClass = "px-1 py-1 text-center border-l border-gray-200 text-gray-900";
     const isEvenRow = index % 2 === 0;
     return `${baseClass} ${isEvenRow ? 'bg-white' : 'bg-gray-50'}`;
   };
@@ -291,7 +294,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-xs">
+        <table className="w-full text-xs text-gray-900">
           <thead className="bg-gray-50">
             {/* グループヘッダー */}
             <tr className="border-b border-gray-300">
@@ -379,74 +382,74 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
               <th className="px-1 py-1 text-center font-medium text-gray-700 whitespace-nowrap">操作</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-100 text-gray-900">
             {memoizedCellData.map(({ date, data, day, index, dateCellClass, dayOfWeekCellClass, actionCellClass }) => (
               <tr key={date} className="hover:bg-gray-50">
                 <td className={dateCellClass}>{day}</td>
                 <td className={dayOfWeekCellClass}>{data?.dayOfWeek || ''}</td>
                 {/* 目標・前年比 */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.salesTarget)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.targetCumulative)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatPercent(data?.targetRatio)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatPercent(data?.yearOverYear)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatPercent(data?.edwYearOverYear)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatPercent(data?.ohbYearOverYear)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.salesTarget)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.targetCumulative)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.targetRatio)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.yearOverYear)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.edwYearOverYear)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.ohbYearOverYear)}</td>
                 {/* 店舗売上 */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.netSales)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.netSalesCumulative)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.edwNetSales)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.edwNetSalesCumulative)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.ohbNetSales)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.ohbNetSalesCumulative)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.netSales)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.netSalesCumulative)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.edwNetSales)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.edwNetSalesCumulative)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbNetSales)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbNetSalesCumulative)}</td>
                 {/* 客数・組数 */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.totalGroups)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.totalCustomers)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.groupUnitPrice)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.customerUnitPrice)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.totalGroups)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.totalCustomers)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.groupUnitPrice)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.customerUnitPrice)}</td>
                 {/* 人件費 */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatDecimal(data?.katougi)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatDecimal(data?.ishimori)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatDecimal(data?.osawa)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatDecimal(data?.washizuka)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatDecimal(data?.employeeHours)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatDecimal(data?.asHours)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.salesPerHour)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.laborCost)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatPercent(data?.laborCostRate)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.katougi)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.ishimori)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.osawa)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.washizuka)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.employeeHours)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.asHours)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.salesPerHour)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.laborCost)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.laborCostRate)}</td>
                 {/* EDW営業明細 */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.lunchSales)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.dinnerSales)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.lunchCustomers)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.dinnerCustomers)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.lunchGroups)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.dinnerGroups)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.edwCustomerUnitPrice)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.lunchUnitPrice)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.dinnerUnitPrice)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchSales)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.dinnerSales)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchCustomers)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.dinnerCustomers)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchGroups)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.dinnerGroups)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.edwCustomerUnitPrice)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchUnitPrice)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.dinnerUnitPrice)}</td>
                 {/* OHB */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.ohbSales)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.ohbCustomers)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.ohbGroups)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.ohbCustomerUnitPrice)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbSales)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbCustomers)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbGroups)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbCustomerUnitPrice)}</td>
                 {/* VOID */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.voidCount)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.voidAmount)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.salesDiscrepancy)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.voidCount)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.voidAmount)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.salesDiscrepancy)}</td>
                 {/* 生産性 */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatDecimal(data?.totalHours)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatDecimal(data?.edwBaitHours)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatDecimal(data?.ohbBaitHours)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.edwProductivity)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.ohbProductivity)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.totalProductivity)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.totalHours)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.edwBaitHours)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.ohbBaitHours)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.edwProductivity)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbProductivity)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.totalProductivity)}</td>
                 {/* OHB予約 */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.reservationCount)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.plain)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.junsei)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.seasonal)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.reservationCount)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.plain)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.junsei)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.seasonal)}</td>
                 {/* アンケート */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatValue(data?.surveyCount)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)}>{formatPercent(data?.surveyRate)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.surveyCount)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.surveyRate)}</td>
                 {/* 操作 */}
                 <td className={actionCellClass}>
                   <button
@@ -468,70 +471,70 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
                   月間累計
                 </td>
                 {/* 目標・前年比 */}
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.salesTarget)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.targetCumulative)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatPercent(monthlySummary.targetRatio)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatPercent(monthlySummary.yearOverYear)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatPercent(monthlySummary.edwYearOverYear)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs">{formatPercent(monthlySummary.ohbYearOverYear)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.salesTarget)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.targetCumulative)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatPercent(monthlySummary.targetRatio)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatPercent(monthlySummary.yearOverYear)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatPercent(monthlySummary.edwYearOverYear)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs text-gray-900" style={cellTextStyle}>{formatPercent(monthlySummary.ohbYearOverYear)}</td>
                 {/* 店舗売上 */}
                 <td className="px-1 py-2 text-right border-r border-gray-200 text-xs bg-green-50 font-bold text-green-800">{formatValue(monthlySummary.netSales)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.netSalesCumulative)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.edwNetSales)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.edwNetSalesCumulative)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.ohbNetSales)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs">{formatValue(monthlySummary.ohbNetSalesCumulative)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.netSalesCumulative)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.edwNetSales)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.edwNetSalesCumulative)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.ohbNetSales)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.ohbNetSalesCumulative)}</td>
                 {/* 客数・組数 */}
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.totalGroups)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.totalCustomers)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.groupUnitPrice)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs">{formatValue(monthlySummary.customerUnitPrice)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.totalGroups)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.totalCustomers)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.groupUnitPrice)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.customerUnitPrice)}</td>
                 {/* 人件費 */}
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatDecimal(monthlySummary.katougi)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatDecimal(monthlySummary.ishimori)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatDecimal(monthlySummary.osawa)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatDecimal(monthlySummary.washizuka)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatDecimal(monthlySummary.employeeHours)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatDecimal(monthlySummary.asHours)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.salesPerHour)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatDecimal(monthlySummary.katougi)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatDecimal(monthlySummary.ishimori)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatDecimal(monthlySummary.osawa)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatDecimal(monthlySummary.washizuka)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatDecimal(monthlySummary.employeeHours)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatDecimal(monthlySummary.asHours)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.salesPerHour)}</td>
                 <td className="px-1 py-2 text-right border-r border-gray-200 text-xs bg-orange-50 font-bold text-orange-800">{formatValue(monthlySummary.laborCost)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs">{formatPercent(monthlySummary.laborCostRate)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs text-gray-900" style={cellTextStyle}>{formatPercent(monthlySummary.laborCostRate)}</td>
                 {/* EDW営業明細 */}
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.lunchSales)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.dinnerSales)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.lunchCustomers)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.dinnerCustomers)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.lunchGroups)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.dinnerGroups)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.edwCustomerUnitPrice)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.lunchUnitPrice)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs">{formatValue(monthlySummary.dinnerUnitPrice)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.lunchSales)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.dinnerSales)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.lunchCustomers)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.dinnerCustomers)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.lunchGroups)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.dinnerGroups)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.edwCustomerUnitPrice)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.lunchUnitPrice)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.dinnerUnitPrice)}</td>
                 {/* OHB */}
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.ohbSales)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.ohbCustomers)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.ohbGroups)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs">{formatValue(monthlySummary.ohbCustomerUnitPrice)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.ohbSales)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.ohbCustomers)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.ohbGroups)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.ohbCustomerUnitPrice)}</td>
                 {/* VOID */}
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.voidCount)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.voidAmount)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs">{formatValue(monthlySummary.salesDiscrepancy)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.voidCount)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.voidAmount)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.salesDiscrepancy)}</td>
                 {/* 生産性 */}
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatDecimal(monthlySummary.totalHours)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatDecimal(monthlySummary.edwBaitHours)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatDecimal(monthlySummary.ohbBaitHours)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.edwProductivity)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.ohbProductivity)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs">{formatValue(monthlySummary.totalProductivity)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatDecimal(monthlySummary.totalHours)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatDecimal(monthlySummary.edwBaitHours)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatDecimal(monthlySummary.ohbBaitHours)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.edwProductivity)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.ohbProductivity)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.totalProductivity)}</td>
                 {/* OHB予約 */}
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.reservationCount)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.plain)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.junsei)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs">{formatValue(monthlySummary.seasonal)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.reservationCount)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.plain)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.junsei)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.seasonal)}</td>
                 {/* アンケート */}
-                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs">{formatValue(monthlySummary.surveyCount)}</td>
-                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs">{formatPercent(monthlySummary.surveyRate)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.surveyCount)}</td>
+                <td className="px-1 py-2 text-right border-r border-gray-300 text-xs text-gray-900" style={cellTextStyle}>{formatPercent(monthlySummary.surveyRate)}</td>
                 {/* 操作 */}
-                <td className="px-1 py-2 text-center text-xs">-</td>
+                <td className="px-1 py-2 text-center text-xs text-gray-900" style={cellTextStyle}>-</td>
               </tr>
             </tfoot>
           )}

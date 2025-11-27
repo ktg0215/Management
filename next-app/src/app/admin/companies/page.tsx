@@ -31,7 +31,8 @@ const EXPENSE_CATEGORIES = [
 ];
 
 const PAYMENT_TYPES = [
-  { value: 'regular', label: '定期支払い' },
+  { value: 'regular', label: '定期支払い（毎月）' },
+  { value: 'specific', label: '定期支払い（選択した月）' },
   { value: 'irregular', label: '不定期支払い' }
 ];
 
@@ -54,6 +55,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
     category: EXPENSE_CATEGORIES[0],
     paymentType: 'regular',
     regularAmount: 0,
+    specificMonths: [],
     isVisible: true,
     storeId: user?.storeId || ''
   });
@@ -73,6 +75,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
         category: EXPENSE_CATEGORIES[0],
         paymentType: 'regular',
         regularAmount: 0,
+        specificMonths: [],
         isVisible: true,
         storeId: user?.storeId || ''
       });
@@ -211,7 +214,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
                 </label>
                 <select
                   value={formData.paymentType}
-                  onChange={(e) => handleChange('paymentType', e.target.value as 'regular' | 'irregular')}
+                  onChange={(e) => handleChange('paymentType', e.target.value as 'regular' | 'irregular' | 'specific')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {PAYMENT_TYPES.map(type => (
@@ -222,19 +225,47 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
                 </select>
               </div>
 
-              {formData.paymentType === 'regular' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    定期支払い金額
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.regularAmount || 0}
-                    onChange={(e) => handleChange('regularAmount', Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="0"
-                  />
-                </div>
+              {(formData.paymentType === 'regular' || formData.paymentType === 'specific') && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      定期支払い金額
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.regularAmount || 0}
+                      onChange={(e) => handleChange('regularAmount', Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min="0"
+                    />
+                  </div>
+                  {formData.paymentType === 'specific' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        支払い月を選択（複数選択可）
+                      </label>
+                      <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => (
+                          <label key={month} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                            <input
+                              type="checkbox"
+                              checked={(formData.specificMonths || []).includes(month)}
+                              onChange={(e) => {
+                                const currentMonths = formData.specificMonths || [];
+                                const newMonths = e.target.checked
+                                  ? [...currentMonths, month]
+                                  : currentMonths.filter((m) => m !== month);
+                                handleChange('specificMonths', newMonths.sort((a, b) => a - b));
+                              }}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700">{month}月</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {user?.role === 'super_admin' && (
@@ -326,8 +357,15 @@ function CompaniesPage() {
         selectedStoreId
       });
       if (response.success && response.data) {
-        console.log('[取引先管理] Setting companies:', response.data);
-        setCompanies(response.data);
+        // specificMonthsを数値配列に変換（データベースから取得した配列をそのまま使用）
+        const processedData = response.data.map((company: any) => ({
+          ...company,
+          specificMonths: Array.isArray(company.specificMonths) 
+            ? company.specificMonths.map((m: any) => typeof m === 'string' ? parseInt(m, 10) : m)
+            : (company.specificMonths ? [company.specificMonths] : [])
+        }));
+        console.log('[取引先管理] Setting companies:', processedData);
+        setCompanies(processedData);
       } else {
         const errorMessage = response.error || '取引先データの取得に失敗しました';
         setError(errorMessage);
@@ -458,11 +496,15 @@ function CompaniesPage() {
         await loadCompanies();
         setError(null); // エラーをクリア
       } else {
-        setError(response.error || '削除に失敗しました');
+        const errorMessage = response.error || '削除に失敗しました';
+        setError(errorMessage);
+        setTimeout(() => setError(''), 10000); // 10秒後にエラーをクリア
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('削除エラー:', error);
-      setError('削除に失敗しました。ネットワークエラーが発生した可能性があります。');
+      const errorMessage = error?.response?.data?.error || error?.message || '削除に失敗しました。ネットワークエラーが発生した可能性があります。';
+      setError(errorMessage);
+      setTimeout(() => setError(''), 10000); // 10秒後にエラーをクリア
     }
   };
 
