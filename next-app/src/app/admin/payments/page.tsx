@@ -158,7 +158,7 @@ const usePaymentData = (storeId: string | null) => {
         });
         if (response.success && response.data) {
           console.log('[支払い管理] Setting companies:', response.data);
-          setCompanies(response.data);
+          setCompanies(response.data as Company[]);
         } else {
           // APIからデータが取得できない場合は空配列を設定
           console.log('[支払い管理] No data from API, setting empty array');
