@@ -552,7 +552,7 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
                           return null;
                         }
                         return (
-                        <tr key={field.id || `field-${index}`} className={`hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
+                          <tr key={field.id || `field-${index}`} className={`hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
                           <td className="px-6 py-2 whitespace-nowrap sticky left-0 bg-white border-r border-gray-100 z-10">
                             <div className="flex items-center space-x-4">
                               <div className="w-1.5 h-1.5 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full flex-shrink-0"></div>
