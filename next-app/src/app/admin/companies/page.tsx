@@ -34,7 +34,10 @@ const PAYMENT_TYPES = [
   { value: 'regular', label: '定期支払い（毎月）' },
   { value: 'specific', label: '定期支払い（選択した月）' },
   { value: 'irregular', label: '不定期支払い' }
-];
+] as const;
+
+// デバッグ用: PAYMENT_TYPESが正しく定義されているか確認
+console.log('[CompaniesPage] PAYMENT_TYPES:', PAYMENT_TYPES);
 
 interface CompanyModalProps {
   isOpen: boolean;
@@ -257,11 +260,14 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {PAYMENT_TYPES.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
+                  {PAYMENT_TYPES.map((type, index) => {
+                    console.log(`[CompanyModal] Rendering payment type option ${index}:`, type);
+                    return (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
