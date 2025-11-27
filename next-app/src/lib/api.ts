@@ -330,6 +330,10 @@ class ApiClient {
     return this.request<{ items: PLItem[] }>(`/pl${query}`);
   }
 
+  async getPLSubjects() {
+    return this.request<string[]>('/pl/subjects');
+  }
+
   async savePL(data: {
     year: number;
     month: number;

@@ -61,6 +61,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [availableCategories, setAvailableCategories] = useState<string[]>(EXPENSE_CATEGORIES);
 
   useEffect(() => {
     if (company) {
@@ -156,7 +157,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
                   onChange={(e) => handleChange('category', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {EXPENSE_CATEGORIES.map(category => (
+                  {availableCategories.map(category => (
                     <option key={category} value={category}>
                       {category}
                     </option>

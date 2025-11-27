@@ -1133,6 +1133,21 @@ app.post('/api/pl', requireDatabase, authenticateToken, async (req: Request, res
   }
 });
 
+// PL科目一覧取得API（取引先の科目選択用）
+app.get('/api/pl/subjects', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  try {
+    // pl_itemsテーブルからユニークな科目名を取得
+    const result = await pool!.query(
+      'SELECT DISTINCT subject_name FROM pl_items WHERE subject_name IS NOT NULL AND subject_name != \'\' ORDER BY subject_name'
+    );
+    const subjects = result.rows.map(row => row.subject_name);
+    res.json({ success: true, data: subjects });
+  } catch (err) {
+    console.error('PL科目一覧取得エラー:', err);
+    res.status(500).json({ success: false, error: '科目一覧の取得に失敗しました' });
+  }
+});
+
 // 支払い管理API
 app.get('/api/payments', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { month, storeId } = req.query;
