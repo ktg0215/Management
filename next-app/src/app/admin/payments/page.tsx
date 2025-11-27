@@ -241,7 +241,7 @@ const usePaymentData = (storeId: string | null) => {
         isVisible: company.isVisible ?? true
       });
       if (response.success && response.data) {
-        setCompanies(prev => [...prev, response.data!]);
+        setCompanies(prev => [...prev, response.data! as Company]);
       }
     } catch (error) {
       console.error('取引先の追加に失敗しました:', error);
