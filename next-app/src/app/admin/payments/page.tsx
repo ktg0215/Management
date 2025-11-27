@@ -396,10 +396,7 @@ const usePaymentData = (storeId: string | null) => {
         storeId: storeId
       }));
       
-      const response = await apiClient.request('/payments/bulk', {
-        method: 'POST',
-        body: JSON.stringify({ payments: paymentsToSave }),
-      });
+      const response = await apiClient.bulkSavePayments(paymentsToSave);
       
       if (response.success) {
         setHasUnsavedChanges(false);
