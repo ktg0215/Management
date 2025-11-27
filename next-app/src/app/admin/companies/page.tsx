@@ -345,13 +345,16 @@ function CompaniesPage() {
 
   useEffect(() => {
     if (user?.storeId && selectedStoreId === '') {
-      setSelectedStoreId(user.storeId);
+      setSelectedStoreId(String(user.storeId || ''));
     }
   }, [user?.storeId, selectedStoreId]);
 
   useEffect(() => {
     if (selectedStoreId) {
       loadCompanies();
+    } else {
+      // selectedStoreIdが空の場合はcompaniesをクリア
+      setCompanies([]);
     }
   }, [selectedStoreId, loadCompanies]);
 
