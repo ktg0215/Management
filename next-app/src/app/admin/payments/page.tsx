@@ -339,7 +339,11 @@ const usePaymentData = (storeId: string | null) => {
 
   // Load companies from API
   useEffect(() => {
-    if (!storeId) return;
+    if (!storeId) {
+      // storeIdがない場合はcompaniesをクリア
+      setCompanies([]);
+      return;
+    }
     
     const loadCompanies = async () => {
       try {
@@ -356,9 +360,14 @@ const usePaymentData = (storeId: string | null) => {
         if (response.success && response.data) {
           console.log('[支払い管理] Setting companies:', response.data);
           setCompanies(response.data);
+        } else {
+          // APIからデータが取得できない場合は空配列を設定
+          console.log('[支払い管理] No data from API, setting empty array');
+          setCompanies([]);
         }
       } catch (error) {
         console.error('取引先データの取得に失敗しました:', error);
+        setCompanies([]);
       } finally {
         setLoading(false);
       }
