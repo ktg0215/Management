@@ -5,7 +5,6 @@ import { Edit2, Plus, Building, ChevronDown, Loader2 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useStoreStore } from '../../stores/storeStore';
 import { formatStoreName, sortStoresByBusinessType } from '../../utils/storeDisplay';
-import YearMonthSelector from '../YearMonthSelector';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 
 // 売上管理フィールド → 月次売上管理フィールドのマッピング
@@ -90,7 +89,6 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
   const { user, isSuperAdmin } = useAuthStore();
   const { stores } = useStoreStore();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedStoreId, setSelectedStoreId] = useState<string>('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['sales', 'customer', 'profit']));
 
@@ -470,14 +468,25 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
               )}
             </div>
 
-            {/* Year and Month Selector */}
+            {/* Year Selector */}
             <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-200">
-              <YearMonthSelector
-                year={selectedYear}
-                month={selectedMonth}
-                onYearChange={setSelectedYear}
-                onMonthChange={setSelectedMonth}
-              />
+              <div className="flex items-center space-x-3">
+                <label className="text-sm font-semibold text-gray-700">年:</label>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  className="bg-transparent border-none focus:ring-0 text-gray-900 font-semibold cursor-pointer"
+                >
+                  {Array.from({ length: 10 }, (_, i) => {
+                    const year = new Date().getFullYear() - 5 + i;
+                    return (
+                      <option key={year} value={year}>
+                        {year}年
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
             </div>
           </div>
         </div>
