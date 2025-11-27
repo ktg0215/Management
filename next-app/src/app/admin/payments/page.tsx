@@ -328,15 +328,11 @@ const usePaymentData = (storeId: string | null) => {
   }, [companies]);
 
   const monthlyTotal = useMemo(() => {
-    return payments
-      .filter(p => {
-        const company = companies.find(c => c.id === p.companyId);
-        return p.month === selectedMonth && company && (
-          company.paymentType === 'regular' || company.isVisible
-        );
-      })
-      .reduce((sum, payment) => sum + payment.amount, 0);
-  }, [payments, selectedMonth, companies]);
+    return visibleCompanies.reduce((sum, company) => {
+      const amount = getPaymentAmount(company.id);
+      return sum + amount;
+    }, 0);
+  }, [visibleCompanies, getPaymentAmount]);
 
   const categoryTotals = useMemo(() => {
     const totals: Record<string, number> = {};
