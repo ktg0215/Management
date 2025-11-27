@@ -5,6 +5,7 @@ import { Building2, Edit2, EyeOff, Building, RotateCcw, Calendar, Plus, X, Save,
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
 import { formatStoreName } from '@/utils/storeDisplay';
+import apiClient from '@/lib/api';
 
 // 型定義
 export type PaymentType = 'regular' | 'irregular' | 'specific';
@@ -316,17 +317,13 @@ const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
   return defaultValue;
 };
 
-const usePaymentData = () => {
-  // 初期化時にローカルストレージからデータを読み込み
-  const [companies, setCompanies] = useState<Company[]>(() =>
-    loadFromStorage(STORAGE_KEYS.COMPANIES, DEMO_COMPANIES)
-  );
-
-  const [payments, setPayments] = useState<Payment[]>(() =>
-    loadFromStorage(STORAGE_KEYS.PAYMENTS, DEMO_PAYMENTS)
-  );
-
+const usePaymentData = (storeId: string | null) => {
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Initialize selectedMonth on client side only
   useEffect(() => {
@@ -340,67 +337,133 @@ const usePaymentData = () => {
     }
   }, []);
 
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(() => {
-    const companies = loadFromStorage(STORAGE_KEYS.COMPANIES, []);
-    return companies.length > 0 ? new Date() : null;
-  });
-
-  // データが変更されたときに未保存フラグを立てる
+  // Load companies from API
   useEffect(() => {
-    setHasUnsavedChanges(true);
-  }, [companies, payments]);
+    if (!storeId) return;
+    
+    const loadCompanies = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.getCompanies(storeId);
+        if (response.success && response.data) {
+          setCompanies(response.data);
+        }
+      } catch (error) {
+        console.error('取引先データの取得に失敗しました:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCompanies();
+  }, [storeId]);
+
+  // Load payments from API when month or storeId changes
+  useEffect(() => {
+    if (!storeId || !selectedMonth) return;
+    
+    const loadPayments = async () => {
+      try {
+        const response = await apiClient.getPayments(selectedMonth, storeId);
+        if (response.success && response.data) {
+          setPayments(response.data);
+        }
+      } catch (error) {
+        console.error('支払いデータの取得に失敗しました:', error);
+      }
+    };
+
+    loadPayments();
+  }, [storeId, selectedMonth]);
 
   // 選択月が変更されたときに保存
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.SELECTED_MONTH, selectedMonth);
   }, [selectedMonth]);
 
-  // 手動保存機能
-  const saveData = useCallback(() => {
-    saveToStorage(STORAGE_KEYS.COMPANIES, companies);
-    saveToStorage(STORAGE_KEYS.PAYMENTS, payments);
-    setHasUnsavedChanges(false);
-    setLastSaved(new Date());
-  }, [companies, payments]);
+  // 手動保存機能 - APIに保存
+  const saveData = useCallback(async () => {
+    if (!storeId) return;
+    
+    try {
+      setLoading(true);
+      // 支払いデータを一括保存
+      const paymentsToSave = payments.map(p => ({
+        id: p.id,
+        companyId: p.companyId,
+        month: p.month,
+        amount: p.amount,
+        storeId: storeId
+      }));
+      
+      const response = await apiClient.request('/payments/bulk', {
+        method: 'POST',
+        body: JSON.stringify({ payments: paymentsToSave }),
+      });
+      
+      if (response.success) {
+        setHasUnsavedChanges(false);
+        setLastSaved(new Date());
+      }
+    } catch (error) {
+      console.error('データの保存に失敗しました:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [payments, storeId]);
 
-  // データリセット機能
-  const resetData = useCallback(() => {
-    if (window.confirm('すべてのデータをリセットしてデモデータに戻しますか？\n※この操作は取り消せません。')) {
-      setCompanies(DEMO_COMPANIES);
-      setPayments(DEMO_PAYMENTS);
-      localStorage.removeItem(STORAGE_KEYS.COMPANIES);
-      localStorage.removeItem(STORAGE_KEYS.PAYMENTS);
-      setHasUnsavedChanges(false);
-      setLastSaved(new Date());
+  const addCompany = useCallback(async (company: Omit<Company, 'id'>) => {
+    if (!storeId) return;
+    
+    try {
+      const response = await apiClient.createCompany({ ...company, storeId });
+      if (response.success && response.data) {
+        setCompanies(prev => [...prev, response.data!]);
+      }
+    } catch (error) {
+      console.error('取引先の追加に失敗しました:', error);
+      throw error;
+    }
+  }, [storeId]);
+
+  const updateCompany = useCallback(async (id: string, updates: Partial<Company>) => {
+    try {
+      const response = await apiClient.updateCompany(id, updates);
+      if (response.success && response.data) {
+        setCompanies(prev => prev.map(company =>
+          company.id === id ? response.data! : company
+        ));
+      }
+    } catch (error) {
+      console.error('取引先の更新に失敗しました:', error);
+      throw error;
     }
   }, []);
 
-  const addCompany = useCallback((company: Omit<Company, 'id'>) => {
-    const newCompany: Company = {
-      ...company,
-      id: Date.now().toString(),
-      isVisible: true,
-    };
-    setCompanies(prev => [...prev, newCompany]);
+  const deleteCompany = useCallback(async (id: string) => {
+    try {
+      const response = await apiClient.deleteCompany(id);
+      if (response.success) {
+        setCompanies(prev => prev.filter(company => company.id !== id));
+        setPayments(prev => prev.filter(payment => payment.companyId !== id));
+      }
+    } catch (error) {
+      console.error('取引先の削除に失敗しました:', error);
+      throw error;
+    }
   }, []);
 
-  const updateCompany = useCallback((id: string, updates: Partial<Company>) => {
-    setCompanies(prev => prev.map(company =>
-      company.id === id ? { ...company, ...updates } : company
-    ));
-  }, []);
-
-  const deleteCompany = useCallback((id: string) => {
-    setCompanies(prev => prev.filter(company => company.id !== id));
-    setPayments(prev => prev.filter(payment => payment.companyId !== id));
-  }, []);
-
-  const toggleCompanyVisibility = useCallback((id: string) => {
-    setCompanies(prev => prev.map(company =>
-      company.id === id ? { ...company, isVisible: !company.isVisible } : company
-    ));
-  }, []);
+  const toggleCompanyVisibility = useCallback(async (id: string) => {
+    const company = companies.find(c => c.id === id);
+    if (!company) return;
+    
+    try {
+      await updateCompany(id, { isVisible: !company.isVisible });
+    } catch (error) {
+      console.error('表示設定の更新に失敗しました:', error);
+    }
+  }, [companies, updateCompany]);
 
   const updatePayment = useCallback((companyId: string, amount: number) => {
     const existingPayment = payments.find(p =>
@@ -415,7 +478,7 @@ const usePaymentData = () => {
       ));
     } else {
       const newPayment: Payment = {
-        id: Date.now().toString(),
+        id: `temp-${Date.now()}`,
         companyId,
         month: selectedMonth,
         amount,
@@ -424,6 +487,7 @@ const usePaymentData = () => {
       };
       setPayments(prev => [...prev, newPayment]);
     }
+    setHasUnsavedChanges(true);
   }, [selectedMonth, payments]);
 
   const getPaymentAmount = useCallback((companyId: string, month: string = selectedMonth) => {
@@ -481,7 +545,7 @@ const usePaymentData = () => {
     hasUnsavedChanges,
     lastSaved,
     saveData,
-    resetData,
+    loading,
   };
 };
 
@@ -748,8 +812,8 @@ function PaymentManagement() {
     hasUnsavedChanges,
     lastSaved,
     saveData,
-    resetData,
-  } = usePaymentData();
+    loading: paymentDataLoading,
+  } = usePaymentData(selectedStoreId);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -769,13 +833,18 @@ function PaymentManagement() {
     }
   }, [user, stores, selectedStoreId]);
 
-  const handleSaveCompany = (companyData: Omit<Company, 'id'>) => {
-    if (editingCompany) {
-      updateCompany(editingCompany.id, companyData);
-    } else {
-      addCompany(companyData);
+  const handleSaveCompany = async (companyData: Omit<Company, 'id'>) => {
+    try {
+      if (editingCompany) {
+        await updateCompany(editingCompany.id, companyData);
+      } else {
+        await addCompany(companyData);
+      }
+      setEditingCompany(undefined);
+    } catch (error) {
+      console.error('取引先の保存に失敗しました:', error);
+      alert('取引先の保存に失敗しました。');
     }
-    setEditingCompany(undefined);
   };
 
   const handleEditCompany = (company: Company) => {
@@ -783,8 +852,15 @@ function PaymentManagement() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteCompany = (id: string) => {
-    deleteCompany(id);
+  const handleDeleteCompany = async (id: string) => {
+    if (window.confirm('この取引先を削除しますか？')) {
+      try {
+        await deleteCompany(id);
+      } catch (error) {
+        console.error('取引先の削除に失敗しました:', error);
+        alert('取引先の削除に失敗しました。');
+      }
+    }
   };
 
   const handleAddCompany = () => {
@@ -883,7 +959,6 @@ function PaymentManagement() {
                     hasUnsavedChanges={hasUnsavedChanges}
                     lastSaved={lastSaved}
                     onSave={saveData}
-                    onReset={resetData}
                   />
                 )}
               </div>
@@ -1149,14 +1224,12 @@ interface SaveButtonProps {
   hasUnsavedChanges: boolean;
   lastSaved: Date | null;
   onSave: () => void;
-  onReset: () => void;
 }
 
 const SaveButton: React.FC<SaveButtonProps> = ({
   hasUnsavedChanges,
   lastSaved,
   onSave,
-  onReset,
 }) => {
   const formatLastSaved = () => {
     if (!lastSaved) return '未保存';
@@ -1212,14 +1285,6 @@ const SaveButton: React.FC<SaveButtonProps> = ({
         <span>保存</span>
       </button>
 
-      {/* リセットボタン */}
-      <button
-        onClick={onReset}
-        className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium"
-      >
-        <RotateCcw className="w-4 h-4" />
-        <span>リセット</span>
-      </button>
     </div>
   );
 };
