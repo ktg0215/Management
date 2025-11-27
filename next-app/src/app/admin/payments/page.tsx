@@ -235,7 +235,11 @@ const usePaymentData = (storeId: string | null) => {
     if (!storeId) return;
     
     try {
-      const response = await apiClient.createCompany({ ...company, storeId });
+      const response = await apiClient.createCompany({ 
+        ...company, 
+        storeId,
+        isVisible: company.isVisible ?? true
+      });
       if (response.success && response.data) {
         setCompanies(prev => [...prev, response.data!]);
       }
