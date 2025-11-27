@@ -183,7 +183,11 @@ const usePaymentData = (storeId: string | null) => {
       try {
         const response = await apiClient.getPayments(selectedMonth, storeId);
         if (response.success && response.data) {
-          setPayments(response.data);
+          setPayments(response.data.map(p => ({
+            ...p,
+            createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+            updatedAt: p.updatedAt ? new Date(p.updatedAt) : new Date()
+          })) as Payment[]);
         }
       } catch (error) {
         console.error('支払いデータの取得に失敗しました:', error);
