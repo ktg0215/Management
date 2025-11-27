@@ -577,11 +577,22 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
                               // Ensure monthDataData is not undefined before accessing field.id
                               let rawValue: any = undefined;
                               try {
-                                if (monthDataData && typeof monthDataData === 'object' && !Array.isArray(monthDataData) && field.id) {
+                                // Triple-check monthDataData is a valid object
+                                if (monthDataData && 
+                                    typeof monthDataData === 'object' && 
+                                    !Array.isArray(monthDataData) && 
+                                    monthDataData !== null &&
+                                    field && 
+                                    field.id) {
                                   rawValue = monthDataData[field.id];
+                                } else {
+                                  // If monthDataData is invalid, set to empty object
+                                  monthDataData = {};
+                                  rawValue = undefined;
                                 }
                               } catch (e) {
-                                console.warn(`Error accessing monthDataData[${field.id}] for month ${month.value}:`, e);
+                                console.warn(`Error accessing monthDataData[${field?.id || 'unknown'}] for month ${month.value}:`, e);
+                                monthDataData = {};
                                 rawValue = undefined;
                               }
                               const value = getValueWithSalesIntegration(rawValue, field, month.value);
