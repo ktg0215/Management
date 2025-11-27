@@ -217,19 +217,30 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
 
   // Get visible fields for current store
   const getVisibleFields = (): Field[] => {
-    const settings = storeVisibilitySettings.find(s => s.storeId === selectedStoreId);
-    if (settings && settings.visibleFieldIds.length > 0) {
-      // Filter master fields by visibility settings
-      return masterFields.filter(field => settings.visibleFieldIds.includes(field.id));
+    try {
+      const settings = storeVisibilitySettings.find(s => s.storeId === selectedStoreId);
+      if (settings && settings.visibleFieldIds && settings.visibleFieldIds.length > 0) {
+        // Filter master fields by visibility settings
+        return masterFields.filter(field => field && field.id && settings.visibleFieldIds.includes(field.id));
+      }
+      // Default: show all fields if no visibility setting exists
+      return masterFields.filter(field => field && field.id);
+    } catch (error) {
+      console.error('Error in getVisibleFields:', error);
+      return masterFields.filter(field => field && field.id);
     }
-    // Default: show all fields if no visibility setting exists
-    return masterFields;
   };
 
   const visibleFields = getVisibleFields();
   
   // Ensure visibleFields is always an array and fields have valid IDs
-  const safeVisibleFields = visibleFields.filter(field => field && field.id);
+  const safeVisibleFields = (visibleFields || []).filter(field => {
+    if (!field || !field.id) {
+      console.warn('Invalid field found:', field);
+      return false;
+    }
+    return true;
+  });
 
   // 6月から始まる月の配列
   const months = [
@@ -293,10 +304,20 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
   };
 
   const getCategoryFields = (category: string) => {
-    return safeVisibleFields.filter(field => field && field.category === category).sort((a, b) => (a.order || 0) - (b.order || 0));
+    try {
+      return safeVisibleFields.filter(field => {
+        if (!field || !field.id) {
+          return false;
+        }
+        return field.category === category;
+      }).sort((a, b) => (a.order || 0) - (b.order || 0));
+    } catch (error) {
+      console.error('Error in getCategoryFields:', error);
+      return [];
+    }
   };
 
-  const fieldCategories = [...new Set(visibleFields.map(field => field.category))];
+  const fieldCategories = [...new Set(safeVisibleFields.map(field => field && field.category).filter(Boolean))];
 
   const toggleCategory = (category: string) => {
     const newExpanded = new Set(expandedCategories);
