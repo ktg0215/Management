@@ -71,7 +71,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
     const fetchCategories = async () => {
       try {
         const response = await apiClient.getPLSubjects();
-        if (response.success && response.data && response.data.length > 0) {
+        if (response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
           // 既存のEXPENSE_CATEGORIESとPL科目をマージして重複を除去
           const merged = [...new Set([...EXPENSE_CATEGORIES, ...response.data])].sort();
           setAvailableCategories(merged);
