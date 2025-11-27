@@ -71,8 +71,8 @@ const CATEGORY_COLORS = {
   'その他': 'bg-gray-50 border-gray-200 text-gray-800'
 };
 
-// デモデータ
-const DEMO_COMPANIES: Company[] = [
+// デモデータは削除済み - APIからデータを取得します
+// const DEMO_COMPANIES: Company[] = [
   {
     id: '1',
     name: 'Google広告',
@@ -190,8 +190,8 @@ const DEMO_COMPANIES: Company[] = [
     isVisible: true,
   },
 ];
-
-const DEMO_PAYMENTS: Payment[] = [
+// デモデータは削除済み - APIからデータを取得します
+// const DEMO_PAYMENTS: Payment[] = [
   {
     id: 'p1',
     companyId: '1',
