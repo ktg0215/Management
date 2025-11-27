@@ -254,7 +254,7 @@ const usePaymentData = (storeId: string | null) => {
       const response = await apiClient.updateCompany(id, updates);
       if (response.success && response.data) {
         setCompanies(prev => prev.map(company =>
-          company.id === id ? response.data! : company
+          company.id === id ? (response.data! as Company) : company
         ));
       }
     } catch (error) {
