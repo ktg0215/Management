@@ -331,7 +331,7 @@ class ApiClient {
   }
 
   async getPLSubjects() {
-    return this.request<string[]>('/pl/subjects');
+    return this.request<{ success: boolean; data: string[] }>('/pl/subjects');
   }
 
   async savePL(data: {

@@ -63,6 +63,27 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
   const [error, setError] = useState<string | null>(null);
   const [availableCategories, setAvailableCategories] = useState<string[]>(EXPENSE_CATEGORIES);
 
+  // PL科目一覧を取得
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await apiClient.getPLSubjects();
+        if (response.success && response.data && response.data.length > 0) {
+          // 既存のEXPENSE_CATEGORIESとPL科目をマージして重複を除去
+          const merged = [...new Set([...EXPENSE_CATEGORIES, ...response.data])].sort();
+          setAvailableCategories(merged);
+        }
+      } catch (error) {
+        console.error('科目一覧の取得に失敗しました:', error);
+        // エラー時はデフォルトの科目リストを使用
+        setAvailableCategories(EXPENSE_CATEGORIES);
+      }
+    };
+    if (isOpen) {
+      fetchCategories();
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (company) {
       // specificMonthsを数値配列として確実に設定
@@ -79,7 +100,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
         branchName: '',
         accountType: '普通',
         accountNumber: '',
-        category: EXPENSE_CATEGORIES[0],
+        category: availableCategories[0] || EXPENSE_CATEGORIES[0],
         paymentType: 'regular',
         regularAmount: 0,
         specificMonths: [],
@@ -88,7 +109,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
       });
     }
     setError(null);
-  }, [company, user?.storeId]);
+  }, [company, user?.storeId, availableCategories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
