@@ -12,7 +12,7 @@ import {
 import { useLocalStorage } from '../../../hooks/useLocalStorage';
 import { useStoreStore } from '../../../stores/storeStore';
 import { useAuthStore } from '../../../stores/authStore';
-import { BarChart3, Settings, Database, RefreshCw, ShieldCheck } from 'lucide-react';
+import { BarChart3, Settings, Database, ShieldCheck } from 'lucide-react';
 
 // API Base URLを取得
 const getApiBaseUrl = (): string => {
