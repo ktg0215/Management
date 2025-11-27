@@ -1,5 +1,5 @@
 import React, { useMemo, memo } from 'react';
-import { RefreshCw, TrendingUp, Settings } from 'lucide-react';
+import { RefreshCw, TrendingUp, Settings, FileText } from 'lucide-react';
 import { Store } from '@/types/store';
 import { formatStoreName } from '@/utils/storeDisplay';
 import Link from 'next/link';
@@ -10,6 +10,7 @@ interface SalesHeaderProps {
   onYearChange: (year: number) => void;
   onMonthChange: (month: number) => void;
   onDataReload: () => void;
+  onOpenForm?: () => void;
   // 店舗関連のprops
   userRole: 'admin' | 'super_admin';
   stores: Store[];
@@ -24,6 +25,7 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
   onYearChange,
   onMonthChange,
   onDataReload,
+  onOpenForm,
   userRole,
   stores,
   selectedStoreId,
@@ -122,6 +124,15 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
 
           {/* アクションボタン */}
           <div className="flex items-center space-x-3">
+            {onOpenForm && (
+              <button
+                onClick={onOpenForm}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                データ入力
+              </button>
+            )}
             <button
               onClick={onDataReload}
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
