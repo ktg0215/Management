@@ -2,10 +2,8 @@
 export const registerServiceWorker = async () => {
   // Service Workerは現在無効化されています（sw.jsファイルが存在しないため）
   // 将来的にPWA機能が必要になった場合は、sw.jsファイルを作成して有効化してください
-  if ('serviceWorker' in navigator && typeof window !== 'undefined') {
-    // Service Worker登録をスキップ（404エラーを防ぐため）
-    console.log('Service Worker registration is disabled (sw.js not found)');
-    return;
+  // 404エラーを防ぐため、何も実行しない
+  return;
     
     // 以下のコードは将来の実装用にコメントアウト
     /*
