@@ -4,10 +4,10 @@ export const registerServiceWorker = async () => {
   // 将来的にPWA機能が必要になった場合は、sw.jsファイルを作成して有効化してください
   // 404エラーを防ぐため、何も実行しない
   return;
-    
-    // 以下のコードは将来の実装用にコメントアウト
-    /*
-    const hostname = window.location.hostname;
+  
+  // 以下のコードは将来の実装用にコメントアウト
+  /*
+  const hostname = window.location.hostname;
     const isProduction = hostname !== 'localhost' && hostname !== '127.0.0.1';
 
     if (!isProduction) {
@@ -42,7 +42,6 @@ export const registerServiceWorker = async () => {
       console.error('Service Worker registration failed:', error);
     }
     */
-  }
 };
 
 const promptForUpdate = (registration: ServiceWorkerRegistration) => {
