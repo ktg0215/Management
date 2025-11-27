@@ -1342,6 +1342,7 @@ app.post('/api/payments/bulk', requireDatabase, authenticateToken, async (req, r
 // 企業（取引先）管理API
 app.get('/api/companies', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { storeId } = req.query;
+  console.log('[API /api/companies] Request:', { storeId, storeIdType: typeof storeId });
   try {
     let query = `
       SELECT c.*, s.name as store_name
@@ -1351,14 +1352,20 @@ app.get('/api/companies', requireDatabase, authenticateToken, async (req: Reques
     const params: any[] = [];
     
     if (storeId) {
+      // storeIdを数値に変換して比較（データベースのstore_idは整数型）
+      const storeIdNum = typeof storeId === 'string' ? parseInt(storeId, 10) : storeId;
       query += ' WHERE c.store_id = $1';
-      params.push(storeId);
+      params.push(storeIdNum);
+      console.log('[API /api/companies] Filtering by storeId:', storeIdNum);
     }
     
     query += ' ORDER BY c.name';
     
+    console.log('[API /api/companies] Query:', query, 'Params:', params);
     const result = await pool!.query(query, params);
+    console.log('[API /api/companies] Found', result.rows.length, 'companies');
     const companies = toCamelCase(result.rows);
+    console.log('[API /api/companies] Returning companies:', companies.length);
     res.json({ success: true, data: companies });
   } catch (err) {
     console.error('企業取得エラー:', err);
