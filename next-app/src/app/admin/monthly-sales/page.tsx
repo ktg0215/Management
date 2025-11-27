@@ -152,18 +152,6 @@ export default function MonthlySalesPage() {
     }
   };
 
-  const handleResetData = async () => {
-    if (window.confirm('全ての月次データを削除しますか？この操作は取り消せません。')) {
-      try {
-        // TODO: API呼び出しでデータベースからも削除
-        const resetStoreData = storeData.map(sd => ({ ...sd, monthlyData: [] }));
-        setStoreData(resetStoreData);
-      } catch (error) {
-        console.error('データ削除エラー:', error);
-        alert('データの削除に失敗しました。');
-      }
-    }
-  };
 
   const currentStore = stores.find(store => store.id === editingStoreId);
 
@@ -221,13 +209,6 @@ export default function MonthlySalesPage() {
               >
                 <Database className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform duration-200" />
                 <span className="font-semibold">データ読み込み</span>
-              </button>
-              <button
-                onClick={handleResetData}
-                className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl hover:from-red-600 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-              >
-                <RefreshCw className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform duration-300" />
-                <span className="font-semibold">データリセット</span>
               </button>
             </div>
           )}
