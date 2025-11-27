@@ -23,10 +23,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     // Check auth after hydration
     checkAuth();
 
-    // Register service worker for offline support
-    if (typeof window !== 'undefined') {
-      registerServiceWorker();
-    }
+    // Service Worker registration is disabled (sw.js not found)
+    // if (typeof window !== 'undefined') {
+    //   registerServiceWorker();
+    // }
   }, []); // 依存関係配列から checkAuth を削除し、マウント時に一度だけ実行
 
   return <>{children}</>;
