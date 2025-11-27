@@ -317,7 +317,16 @@ function CompaniesPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getCompanies(selectedStoreId);
+      console.log('[取引先管理] API Response:', {
+        success: response.success,
+        hasData: !!response.data,
+        dataLength: response.data ? response.data.length : 0,
+        data: response.data,
+        error: response.error,
+        selectedStoreId
+      });
       if (response.success && response.data) {
+        console.log('[取引先管理] Setting companies:', response.data);
         setCompanies(response.data);
       } else {
         const errorMessage = response.error || '取引先データの取得に失敗しました';

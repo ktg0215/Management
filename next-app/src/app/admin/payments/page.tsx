@@ -345,7 +345,16 @@ const usePaymentData = (storeId: string | null) => {
       try {
         setLoading(true);
         const response = await apiClient.getCompanies(storeId);
+        console.log('[支払い管理] API Response:', {
+          success: response.success,
+          hasData: !!response.data,
+          dataLength: response.data ? response.data.length : 0,
+          data: response.data,
+          error: response.error,
+          storeId
+        });
         if (response.success && response.data) {
+          console.log('[支払い管理] Setting companies:', response.data);
           setCompanies(response.data);
         }
       } catch (error) {
