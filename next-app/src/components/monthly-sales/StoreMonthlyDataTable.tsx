@@ -225,7 +225,7 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
       return masterFields;
     } catch (error) {
       console.error('Error in getVisibleFields:', error);
-      return safeMasterFields;
+      return masterFields;
     }
   };
 
