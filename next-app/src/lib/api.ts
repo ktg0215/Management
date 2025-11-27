@@ -301,6 +301,62 @@ class ApiClient {
     });
   }
 
+  // Shift Excel export endpoint
+  async exportShiftToExcel(periodId: string, storeId: string): Promise<Blob> {
+    const url = `${this.baseURL}/shift-export-excel?periodId=${periodId}&storeId=${storeId}`;
+    console.log('Excel出力API呼び出し:', url);
+    const headers: HeadersInit = {
+      ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+    };
+
+    const response = await fetch(url, { headers });
+    console.log('APIレスポンス:', {
+      status: response.status,
+      statusText: response.statusText,
+      contentType: response.headers.get('content-type'),
+      ok: response.ok
+    });
+    
+    if (!response.ok) {
+      // エラーレスポンスの内容を確認
+      const contentType = response.headers.get('content-type');
+      let errorText: string;
+      
+      if (contentType && contentType.includes('application/json')) {
+        // JSONエラーレスポンスの場合
+        const errorData = await response.json();
+        errorText = JSON.stringify(errorData);
+        console.error('JSONエラーレスポンス:', errorData);
+      } else {
+        // テキストエラーレスポンスの場合
+        errorText = await response.text();
+        console.error('テキストエラーレスポンス:', errorText);
+      }
+      
+      throw new Error(`Excel出力に失敗しました: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+    
+    // Content-Typeを確認してExcelファイルであることを確認
+    const contentType = response.headers.get('content-type');
+    console.log('Content-Type:', contentType);
+    
+    if (!contentType || !contentType.includes('spreadsheetml')) {
+      console.error('予期しないContent-Type:', contentType);
+      // CSVやJSONが返されている可能性があるので、エラーを投げる
+      const text = await response.text();
+      console.error('予期しないレスポンス内容:', text.substring(0, 200));
+      throw new Error(`Excelファイルではありません。Content-Type: ${contentType}`);
+    }
+    
+    const blob = await response.blob();
+    console.log('Blob取得完了:', {
+      type: blob.type,
+      size: blob.size
+    });
+    
+    return blob;
+  }
+
   async cleanupOldShiftData() {
     return this.request<{
       message: string;

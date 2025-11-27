@@ -8,6 +8,8 @@ import bcrypt from 'bcryptjs';
 import jwt, { verify } from 'jsonwebtoken';
 import http from 'http';
 import { WebSocketManager } from './websocket/WebSocketServer';
+import ExcelJS from 'exceljs';
+import path from 'path';
 
 // 環境変数の読み込み
 dotenv.config();
@@ -937,6 +939,228 @@ app.post('/api/shift-cleanup', requireDatabase, authenticateToken, async (req: R
   } catch (err) {
     console.error('シフトデータクリーンアップエラー:', err);
     res.status(500).json({ error: 'シフトデータクリーンアップに失敗しました' });
+  }
+});
+
+// シフトExcel出力API（メインドメインと同じ形式）
+app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { periodId, storeId } = req.query;
+    
+    if (!periodId || !storeId) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.status(400).json({ error: 'periodIdとstoreIdが必要です' });
+      return;
+    }
+
+    // シフト期間を取得
+    const periodResult = await pool!.query(
+      'SELECT * FROM shift_periods WHERE id = $1',
+      [periodId]
+    );
+
+    if (periodResult.rows.length === 0) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.status(404).json({ error: 'シフト期間が見つかりません' });
+      return;
+    }
+
+    const period = toCamelCase(periodResult.rows[0]);
+    const startDate = new Date(period.startDate);
+    const endDate = new Date(period.endDate);
+    
+    // 日付範囲内の日付リストを生成（メインドメインのロジックに合わせる）
+    const days: Date[] = [];
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      days.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // 従業員を取得（storeIdでフィルタ、user_noでソート）
+    const employeesResult = await pool!.query(
+      `SELECT e.*, s.name as store_name 
+       FROM employees e 
+       JOIN stores s ON e.store_id = s.id 
+       WHERE e.store_id = $1 
+       ORDER BY e.user_no`,
+      [storeId]
+    );
+    const employees = toCamelCase(employeesResult.rows);
+
+    // シフト提出データを取得
+    const submissionsResult = await pool!.query(
+      `SELECT ss.*, e.full_name as employee_name, e.employee_id, e.user_no
+       FROM shift_submissions ss
+       JOIN employees e ON ss.user_id = e.id
+       WHERE ss.shift_period_id = $1 AND e.store_id = $2
+       ORDER BY e.user_no`,
+      [periodId, storeId]
+    );
+    const submissions = toCamelCase(submissionsResult.rows);
+
+    // 各提出のシフトエントリを取得
+    const submissionsWithEntries = await Promise.all(
+      submissions.map(async (submission: any) => {
+        const entriesResult = await pool!.query(
+          'SELECT * FROM shift_entries WHERE submission_id = $1 ORDER BY work_date',
+          [submission.id]
+        );
+        return {
+          ...submission,
+          shiftEntries: toCamelCase(entriesResult.rows)
+        };
+      })
+    );
+
+    // Excelテンプレートを読み込む
+    // __dirnameはコンパイル後のdistディレクトリを指すため、templatesディレクトリはbackend/templatesに配置
+    const templatePath = path.join(process.cwd(), 'templates', 'on_template.xlsx');
+    console.log('テンプレートファイルパス:', templatePath);
+    
+    // テンプレートファイルの存在確認
+    if (!fs.existsSync(templatePath)) {
+      console.error('テンプレートファイルが見つかりません:', templatePath);
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.status(500).json({ error: 'テンプレートファイルが見つかりません', path: templatePath });
+      return;
+    }
+    
+    const workbook = new ExcelJS.Workbook();
+    try {
+      await workbook.xlsx.readFile(templatePath);
+    } catch (readError) {
+      console.error('テンプレートファイル読み込みエラー:', readError);
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.status(500).json({ error: 'テンプレートファイルの読み込みに失敗しました: ' + (readError instanceof Error ? readError.message : '不明なエラー') });
+      return;
+    }
+    
+    const sheet = workbook.getWorksheet('原本');
+    if (!sheet) {
+      console.error('「原本」シートが見つかりません');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.status(500).json({ error: 'テンプレートファイルの「原本」シートが見つかりません' });
+      return;
+    }
+
+    // 月と日付を設定
+    const month = startDate.getMonth() + 1;
+    const dayNumbers = days.map(d => d.getDate());
+    
+    sheet.getCell('C2').value = `${month}月`;
+    const dayColumns = ['E2', 'G2', 'I2', 'K2', 'M2', 'O2', 'Q2', 'S2', 'U2', 'W2', 'Y2', 'AA2', 'AC2', 'AE2', 'AG2', 'AI2'];
+    dayNumbers.forEach((day, index) => {
+      if (index < dayColumns.length) {
+        sheet.getCell(dayColumns[index]).value = day;
+      }
+    });
+
+    // 曜日を設定
+    const weekdays = ['月', '火', '水', '木', '金', '土', '日'];
+    const weekdayColumns = ['E3', 'G3', 'I3', 'K3', 'M3', 'O3', 'Q3', 'S3', 'U3', 'W3', 'Y3', 'AA3', 'AC3', 'AE3', 'AG3', 'AI3'];
+    days.forEach((day, index) => {
+      if (index < weekdayColumns.length) {
+        const weekday = weekdays[day.getDay() === 0 ? 6 : day.getDay() - 1]; // 月曜日を0に調整
+        sheet.getCell(weekdayColumns[index]).value = weekday;
+      }
+    });
+
+    // 従業員データを書き込む
+    const startRow = 16; // メインドメインと同じ開始行
+    const startTimeColumns = [5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35]; // 出勤時間列
+    const endTimeColumns = [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36]; // 退勤時間列
+    const nameColumn = 3; // 従業員名列
+
+    let currentRow = startRow;
+    employees.forEach((employee: any) => {
+      const submission = submissionsWithEntries.find((s: any) => s.employeeId === employee.employeeId);
+      
+      // 従業員名を設定
+      sheet.getCell(currentRow, nameColumn).value = employee.nickname || employee.fullName;
+
+      // 各日のシフトデータを書き込む
+      days.forEach((day, dayIndex) => {
+        if (dayIndex < startTimeColumns.length) {
+          const dateStr = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
+          const entry = submission?.shiftEntries?.find((e: any) => {
+            // workDateとwork_dateの両方に対応
+            const entryDate = e.workDate || e.work_date;
+            return entryDate === dateStr;
+          });
+
+          if (entry) {
+            // 出勤時間
+            if (entry.startTime) {
+              const startTime = parseFloat(entry.startTime);
+              if (!isNaN(startTime)) {
+                sheet.getCell(currentRow, startTimeColumns[dayIndex]).value = startTime;
+              }
+            }
+            // 退勤時間
+            if (entry.endTime) {
+              const endTime = parseFloat(entry.endTime);
+              if (!isNaN(endTime)) {
+                sheet.getCell(currentRow, endTimeColumns[dayIndex]).value = endTime;
+              }
+            }
+          }
+        }
+      });
+
+      currentRow++;
+    });
+
+    // セルの結合（メインドメインと同じ）
+    const mergeRanges = [
+      'E2:F2', 'G2:H2', 'I2:J2', 'K2:L2', 'M2:N2', 'O2:P2', 'Q2:R2', 'S2:T2',
+      'U2:V2', 'W2:X2', 'Y2:Z2', 'AA2:AB2', 'AC2:AD2', 'AE2:AF2', 'AG2:AH2', 'AI2:AJ2',
+      'E3:F3', 'G3:H3', 'I3:J3', 'K3:L3', 'M3:N3', 'O3:P3', 'Q3:R3', 'S3:T3',
+      'U3:V3', 'W3:X3', 'Y3:Z3', 'AA3:AB3', 'AC3:AD3', 'AE3:AF3', 'AG3:AH3', 'AI3:AJ3'
+    ];
+    
+    if (dayNumbers.length >= 16) {
+      mergeRanges.push('AK2:AL2', 'AK3:AL3');
+    }
+
+    mergeRanges.forEach(range => {
+      try {
+        sheet.mergeCells(range);
+      } catch (err) {
+        // 既に結合されている場合は無視
+      }
+    });
+
+    // セルの中央揃え（2行目と3行目）
+    for (let row = 2; row <= 3; row++) {
+      for (let col = 5; col <= 36 + (dayNumbers.length >= 16 ? 2 : 0); col++) {
+        const cell = sheet.getCell(row, col);
+        cell.alignment = { horizontal: 'center', vertical: 'center' };
+      }
+    }
+
+    // Excelファイルを生成
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    // ファイル名を設定
+    const storeResult = await pool!.query('SELECT name FROM stores WHERE id = $1', [storeId]);
+    const storeName = storeResult.rows[0]?.name || '全店舗';
+    const filename = `${startDate.getFullYear()}${month.toString().padStart(2, '0')}${startDate.getDate().toString().padStart(2, '0')}.xlsx`;
+
+    // レスポンスを設定（Excelファイルとして返す）
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+    res.setHeader('Content-Length', buffer.length.toString());
+    res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error('シフトExcel出力エラー:', err);
+    // エラー時はJSONとして返す（CSVとして解釈されないようにContent-Typeを明示的に設定）
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.status(500).json({ 
+      error: 'シフトExcel出力に失敗しました',
+      details: err instanceof Error ? err.message : '不明なエラー',
+      stack: err instanceof Error ? err.stack : undefined
+    });
   }
 });
 

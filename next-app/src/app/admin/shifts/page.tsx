@@ -74,15 +74,15 @@ const ShiftApproval = () => {
     return [];
   };
 
-  // Generate period options based on current date
+  // Generate period options based on current date (一か月前から表示)
   const generatePeriodOptions = (): PeriodOption[] => {
     if (!isHydrated) return []; // SSR対策
 
     const today = new Date();
     const options: PeriodOption[] = [];
 
-    // 過去3ヶ月分
-    for (let i = 3; i >= 0; i--) {
+    // 過去1ヶ月分（一か月前から）
+    for (let i = 1; i >= 0; i--) {
       const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const year = date.getFullYear();
       const month = date.getMonth() + 1;
@@ -371,64 +371,94 @@ const ShiftApproval = () => {
     }
   };
 
-  // Export to CSV (lightweight alternative to Excel)
-  const exportToCSV = async () => {
-    if (!selectedPeriodValue) return;
-
-    const selectedPeriod = periodOptions.find(p => p.value === selectedPeriodValue);
-    if (!selectedPeriod) return;
-
-    // Get unique employees and sort by their custom order
-    const uniqueEmployees = getUniqueEmployees();
-
-    // Calculate the number of days in the period
-    const year = selectedPeriod.year;
-    const month = selectedPeriod.month;
-    const startDay = selectedPeriod.isFirstHalf ? 1 : 16;
-    const endDay = selectedPeriod.isFirstHalf ? 15 : (typeof window !== 'undefined' ? new Date(year, month, 0).getDate() : 31);
-
-    // Create CSV content
-    let csvContent = '';
-
-    // Title row
-    const currentStore = stores.find(store => store.id === selectedStoreId);
-    const storeName = currentStore ? currentStore.name : '全店舗';
-    csvContent += `${storeName} ${year}年${month}月${selectedPeriod.isFirstHalf ? '前半' : '後半'}シフト表\n\n`;
-
-    // Header row with dates
-    let headerRow = '従業員名,';
-    for (let day = startDay; day <= endDay; day++) {
-      headerRow += `${day}日 出勤,${day}日 退勤,`;
+  // Export to Excel (メインドメインと同じ形式)
+  const exportToExcel = async () => {
+    if (!selectedPeriodValue || !selectedStoreId) {
+      alert('店舗と期間を選択してください');
+      return;
     }
-    csvContent += headerRow.slice(0, -1) + '\n'; // Remove last comma
 
-    // Employee data rows
-    uniqueEmployees.forEach(employee => {
-      const submission = getEmployeeSubmission(employee.id);
-      let row = `${employee.nickname},`;
-
-      for (let day = startDay; day <= endDay; day++) {
-        const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-        const shiftEntry = submission?.shiftEntries?.find((entry: ShiftEntry) => entry.work_date === dateStr);
-
-        const startTime = shiftEntry?.startTime || '';
-        const endTime = shiftEntry?.endTime || '';
-        row += `${startTime},${endTime},`;
+    try {
+      const selectedPeriod = periodOptions.find(p => p.value === selectedPeriodValue);
+      if (!selectedPeriod) {
+        alert('期間が見つかりません');
+        return;
       }
 
-      csvContent += row.slice(0, -1) + '\n'; // Remove last comma
-    });
+      // シフト期間を取得
+      const periodsResponse = await apiClient.getShiftPeriods(selectedStoreId);
+      if (!periodsResponse.success || !periodsResponse.data) {
+        alert('シフト期間の取得に失敗しました');
+        return;
+      }
 
-    // Download CSV file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `シフト表_${storeName}_${year}年${month}月${selectedPeriod.isFirstHalf ? '前半' : '後半'}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const targetPeriod = periodsResponse.data.find((period: any) => {
+        const periodDate = new Date(period.startDate);
+        return periodDate.getFullYear() === selectedPeriod.year &&
+               periodDate.getMonth() + 1 === selectedPeriod.month;
+      });
+
+      if (!targetPeriod) {
+        alert('該当するシフト期間が見つかりません');
+        return;
+      }
+
+      // Excelファイルをダウンロード
+      console.log('Excel出力開始:', { periodId: targetPeriod.id, storeId: selectedStoreId });
+      
+      let blob: Blob;
+      try {
+        blob = await apiClient.exportShiftToExcel(targetPeriod.id, selectedStoreId);
+      } catch (error) {
+        console.error('Excel出力APIエラー:', error);
+        alert('Excel出力に失敗しました: ' + (error instanceof Error ? error.message : '不明なエラー'));
+        return;
+      }
+      
+      // blobのタイプを確認
+      console.log('Blob type:', blob.type);
+      console.log('Blob size:', blob.size);
+      
+      // CSVやJSONが返されている場合はエラー
+      if (!blob.type || blob.type.includes('text/csv') || blob.type.includes('application/json') || blob.type.includes('text/plain')) {
+        console.error('予期しないファイルタイプ:', blob.type);
+        // blobの内容を確認（最初の100文字）
+        const text = await blob.text();
+        console.error('予期しないレスポンス内容:', text.substring(0, 200));
+        alert('Excelファイルの取得に失敗しました。\nファイルタイプ: ' + blob.type + '\nエラー内容: ' + text.substring(0, 100));
+        return;
+      }
+      
+      if (!blob.type.includes('spreadsheetml')) {
+        console.error('予期しないファイルタイプ:', blob.type);
+        alert('Excelファイルの取得に失敗しました。ファイルタイプ: ' + blob.type);
+        return;
+      }
+      
+      // ファイル名を設定
+      const currentStore = stores.find(store => store.id === selectedStoreId);
+      const storeName = currentStore ? currentStore.name : '全店舗';
+      const year = selectedPeriod.year;
+      const month = selectedPeriod.month;
+      const startDate = new Date(targetPeriod.startDate);
+      const filename = `${year}${month.toString().padStart(2, '0')}${startDate.getDate().toString().padStart(2, '0')}.xlsx`;
+
+      // ダウンロード
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('Excelファイルダウンロード完了:', filename);
+    } catch (error) {
+      console.error('Excel出力エラー:', error);
+      alert('Excel出力に失敗しました: ' + (error instanceof Error ? error.message : '不明なエラー'));
+    }
   };
 
   // Calculate submission statistics (excluding admins)
@@ -510,10 +540,13 @@ const ShiftApproval = () => {
                 </button>
                 <button
                   className="btn-primary flex items-center"
-                  onClick={exportToCSV}
+                  onClick={() => {
+                    console.log('ボタンクリック: exportToExcel関数を呼び出します');
+                    exportToExcel();
+                  }}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  CSVで出力
+                  Excelで出力
                 </button>
               </div>
             </div>
