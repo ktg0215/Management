@@ -260,14 +260,9 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {PAYMENT_TYPES.map((type, index) => {
-                    console.log(`[CompanyModal] Rendering payment type option ${index}:`, type);
-                    return (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    );
-                  })}
+                  <option value="regular">定期支払い（毎月）</option>
+                  <option value="specific">定期支払い（選択した月）</option>
+                  <option value="irregular">不定期支払い</option>
                 </select>
               </div>
 
