@@ -64,7 +64,13 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
 
   useEffect(() => {
     if (company) {
-      setFormData(company);
+      // specificMonthsを数値配列として確実に設定
+      setFormData({
+        ...company,
+        specificMonths: Array.isArray(company.specificMonths) 
+          ? company.specificMonths.map((m: any) => typeof m === 'string' ? parseInt(m, 10) : m)
+          : (company.specificMonths ? [company.specificMonths] : [])
+      });
     } else {
       setFormData({
         name: '',
@@ -98,7 +104,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
     }
   };
 
-  const handleChange = (field: keyof Omit<Company, 'id'>, value: string | number | boolean) => {
+  const handleChange = (field: keyof Omit<Company, 'id'>, value: string | number | boolean | number[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
