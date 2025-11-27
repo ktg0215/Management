@@ -383,6 +383,13 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  async bulkSavePayments(payments: Array<{ id?: string; companyId: string; month: string; amount: number; storeId: string }>) {
+    return this.request<{ processedCount: number; insertedCount: number; updatedCount: number }>('/payments/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ payments }),
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
