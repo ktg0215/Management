@@ -221,13 +221,13 @@ export const StoreMonthlyDataTable: React.FC<StoreMonthlyDataTableProps> = ({
       const settings = storeVisibilitySettings.find(s => s.storeId === selectedStoreId);
       if (settings && settings.visibleFieldIds && settings.visibleFieldIds.length > 0) {
         // Filter master fields by visibility settings
-        return masterFields.filter(field => field && field.id && settings.visibleFieldIds.includes(field.id));
+        return safeMasterFields.filter(field => field && field.id && settings.visibleFieldIds.includes(field.id));
       }
       // Default: show all fields if no visibility setting exists
-      return masterFields.filter(field => field && field.id);
+      return safeMasterFields;
     } catch (error) {
       console.error('Error in getVisibleFields:', error);
-      return masterFields.filter(field => field && field.id);
+      return safeMasterFields;
     }
   };
 
