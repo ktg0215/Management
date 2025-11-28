@@ -150,6 +150,17 @@ const ShiftApproval = () => {
     loadData();
   }, []); // マウント時に一度だけ実行
 
+  // 店舗が読み込まれたら最初の店舗を自動選択
+  useEffect(() => {
+    if (isHydrated && stores.length > 0 && !selectedStoreId) {
+      const firstStore = stores.find(store => store.name.toLowerCase() !== 'manager');
+      if (firstStore) {
+        console.log('🔍 最初の店舗を自動選択:', firstStore.id, firstStore.name);
+        setSelectedStoreId(firstStore.id);
+      }
+    }
+  }, [isHydrated, stores, selectedStoreId]);
+
   useEffect(() => {
     if (isHydrated) {
       const options = generatePeriodOptions();

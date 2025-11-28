@@ -10,6 +10,7 @@ import http from 'http';
 import { WebSocketManager } from './websocket/WebSocketServer';
 import ExcelJS from 'exceljs';
 import path from 'path';
+import fs from 'fs';
 
 // 環境変数の読み込み
 dotenv.config();
@@ -1135,7 +1136,7 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
     for (let row = 2; row <= 3; row++) {
       for (let col = 5; col <= 36 + (dayNumbers.length >= 16 ? 2 : 0); col++) {
         const cell = sheet.getCell(row, col);
-        cell.alignment = { horizontal: 'center', vertical: 'center' };
+        cell.alignment = { horizontal: 'center' as const, vertical: 'middle' as const };
       }
     }
 
@@ -1150,8 +1151,8 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
     // レスポンスを設定（Excelファイルとして返す）
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
-    res.setHeader('Content-Length', buffer.length.toString());
-    res.send(Buffer.from(buffer));
+    res.setHeader('Content-Length', Buffer.byteLength(buffer).toString());
+    res.send(buffer);
   } catch (err) {
     console.error('シフトExcel出力エラー:', err);
     // エラー時はJSONとして返す（CSVとして解釈されないようにContent-Typeを明示的に設定）
