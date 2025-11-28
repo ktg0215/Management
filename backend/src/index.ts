@@ -1053,16 +1053,32 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
 
     // Excelテンプレートを読み込む
     // process.cwd()は実行時の作業ディレクトリを返す
-    // バックエンドは~/Management/backendから実行されるため、backend/templates/on_template.xlsxを参照
-    const templatePath = path.join(process.cwd(), 'backend', 'templates', 'on_template.xlsx');
+    // PM2で実行する場合、作業ディレクトリは~/Managementになる可能性がある
+    // 複数のパスを試す
+    const possiblePaths = [
+      path.join(process.cwd(), 'backend', 'templates', 'on_template.xlsx'),
+      path.join(process.cwd(), 'templates', 'on_template.xlsx'),
+      path.join(__dirname, '..', 'templates', 'on_template.xlsx'),
+      path.join(__dirname, '..', '..', 'backend', 'templates', 'on_template.xlsx'),
+    ];
+    
+    let templatePath = '';
+    for (const possiblePath of possiblePaths) {
+      if (fs.existsSync(possiblePath)) {
+        templatePath = possiblePath;
+        break;
+      }
+    }
+    
     console.log('テンプレートファイルパス:', templatePath);
     console.log('process.cwd():', process.cwd());
+    console.log('__dirname:', __dirname);
     
     // テンプレートファイルの存在確認
-    if (!fs.existsSync(templatePath)) {
-      console.error('テンプレートファイルが見つかりません:', templatePath);
+    if (!templatePath || !fs.existsSync(templatePath)) {
+      console.error('テンプレートファイルが見つかりません。試したパス:', possiblePaths);
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
-      res.status(500).json({ error: 'テンプレートファイルが見つかりません', path: templatePath });
+      res.status(500).json({ error: 'テンプレートファイルが見つかりません', triedPaths: possiblePaths, cwd: process.cwd(), dirname: __dirname });
       return;
     }
     
