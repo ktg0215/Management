@@ -1044,12 +1044,19 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
           'SELECT * FROM shift_entries WHERE submission_id = $1 ORDER BY work_date',
           [submission.id]
         );
+        const entries = toCamelCase(entriesResult.rows);
+        console.log(`従業員ID ${submission.employeeId} のシフトエントリ:`, entries.length, '件', entries);
         return {
           ...submission,
-          shiftEntries: toCamelCase(entriesResult.rows)
+          shiftEntries: entries
         };
       })
     );
+    
+    console.log('シフト提出データ（エントリ含む）:', submissionsWithEntries.length, '件');
+    submissionsWithEntries.forEach((sub: any) => {
+      console.log(`  従業員ID: ${sub.employeeId}, エントリ数: ${sub.shiftEntries?.length || 0}`);
+    });
 
     // Excelテンプレートを読み込む
     // process.cwd()は実行時の作業ディレクトリを返す（PM2では~/Management/backend）
@@ -1124,15 +1131,31 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
       }
     });
 
-    // 従業員データを書き込む
-    const startRow = 16; // メインドメインと同じ開始行
+    // 従業員データを書き込む（メインドメインのCsvMixinに合わせる）
+    // メインドメインでは t=15, op=16 から始まる
+    const startRow = 16; // メインドメインと同じ開始行（op=16）
     const startTimeColumns = [5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35]; // 出勤時間列
     const endTimeColumns = [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36]; // 退勤時間列
-    const nameColumn = 3; // 従業員名列
+    const nameColumn = 3; // 従業員名列（C列）
 
     let currentRow = startRow;
+    console.log('従業員数:', employees.length);
+    console.log('提出データ数:', submissionsWithEntries.length);
+    
     employees.forEach((employee: any) => {
-      const submission = submissionsWithEntries.find((s: any) => s.employeeId === employee.employeeId);
+      // メインドメインでは employee.id (employees.id) でマッチング
+      // submission.employeeId は shift_submissions.employee_id (employees.idへの参照)
+      const submission = submissionsWithEntries.find((s: any) => {
+        // employeeIdはshift_submissions.employee_idで、employees.idを参照している
+        return s.employeeId === employee.id || s.employeeIdRef === employee.id;
+      });
+      
+      console.log(`従業員 ${employee.nickname || employee.fullName} (ID: ${employee.id}):`, {
+        hasSubmission: !!submission,
+        submissionEmployeeId: submission?.employeeId,
+        submissionEmployeeIdRef: submission?.employeeIdRef,
+        entriesCount: submission?.shiftEntries?.length || 0
+      });
       
       // 従業員名を設定
       sheet.getCell(currentRow, nameColumn).value = employee.nickname || employee.fullName;
@@ -1140,23 +1163,30 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
       // 各日のシフトデータを書き込む
       days.forEach((day, dayIndex) => {
         if (dayIndex < startTimeColumns.length) {
+          // 日付文字列を生成（YYYY-MM-DD形式）
           const dateStr = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
+          
           const entry = submission?.shiftEntries?.find((e: any) => {
             // workDateとwork_dateの両方に対応
             const entryDate = e.workDate || e.work_date;
-            return entryDate === dateStr;
+            // 日付文字列を正規化（時刻部分を削除）
+            const normalizedEntryDate = entryDate ? entryDate.split('T')[0] : null;
+            return normalizedEntryDate === dateStr;
           });
 
           if (entry) {
-            // 出勤時間
-            if (entry.startTime) {
+            console.log(`  日付 ${dateStr}: 出勤=${entry.startTime}, 退勤=${entry.endTime}`);
+            
+            // 出勤時間（メインドメインのロジックに合わせる）
+            if (entry.startTime && entry.startTime !== '' && entry.startTime !== ' ') {
               const startTime = parseFloat(entry.startTime);
               if (!isNaN(startTime)) {
                 sheet.getCell(currentRow, startTimeColumns[dayIndex]).value = startTime;
               }
             }
-            // 退勤時間
-            if (entry.endTime) {
+            
+            // 退勤時間（メインドメインのロジックに合わせる）
+            if (entry.endTime && entry.endTime !== '' && entry.endTime !== ' ') {
               const endTime = parseFloat(entry.endTime);
               if (!isNaN(endTime)) {
                 sheet.getCell(currentRow, endTimeColumns[dayIndex]).value = endTime;
