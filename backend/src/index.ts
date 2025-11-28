@@ -737,13 +737,13 @@ app.get('/api/shift-submissions', requireDatabase, authenticateToken, async (req
     let query = `
       SELECT ss.*, e.full_name as employee_name, e.employee_id
       FROM shift_submissions ss
-      JOIN employees e ON ss.user_id = e.id
-      JOIN shift_periods sp ON ss.shift_period_id = sp.id
+      JOIN employees e ON ss.employee_id = e.id
+      JOIN shift_periods sp ON ss.period_id = sp.id
     `;
     let params: any[] = [];
     
     if (periodId) {
-      query += ' WHERE ss.shift_period_id = $1';
+      query += ' WHERE ss.period_id = $1';
       params.push(periodId);
     }
     
@@ -762,9 +762,9 @@ app.post('/api/shift-submissions', requireDatabase, authenticateToken, async (re
   const { periodId, employeeId, status } = req.body;
   try {
     const result = await pool!.query(
-      `INSERT INTO shift_submissions (shift_period_id, user_id, status)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [periodId, employeeId, status || 'draft']
+      `INSERT INTO shift_submissions (period_id, employee_id, status, submitted_at, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING *`,
+      [periodId, employeeId, status || 'draft', status === 'submitted' ? new Date() : null]
     );
     const submission = toCamelCase(result.rows[0]);
     res.json({ data: submission });
@@ -920,13 +920,13 @@ app.post('/api/shift-cleanup', requireDatabase, authenticateToken, async (req: R
       DELETE FROM shift_entries 
       WHERE submission_id IN (
         SELECT id FROM shift_submissions 
-        WHERE shift_period_id = ANY($1)
+        WHERE period_id = ANY($1)
       )
     `, [periodIds]);
     
     // シフト提出データを削除
     const deleteSubmissionsResult = await pool!.query(
-      'DELETE FROM shift_submissions WHERE shift_period_id = ANY($1)',
+      'DELETE FROM shift_submissions WHERE period_id = ANY($1)',
       [periodIds]
     );
     
@@ -1007,8 +1007,8 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
     const submissionsResult = await pool!.query(
       `SELECT ss.*, e.full_name as employee_name, e.employee_id, e.user_no
        FROM shift_submissions ss
-       JOIN employees e ON ss.user_id = e.id
-       WHERE ss.shift_period_id = $1 AND e.store_id = $2
+       JOIN employees e ON ss.employee_id = e.id
+       WHERE ss.period_id = $1 AND e.store_id = $2
        ORDER BY e.user_no`,
       [periodId, storeId]
     );
@@ -1203,11 +1203,11 @@ const scheduleShiftCleanup = () => {
           DELETE FROM shift_entries 
           WHERE submission_id IN (
             SELECT id FROM shift_submissions 
-            WHERE shift_period_id = ANY($1)
+            WHERE period_id = ANY($1)
           )
         `, [periodIds]);
         
-        await pool!.query('DELETE FROM shift_submissions WHERE shift_period_id = ANY($1)', [periodIds]);
+        await pool!.query('DELETE FROM shift_submissions WHERE period_id = ANY($1)', [periodIds]);
         await pool!.query('DELETE FROM shift_periods WHERE id = ANY($1)', [periodIds]);
         
         console.log(`定期クリーンアップ完了: ${periodIds.length}期間のデータを削除`);
