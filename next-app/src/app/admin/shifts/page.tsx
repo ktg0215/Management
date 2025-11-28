@@ -221,26 +221,60 @@ const ShiftApproval = () => {
       if (periodsResponse.success && periodsResponse.data) {
         // 選択された期間に該当するシフト期間を探す
         const selectedPeriod = periodOptions.find(p => p.value === selectedPeriodValue);
+        console.log('🔍 期間マッチング開始:', {
+          selectedPeriodValue,
+          selectedPeriod,
+          periodsCount: periodsResponse.data.length,
+          periods: periodsResponse.data.map((p: any) => ({
+            id: p.id,
+            startDate: p.startDate || p.start_date,
+            endDate: p.endDate || p.end_date,
+            year: p.year,
+            month: p.month
+          }))
+        });
+        
         if (selectedPeriod) {
           // 期間のマッチングロジックを改善（startDateまたはstart_dateに対応）
           const targetPeriod = periodsResponse.data.find((period: any) => {
             const startDate = period.startDate || period.start_date;
-            if (!startDate) return false;
+            if (!startDate) {
+              console.log('⚠️ startDateが見つかりません:', period);
+              return false;
+            }
             const periodDate = new Date(startDate);
             const periodYear = periodDate.getFullYear();
             const periodMonth = periodDate.getMonth() + 1;
+            const periodDay = periodDate.getDate();
             
             // 前半か後半かを判定（startDateが15日以前なら前半、16日以降なら後半）
-            const isFirstHalf = periodDate.getDate() <= 15;
+            const isFirstHalf = periodDay <= 15;
             const matchesHalf = selectedPeriod.isFirstHalf === isFirstHalf;
             
-            return periodYear === selectedPeriod.year &&
-                   periodMonth === selectedPeriod.month &&
-                   matchesHalf;
+            const matchesYear = periodYear === selectedPeriod.year;
+            const matchesMonth = periodMonth === selectedPeriod.month;
+            
+            console.log('🔍 期間比較:', {
+              periodId: period.id,
+              startDate,
+              periodYear,
+              periodMonth,
+              periodDay,
+              isFirstHalf,
+              selectedYear: selectedPeriod.year,
+              selectedMonth: selectedPeriod.month,
+              selectedIsFirstHalf: selectedPeriod.isFirstHalf,
+              matchesYear,
+              matchesMonth,
+              matchesHalf,
+              matches: matchesYear && matchesMonth && matchesHalf
+            });
+            
+            return matchesYear && matchesMonth && matchesHalf;
           });
 
           if (targetPeriod) {
-            console.log('シフト期間が見つかりました:', targetPeriod);
+            console.log('✅ シフト期間が見つかりました:', targetPeriod);
             // シフト提出データを取得（未提出の場合は空配列が返る）
             const submissionsResponse = await apiClient.getShiftSubmissions(targetPeriod.id);
             if (submissionsResponse.success) {
@@ -264,15 +298,23 @@ const ShiftApproval = () => {
               setSubmissions([]);
             }
           } else {
-            console.error('該当するシフト期間が見つかりません:', {
+            console.error('❌ 該当するシフト期間が見つかりません:', {
               selectedPeriod,
-              availablePeriods: periodsResponse.data.map((p: any) => ({
-                id: p.id,
-                startDate: p.startDate || p.start_date,
-                endDate: p.endDate || p.end_date,
-                year: p.year,
-                month: p.month
-              }))
+              availablePeriods: periodsResponse.data.map((p: any) => {
+                const startDate = p.startDate || p.start_date;
+                const periodDate = startDate ? new Date(startDate) : null;
+                return {
+                  id: p.id,
+                  startDate,
+                  endDate: p.endDate || p.end_date,
+                  year: p.year,
+                  month: p.month,
+                  calculatedYear: periodDate ? periodDate.getFullYear() : null,
+                  calculatedMonth: periodDate ? periodDate.getMonth() + 1 : null,
+                  calculatedDay: periodDate ? periodDate.getDate() : null,
+                  calculatedIsFirstHalf: periodDate ? periodDate.getDate() <= 15 : null
+                };
+              })
             });
             // 期間が見つからない場合も空配列を設定（エラーではなく未作成の状態として扱う）
             setSubmissions([]);
@@ -428,33 +470,74 @@ const ShiftApproval = () => {
         return;
       }
 
+      console.log('🔍 Excel出力 - 期間マッチング開始:', {
+        selectedPeriod,
+        periodsCount: periodsResponse.data.length,
+        periods: periodsResponse.data.map((p: any) => ({
+          id: p.id,
+          startDate: p.startDate || p.start_date,
+          endDate: p.endDate || p.end_date,
+          year: p.year,
+          month: p.month
+        }))
+      });
+
       // 期間のマッチングロジックを改善（startDateまたはstart_dateに対応）
       const targetPeriod = periodsResponse.data.find((period: any) => {
         const startDate = period.startDate || period.start_date;
-        if (!startDate) return false;
+        if (!startDate) {
+          console.log('⚠️ Excel出力 - startDateが見つかりません:', period);
+          return false;
+        }
         const periodDate = new Date(startDate);
         const periodYear = periodDate.getFullYear();
         const periodMonth = periodDate.getMonth() + 1;
+        const periodDay = periodDate.getDate();
         
         // 前半か後半かを判定（startDateが15日以前なら前半、16日以降なら後半）
-        const isFirstHalf = periodDate.getDate() <= 15;
+        const isFirstHalf = periodDay <= 15;
         const matchesHalf = selectedPeriod.isFirstHalf === isFirstHalf;
         
-        return periodYear === selectedPeriod.year &&
-               periodMonth === selectedPeriod.month &&
-               matchesHalf;
+        const matchesYear = periodYear === selectedPeriod.year;
+        const matchesMonth = periodMonth === selectedPeriod.month;
+        
+        console.log('🔍 Excel出力 - 期間比較:', {
+          periodId: period.id,
+          startDate,
+          periodYear,
+          periodMonth,
+          periodDay,
+          isFirstHalf,
+          selectedYear: selectedPeriod.year,
+          selectedMonth: selectedPeriod.month,
+          selectedIsFirstHalf: selectedPeriod.isFirstHalf,
+          matchesYear,
+          matchesMonth,
+          matchesHalf,
+          matches: matchesYear && matchesMonth && matchesHalf
+        });
+        
+        return matchesYear && matchesMonth && matchesHalf;
       });
 
       if (!targetPeriod) {
-        console.error('該当するシフト期間が見つかりません:', {
+        console.error('❌ Excel出力 - 該当するシフト期間が見つかりません:', {
           selectedPeriod,
-          availablePeriods: periodsResponse.data.map((p: any) => ({
-            id: p.id,
-            startDate: p.startDate || p.start_date,
-            endDate: p.endDate || p.end_date,
-            year: p.year,
-            month: p.month
-          }))
+          availablePeriods: periodsResponse.data.map((p: any) => {
+            const startDate = p.startDate || p.start_date;
+            const periodDate = startDate ? new Date(startDate) : null;
+            return {
+              id: p.id,
+              startDate,
+              endDate: p.endDate || p.end_date,
+              year: p.year,
+              month: p.month,
+              calculatedYear: periodDate ? periodDate.getFullYear() : null,
+              calculatedMonth: periodDate ? periodDate.getMonth() + 1 : null,
+              calculatedDay: periodDate ? periodDate.getDate() : null,
+              calculatedIsFirstHalf: periodDate ? periodDate.getDate() <= 15 : null
+            };
+          })
         });
         alert('該当するシフト期間が見つかりません。期間を確認してください。');
         return;
