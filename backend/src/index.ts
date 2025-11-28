@@ -701,9 +701,21 @@ app.delete('/api/employees/:id', requireDatabase, authenticateToken, async (req:
 // シフト期間管理API
 app.get('/api/shift-periods', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   try {
-    // shift_periodsテーブルにはstore_idカラムがないため、全件取得
-    // periodカラムが存在しない場合は除外
-    const query = 'SELECT id, year, month, start_date, end_date, created_at, updated_at FROM shift_periods ORDER BY year DESC, month DESC, start_date DESC';
+    // shift_periodsテーブルにはyear, monthカラムがないため、start_dateとend_dateから計算
+    const query = `
+      SELECT 
+        id,
+        start_date,
+        end_date,
+        submission_deadline,
+        is_locked,
+        created_at,
+        updated_at,
+        EXTRACT(YEAR FROM start_date) as year,
+        EXTRACT(MONTH FROM start_date) as month
+      FROM shift_periods 
+      ORDER BY start_date DESC
+    `;
     const result = await pool!.query(query);
     const periods = toCamelCase(result.rows);
     res.json({ data: periods });
