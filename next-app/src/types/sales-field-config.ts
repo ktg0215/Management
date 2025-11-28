@@ -250,7 +250,7 @@ const CAFE_ALL_FIELDS: SalesFieldConfig[] = [
     isEditable: false,
     isCalculated: true,
     aggregationMethod: 'sum',
-    order: 10
+    order: 11
   },
   {
     id: 'field_edwNetSales',
