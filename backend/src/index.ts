@@ -1052,25 +1052,27 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
     );
 
     // Excelテンプレートを読み込む
-    // process.cwd()は実行時の作業ディレクトリを返す
-    // PM2で実行する場合、作業ディレクトリは~/Managementになる可能性がある
+    // process.cwd()は実行時の作業ディレクトリを返す（PM2では~/Management/backend）
+    // __dirnameはコンパイル後のdistディレクトリを指す（~/Management/backend/src）
     // 複数のパスを試す
     const possiblePaths = [
-      path.join(process.cwd(), 'backend', 'templates', 'on_template.xlsx'),
-      path.join(process.cwd(), 'templates', 'on_template.xlsx'),
-      path.join(__dirname, '..', 'templates', 'on_template.xlsx'),
-      path.join(__dirname, '..', '..', 'backend', 'templates', 'on_template.xlsx'),
+      path.join(process.cwd(), 'templates', 'on_template.xlsx'), // /home/ktg/Management/backend/templates/on_template.xlsx
+      path.join(__dirname, '..', 'templates', 'on_template.xlsx'), // /home/ktg/Management/backend/src/../templates/on_template.xlsx
+      path.join(process.cwd(), 'backend', 'templates', 'on_template.xlsx'), // 念のため
+      path.join(__dirname, '..', '..', 'backend', 'templates', 'on_template.xlsx'), // 念のため
     ];
     
     let templatePath = '';
     for (const possiblePath of possiblePaths) {
-      if (fs.existsSync(possiblePath)) {
-        templatePath = possiblePath;
+      const resolvedPath = path.resolve(possiblePath);
+      console.log('テンプレートファイルパス確認:', resolvedPath, '存在:', fs.existsSync(resolvedPath));
+      if (fs.existsSync(resolvedPath)) {
+        templatePath = resolvedPath;
         break;
       }
     }
     
-    console.log('テンプレートファイルパス:', templatePath);
+    console.log('選択されたテンプレートファイルパス:', templatePath);
     console.log('process.cwd():', process.cwd());
     console.log('__dirname:', __dirname);
     
