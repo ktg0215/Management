@@ -859,8 +859,10 @@ const ShiftApproval = () => {
                                   {submission?.shiftEntries
                                     ?.sort((a, b) => {
                                       if (typeof window !== 'undefined') {
-                                        const dateA = new Date(a.work_date || a.workDate || '');
-                                        const dateB = new Date(b.work_date || b.workDate || '');
+                                        const workDateA = (a as any).work_date || (a as any).workDate || '';
+                                        const workDateB = (b as any).work_date || (b as any).workDate || '';
+                                        const dateA = new Date(workDateA);
+                                        const dateB = new Date(workDateB);
                                         if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) return 0;
                                         return dateA.getTime() - dateB.getTime();
                                       }
@@ -868,7 +870,7 @@ const ShiftApproval = () => {
                                     })
                                     .map((shift) => {
                                       if (typeof window === 'undefined') return null;
-                                      const workDate = shift.work_date || shift.workDate;
+                                      const workDate = (shift as any).work_date || (shift as any).workDate;
                                       if (!workDate) return null;
                                       const date = new Date(workDate);
                                       if (isNaN(date.getTime())) {
