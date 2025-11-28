@@ -242,10 +242,13 @@ const ShiftApproval = () => {
               console.log('⚠️ startDateが見つかりません:', period);
               return false;
             }
+            // ISO文字列をDateオブジェクトに変換（UTCとして解釈される）
             const periodDate = new Date(startDate);
-            const periodYear = periodDate.getFullYear();
-            const periodMonth = periodDate.getMonth() + 1;
-            const periodDay = periodDate.getDate();
+            // 日本時間（JST = UTC+9）に変換して日付を取得
+            const jstDate = new Date(periodDate.getTime() + (9 * 60 * 60 * 1000));
+            const periodYear = jstDate.getUTCFullYear();
+            const periodMonth = jstDate.getUTCMonth() + 1;
+            const periodDay = jstDate.getUTCDate();
             
             // 前半か後半かを判定（startDateが15日以前なら前半、16日以降なら後半）
             const isFirstHalf = periodDay <= 15;
@@ -257,6 +260,8 @@ const ShiftApproval = () => {
             console.log('🔍 期間比較:', {
               periodId: period.id,
               startDate,
+              utcDate: periodDate.toISOString(),
+              jstDate: jstDate.toISOString(),
               periodYear,
               periodMonth,
               periodDay,
@@ -506,10 +511,13 @@ const ShiftApproval = () => {
           console.log('⚠️ Excel出力 - startDateが見つかりません:', period);
           return false;
         }
+        // ISO文字列をDateオブジェクトに変換（UTCとして解釈される）
         const periodDate = new Date(startDate);
-        const periodYear = periodDate.getFullYear();
-        const periodMonth = periodDate.getMonth() + 1;
-        const periodDay = periodDate.getDate();
+        // 日本時間（JST = UTC+9）に変換して日付を取得
+        const jstDate = new Date(periodDate.getTime() + (9 * 60 * 60 * 1000));
+        const periodYear = jstDate.getUTCFullYear();
+        const periodMonth = jstDate.getUTCMonth() + 1;
+        const periodDay = jstDate.getUTCDate();
         
         // 前半か後半かを判定（startDateが15日以前なら前半、16日以降なら後半）
         const isFirstHalf = periodDay <= 15;
@@ -521,6 +529,8 @@ const ShiftApproval = () => {
         console.log('🔍 Excel出力 - 期間比較:', {
           periodId: period.id,
           startDate,
+          utcDate: periodDate.toISOString(),
+          jstDate: jstDate.toISOString(),
           periodYear,
           periodMonth,
           periodDay,
