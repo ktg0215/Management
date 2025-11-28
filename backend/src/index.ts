@@ -755,7 +755,7 @@ app.get('/api/shift-submissions', requireDatabase, authenticateToken, async (req
   }
   try {
     let query = `
-      SELECT ss.*, e.full_name as employee_name, e.employee_id
+      SELECT ss.*, e.full_name as employee_name, e.employee_id, ss.employee_id as employee_id_ref
       FROM shift_submissions ss
       JOIN employees e ON ss.employee_id = e.id
       JOIN shift_periods sp ON ss.period_id = sp.id
@@ -770,7 +770,10 @@ app.get('/api/shift-submissions', requireDatabase, authenticateToken, async (req
     query += ' ORDER BY ss.created_at DESC';
     
     const result = await pool!.query(query, params);
-    const submissions = toCamelCase(result.rows);
+    const submissions = toCamelCase(result.rows).map((sub: any) => ({
+      ...sub,
+      employeeId: sub.employeeIdRef || sub.employeeId // employee_id (employees.idへの参照)をemployeeIdとして設定
+    }));
     res.json({ data: submissions });
   } catch (err) {
     console.error('シフト提出取得エラー:', err);
