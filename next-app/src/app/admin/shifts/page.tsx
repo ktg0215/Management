@@ -298,24 +298,41 @@ const ShiftApproval = () => {
               setSubmissions([]);
             }
           } else {
-            console.error('❌ 該当するシフト期間が見つかりません:', {
-              selectedPeriod,
+            // より詳細なデバッグ情報を出力
+            const debugInfo = {
+              selectedPeriod: {
+                value: selectedPeriod.value,
+                label: selectedPeriod.label,
+                year: selectedPeriod.year,
+                month: selectedPeriod.month,
+                isFirstHalf: selectedPeriod.isFirstHalf
+              },
               availablePeriods: periodsResponse.data.map((p: any) => {
                 const startDate = p.startDate || p.start_date;
                 const periodDate = startDate ? new Date(startDate) : null;
+                const calculatedIsFirstHalf = periodDate ? periodDate.getDate() <= 15 : null;
                 return {
                   id: p.id,
                   startDate,
+                  startDateType: typeof startDate,
                   endDate: p.endDate || p.end_date,
                   year: p.year,
                   month: p.month,
                   calculatedYear: periodDate ? periodDate.getFullYear() : null,
                   calculatedMonth: periodDate ? periodDate.getMonth() + 1 : null,
                   calculatedDay: periodDate ? periodDate.getDate() : null,
-                  calculatedIsFirstHalf: periodDate ? periodDate.getDate() <= 15 : null
+                  calculatedIsFirstHalf,
+                  matchesYear: periodDate ? periodDate.getFullYear() === selectedPeriod.year : false,
+                  matchesMonth: periodDate ? periodDate.getMonth() + 1 === selectedPeriod.month : false,
+                  matchesHalf: calculatedIsFirstHalf === selectedPeriod.isFirstHalf,
+                  matchesAll: periodDate ? 
+                    (periodDate.getFullYear() === selectedPeriod.year &&
+                     periodDate.getMonth() + 1 === selectedPeriod.month &&
+                     calculatedIsFirstHalf === selectedPeriod.isFirstHalf) : false
                 };
               })
-            });
+            };
+            console.error('❌ 該当するシフト期間が見つかりません:', debugInfo);
             // 期間が見つからない場合も空配列を設定（エラーではなく未作成の状態として扱う）
             setSubmissions([]);
           }
