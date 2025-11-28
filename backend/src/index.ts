@@ -1112,24 +1112,37 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
       return;
     }
 
-    // 月と日付を設定
-    const month = startDate.getMonth() + 1;
-    const dayNumbers = days.map(d => d.getDate());
+    // 月と日付を設定（メインドメインのロジックに合わせる）
+    // UTC時間を日本時間（JST）に変換してから月と日を取得
+    const jstStartDate = new Date(startDate.getTime() + (9 * 60 * 60 * 1000));
+    const month = jstStartDate.getUTCMonth() + 1;
+    const dayNumbers = days.map(d => {
+      const jstDay = new Date(d.getTime() + (9 * 60 * 60 * 1000));
+      return jstDay.getUTCDate();
+    });
+    
+    console.log('月:', month);
+    console.log('日付リスト:', dayNumbers);
+    console.log('日数:', dayNumbers.length);
     
     sheet.getCell('C2').value = `${month}月`;
     const dayColumns = ['E2', 'G2', 'I2', 'K2', 'M2', 'O2', 'Q2', 'S2', 'U2', 'W2', 'Y2', 'AA2', 'AC2', 'AE2', 'AG2', 'AI2'];
     dayNumbers.forEach((day, index) => {
       if (index < dayColumns.length) {
         sheet.getCell(dayColumns[index]).value = day;
+        console.log(`日付セル ${dayColumns[index]} = ${day}`);
       }
     });
 
-    // 曜日を設定
+    // 曜日を設定（メインドメインのロジックに合わせる）
     const weekdays = ['月', '火', '水', '木', '金', '土', '日'];
     const weekdayColumns = ['E3', 'G3', 'I3', 'K3', 'M3', 'O3', 'Q3', 'S3', 'U3', 'W3', 'Y3', 'AA3', 'AC3', 'AE3', 'AG3', 'AI3'];
     days.forEach((day, index) => {
       if (index < weekdayColumns.length) {
-        const weekday = weekdays[day.getDay() === 0 ? 6 : day.getDay() - 1]; // 月曜日を0に調整
+        // UTC時間を日本時間（JST）に変換してから曜日を取得
+        const jstDay = new Date(day.getTime() + (9 * 60 * 60 * 1000));
+        const dayOfWeek = jstDay.getUTCDay(); // 0=日曜日, 1=月曜日, ..., 6=土曜日
+        const weekday = weekdays[dayOfWeek === 0 ? 6 : dayOfWeek - 1]; // 月曜日を0に調整
         sheet.getCell(weekdayColumns[index]).value = weekday;
       }
     });
