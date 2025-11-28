@@ -33,6 +33,16 @@ function toCamelCase(obj: any): any {
     return obj;
   }
   
+  // DateオブジェクトやPostgreSQLの日付型をISO文字列に変換
+  if (obj instanceof Date) {
+    return obj.toISOString();
+  }
+  
+  // PostgreSQLの日付型（pgライブラリが返す形式）をISO文字列に変換
+  if (obj && typeof obj === 'object' && 'toISOString' in obj && typeof obj.toISOString === 'function') {
+    return obj.toISOString();
+  }
+  
   if (Array.isArray(obj)) {
     return obj.map(toCamelCase);
   }
@@ -41,7 +51,16 @@ function toCamelCase(obj: any): any {
   for (const key in obj) {
     if (obj.hasOwnProperty(key)) {
       const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-      camelCaseObj[camelKey] = toCamelCase(obj[key]);
+      const value = obj[key];
+      
+      // 日付型の値をISO文字列に変換
+      if (value instanceof Date) {
+        camelCaseObj[camelKey] = value.toISOString();
+      } else if (value && typeof value === 'object' && 'toISOString' in value && typeof value.toISOString === 'function') {
+        camelCaseObj[camelKey] = value.toISOString();
+      } else {
+        camelCaseObj[camelKey] = toCamelCase(value);
+      }
     }
   }
   return camelCaseObj;
