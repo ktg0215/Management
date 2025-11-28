@@ -703,7 +703,7 @@ const ShiftApproval = () => {
                   }}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Excelで出力
+                  エクセルで出力
                 </button>
               </div>
             </div>
