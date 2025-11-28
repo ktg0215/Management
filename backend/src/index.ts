@@ -1012,24 +1012,24 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // 従業員を取得（storeIdでフィルタ、user_noでソート）
+    // 従業員を取得（storeIdでフィルタ、employee_idでソート）
     const employeesResult = await pool!.query(
       `SELECT e.*, s.name as store_name 
        FROM employees e 
        JOIN stores s ON e.store_id = s.id 
        WHERE e.store_id = $1 
-       ORDER BY e.user_no`,
+       ORDER BY CAST(e.employee_id AS INTEGER)`,
       [storeId]
     );
     const employees = toCamelCase(employeesResult.rows);
 
     // シフト提出データを取得
     const submissionsResult = await pool!.query(
-      `SELECT ss.*, e.full_name as employee_name, e.employee_id, e.user_no
+      `SELECT ss.*, e.full_name as employee_name, e.employee_id
        FROM shift_submissions ss
        JOIN employees e ON ss.employee_id = e.id
        WHERE ss.period_id = $1 AND e.store_id = $2
-       ORDER BY e.user_no`,
+       ORDER BY CAST(e.employee_id AS INTEGER)`,
       [periodId, storeId]
     );
     const submissions = toCamelCase(submissionsResult.rows);
