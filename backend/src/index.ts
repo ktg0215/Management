@@ -1052,9 +1052,11 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
     );
 
     // Excelテンプレートを読み込む
-    // __dirnameはコンパイル後のdistディレクトリを指すため、templatesディレクトリはbackend/templatesに配置
-    const templatePath = path.join(process.cwd(), 'templates', 'on_template.xlsx');
+    // process.cwd()は実行時の作業ディレクトリを返す
+    // バックエンドは~/Management/backendから実行されるため、backend/templates/on_template.xlsxを参照
+    const templatePath = path.join(process.cwd(), 'backend', 'templates', 'on_template.xlsx');
     console.log('テンプレートファイルパス:', templatePath);
+    console.log('process.cwd():', process.cwd());
     
     // テンプレートファイルの存在確認
     if (!fs.existsSync(templatePath)) {

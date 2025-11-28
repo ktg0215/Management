@@ -859,15 +859,24 @@ const ShiftApproval = () => {
                                   {submission?.shiftEntries
                                     ?.sort((a, b) => {
                                       if (typeof window !== 'undefined') {
-                                        return new Date(a.work_date).getTime() - new Date(b.work_date).getTime();
+                                        const dateA = new Date(a.work_date || a.workDate || '');
+                                        const dateB = new Date(b.work_date || b.workDate || '');
+                                        if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) return 0;
+                                        return dateA.getTime() - dateB.getTime();
                                       }
                                       return 0;
                                     })
                                     .map((shift) => {
                                       if (typeof window === 'undefined') return null;
-                                      const date = new Date(shift.work_date);
+                                      const workDate = shift.work_date || shift.workDate;
+                                      if (!workDate) return null;
+                                      const date = new Date(workDate);
+                                      if (isNaN(date.getTime())) {
+                                        console.error('Invalid date:', workDate);
+                                        return null;
+                                      }
                                       return (
-                                        <tr key={shift.work_date} className="hover:bg-gray-50">
+                                        <tr key={workDate} className="hover:bg-gray-50">
                                           <td className="px-3 py-2 whitespace-nowrap">
                                             <div className="text-sm">
                                               {format(date, 'MM/dd')}
