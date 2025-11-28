@@ -403,14 +403,35 @@ const ShiftApproval = () => {
         return;
       }
 
+      // 期間のマッチングロジックを改善（startDateまたはstart_dateに対応）
       const targetPeriod = periodsResponse.data.find((period: any) => {
-        const periodDate = new Date(period.startDate);
-        return periodDate.getFullYear() === selectedPeriod.year &&
-               periodDate.getMonth() + 1 === selectedPeriod.month;
+        const startDate = period.startDate || period.start_date;
+        if (!startDate) return false;
+        const periodDate = new Date(startDate);
+        const periodYear = periodDate.getFullYear();
+        const periodMonth = periodDate.getMonth() + 1;
+        
+        // 前半か後半かを判定（startDateが15日以前なら前半、16日以降なら後半）
+        const isFirstHalf = periodDate.getDate() <= 15;
+        const matchesHalf = selectedPeriod.isFirstHalf === isFirstHalf;
+        
+        return periodYear === selectedPeriod.year &&
+               periodMonth === selectedPeriod.month &&
+               matchesHalf;
       });
 
       if (!targetPeriod) {
-        alert('該当するシフト期間が見つかりません');
+        console.error('該当するシフト期間が見つかりません:', {
+          selectedPeriod,
+          availablePeriods: periodsResponse.data.map((p: any) => ({
+            id: p.id,
+            startDate: p.startDate || p.start_date,
+            endDate: p.endDate || p.end_date,
+            year: p.year,
+            month: p.month
+          }))
+        });
+        alert('該当するシフト期間が見つかりません。期間を確認してください。');
         return;
       }
 
