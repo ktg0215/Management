@@ -729,9 +729,10 @@ app.get('/api/shift-periods', requireDatabase, authenticateToken, async (req: Re
 // シフト提出管理API
 app.get('/api/shift-submissions', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { periodId } = req.query;
-  // periodIdが存在し、かつUUID形式でない場合は400エラー
-  if (periodId && !/^[0-9a-fA-F-]{36}$/.test(periodId as string)) {
-    res.status(400).json({ error: 'periodIdが不正です（UUID形式のみ許可）' });
+  // periodIdが存在する場合は整数型として検証（UUID形式のチェックを削除）
+  if (periodId && isNaN(Number(periodId))) {
+    res.status(400).json({ error: 'periodIdが不正です（整数のみ許可）' });
+    return;
   }
   try {
     let query = `
