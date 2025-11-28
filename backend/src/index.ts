@@ -1028,14 +1028,17 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
 
     // シフト提出データを取得
     const submissionsResult = await pool!.query(
-      `SELECT ss.*, e.full_name as employee_name, e.employee_id
+      `SELECT ss.*, e.full_name as employee_name, e.employee_id, e.id as employee_db_id
        FROM shift_submissions ss
        JOIN employees e ON ss.employee_id = e.id
        WHERE ss.period_id = $1 AND e.store_id = $2
        ORDER BY CAST(e.employee_id AS INTEGER)`,
       [periodId, storeId]
     );
-    const submissions = toCamelCase(submissionsResult.rows);
+    const submissions = toCamelCase(submissionsResult.rows).map((sub: any) => ({
+      ...sub,
+      employeeId: sub.employeeDbId || sub.employeeIdRef || sub.employeeId // employees.idをemployeeIdとして設定
+    }));
 
     // 各提出のシフトエントリを取得
     const submissionsWithEntries = await Promise.all(
