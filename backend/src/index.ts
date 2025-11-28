@@ -702,13 +702,15 @@ app.delete('/api/employees/:id', requireDatabase, authenticateToken, async (req:
 app.get('/api/shift-periods', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   try {
     // shift_periodsテーブルにはstore_idカラムがないため、全件取得
-    const query = 'SELECT * FROM shift_periods ORDER BY year DESC, month DESC, period DESC';
+    // periodカラムが存在しない場合は除外
+    const query = 'SELECT id, year, month, start_date, end_date, created_at, updated_at FROM shift_periods ORDER BY year DESC, month DESC, start_date DESC';
     const result = await pool!.query(query);
     const periods = toCamelCase(result.rows);
     res.json({ data: periods });
   } catch (err) {
     console.error('シフト期間取得エラー:', err);
-    res.status(500).json({ error: 'シフト期間の取得に失敗しました' });
+    console.error('エラー詳細:', err instanceof Error ? err.message : String(err));
+    res.status(500).json({ error: 'シフト期間の取得に失敗しました', details: err instanceof Error ? err.message : String(err) });
   }
 });
 
