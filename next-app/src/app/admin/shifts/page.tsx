@@ -222,20 +222,34 @@ const ShiftApproval = () => {
         // 選択された期間に該当するシフト期間を探す
         const selectedPeriod = periodOptions.find(p => p.value === selectedPeriodValue);
         if (selectedPeriod) {
-          const targetPeriod = periodsResponse.data.find((period) => {
-            const p = period as { startDate: string };
-            const periodDate = new Date(p.startDate);
-            return periodDate.getFullYear() === selectedPeriod.year &&
-                   periodDate.getMonth() + 1 === selectedPeriod.month;
+          // 期間のマッチングロジックを改善（startDateまたはstart_dateに対応）
+          const targetPeriod = periodsResponse.data.find((period: any) => {
+            const startDate = period.startDate || period.start_date;
+            if (!startDate) return false;
+            const periodDate = new Date(startDate);
+            const periodYear = periodDate.getFullYear();
+            const periodMonth = periodDate.getMonth() + 1;
+            
+            // 前半か後半かを判定（startDateが15日以前なら前半、16日以降なら後半）
+            const isFirstHalf = periodDate.getDate() <= 15;
+            const matchesHalf = selectedPeriod.isFirstHalf === isFirstHalf;
+            
+            return periodYear === selectedPeriod.year &&
+                   periodMonth === selectedPeriod.month &&
+                   matchesHalf;
           });
 
           if (targetPeriod) {
-            // シフト提出データを取得
+            console.log('シフト期間が見つかりました:', targetPeriod);
+            // シフト提出データを取得（未提出の場合は空配列が返る）
             const submissionsResponse = await apiClient.getShiftSubmissions(targetPeriod.id);
-            if (submissionsResponse.success && submissionsResponse.data) {
+            if (submissionsResponse.success) {
+              const submissionsData = submissionsResponse.data || [];
+              console.log('シフト提出データ:', submissionsData.length, '件');
+              
               // シフトエントリも含めて取得
               const submissionsWithEntries = await Promise.all(
-                submissionsResponse.data.map(async (submission: ShiftSubmission) => {
+                submissionsData.map(async (submission: ShiftSubmission) => {
                   const entriesResponse = await apiClient.getShiftEntries(submission.id);
                   return {
                     ...submission,
@@ -246,10 +260,21 @@ const ShiftApproval = () => {
               setSubmissions(submissionsWithEntries);
             } else {
               console.error('シフト提出取得エラー:', submissionsResponse.error);
+              // エラーでも空配列を設定（未提出の状態として扱う）
               setSubmissions([]);
             }
           } else {
-            console.log('該当するシフト期間が見つかりません');
+            console.error('該当するシフト期間が見つかりません:', {
+              selectedPeriod,
+              availablePeriods: periodsResponse.data.map((p: any) => ({
+                id: p.id,
+                startDate: p.startDate || p.start_date,
+                endDate: p.endDate || p.end_date,
+                year: p.year,
+                month: p.month
+              }))
+            });
+            // 期間が見つからない場合も空配列を設定（エラーではなく未作成の状態として扱う）
             setSubmissions([]);
           }
         }
