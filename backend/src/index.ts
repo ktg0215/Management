@@ -1126,11 +1126,20 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
     console.log('日数:', dayNumbers.length);
     
     sheet.getCell('C2').value = `${month}月`;
+    // メインドメインでは最大16日分まで対応（15日分の場合は16列目は空）
     const dayColumns = ['E2', 'G2', 'I2', 'K2', 'M2', 'O2', 'Q2', 'S2', 'U2', 'W2', 'Y2', 'AA2', 'AC2', 'AE2', 'AG2', 'AI2'];
+    // 16日以上の場合、AK2も追加（メインドメインのロジックに合わせる）
+    const maxDays = dayNumbers.length >= 16 ? 16 : dayNumbers.length;
     dayNumbers.forEach((day, index) => {
-      if (index < dayColumns.length) {
-        sheet.getCell(dayColumns[index]).value = day;
-        console.log(`日付セル ${dayColumns[index]} = ${day}`);
+      if (index < maxDays) {
+        if (index < dayColumns.length) {
+          sheet.getCell(dayColumns[index]).value = day;
+          console.log(`日付セル ${dayColumns[index]} = ${day}`);
+        } else if (index === 15 && dayNumbers.length >= 16) {
+          // 16日目の場合はAK2に書き込む
+          sheet.getCell('AK2').value = day;
+          console.log(`日付セル AK2 = ${day}`);
+        }
       }
     });
 
@@ -1138,20 +1147,28 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
     const weekdays = ['月', '火', '水', '木', '金', '土', '日'];
     const weekdayColumns = ['E3', 'G3', 'I3', 'K3', 'M3', 'O3', 'Q3', 'S3', 'U3', 'W3', 'Y3', 'AA3', 'AC3', 'AE3', 'AG3', 'AI3'];
     days.forEach((day, index) => {
-      if (index < weekdayColumns.length) {
-        // UTC時間を日本時間（JST）に変換してから曜日を取得
-        const jstDay = new Date(day.getTime() + (9 * 60 * 60 * 1000));
-        const dayOfWeek = jstDay.getUTCDay(); // 0=日曜日, 1=月曜日, ..., 6=土曜日
-        const weekday = weekdays[dayOfWeek === 0 ? 6 : dayOfWeek - 1]; // 月曜日を0に調整
-        sheet.getCell(weekdayColumns[index]).value = weekday;
+      if (index < maxDays) {
+        if (index < weekdayColumns.length) {
+          // UTC時間を日本時間（JST）に変換してから曜日を取得
+          const jstDay = new Date(day.getTime() + (9 * 60 * 60 * 1000));
+          const dayOfWeek = jstDay.getUTCDay(); // 0=日曜日, 1=月曜日, ..., 6=土曜日
+          const weekday = weekdays[dayOfWeek === 0 ? 6 : dayOfWeek - 1]; // 月曜日を0に調整
+          sheet.getCell(weekdayColumns[index]).value = weekday;
+        } else if (index === 15 && dayNumbers.length >= 16) {
+          // 16日目の場合はAK3に書き込む
+          const jstDay = new Date(day.getTime() + (9 * 60 * 60 * 1000));
+          const dayOfWeek = jstDay.getUTCDay();
+          const weekday = weekdays[dayOfWeek === 0 ? 6 : dayOfWeek - 1];
+          sheet.getCell('AK3').value = weekday;
+        }
       }
     });
 
     // 従業員データを書き込む（メインドメインのCsvMixinに合わせる）
     // メインドメインでは t=15, op=16 から始まる
     const startRow = 16; // メインドメインと同じ開始行（op=16）
-    const startTimeColumns = [5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35]; // 出勤時間列
-    const endTimeColumns = [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36]; // 退勤時間列
+    const startTimeColumns = [5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37]; // 出勤時間列（16日分対応）
+    const endTimeColumns = [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38]; // 退勤時間列（16日分対応）
     const nameColumn = 3; // 従業員名列（C列）
 
     let currentRow = startRow;
@@ -1179,8 +1196,8 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
 
       // 各日のシフトデータを書き込む
       days.forEach((day, dayIndex) => {
-        // メインドメインでは最大16日分まで対応（startTimeColumns.length = 16）
-        if (dayIndex < startTimeColumns.length) {
+        // メインドメインでは最大16日分まで対応
+        if (dayIndex < maxDays && dayIndex < startTimeColumns.length) {
           // 日付文字列を生成（YYYY-MM-DD形式）
           // UTC時間を日本時間（JST）に変換してから日付を取得
           const jstDate = new Date(day.getTime() + (9 * 60 * 60 * 1000));
@@ -1251,7 +1268,8 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
       'U3:V3', 'W3:X3', 'Y3:Z3', 'AA3:AB3', 'AC3:AD3', 'AE3:AF3', 'AG3:AH3', 'AI3:AJ3'
     ];
     
-    if (dayNumbers.length >= 16) {
+    // 16日以上の場合、AK2:AL2とAK3:AL3を結合（メインドメインのロジックに合わせる）
+    if (maxDays >= 16) {
       mergeRanges.push('AK2:AL2', 'AK3:AL3');
     }
 
