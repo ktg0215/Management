@@ -1147,7 +1147,8 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
       // submission.employeeId は shift_submissions.employee_id (employees.idへの参照)
       const submission = submissionsWithEntries.find((s: any) => {
         // employeeIdはshift_submissions.employee_idで、employees.idを参照している
-        return s.employeeId === employee.id || s.employeeIdRef === employee.id;
+        // employeeIdRefは明示的に取得したemployees.id
+        return s.employeeId === employee.id || s.employeeIdRef === employee.id || s.employeeDbId === employee.id;
       });
       
       console.log(`従業員 ${employee.nickname || employee.fullName} (ID: ${employee.id}):`, {
