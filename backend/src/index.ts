@@ -1166,26 +1166,40 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
 
       // 各日のシフトデータを書き込む
       days.forEach((day, dayIndex) => {
+        // メインドメインでは最大16日分まで対応（startTimeColumns.length = 16）
         if (dayIndex < startTimeColumns.length) {
           // 日付文字列を生成（YYYY-MM-DD形式）
-          const dateStr = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
+          // UTC時間を日本時間（JST）に変換してから日付を取得
+          const jstDate = new Date(day.getTime() + (9 * 60 * 60 * 1000));
+          const dateStr = `${jstDate.getUTCFullYear()}-${(jstDate.getUTCMonth() + 1).toString().padStart(2, '0')}-${jstDate.getUTCDate().toString().padStart(2, '0')}`;
+          
+          console.log(`  日付インデックス ${dayIndex}: ${dateStr} (元の日付: ${day.toISOString()})`);
           
           const entry = submission?.shiftEntries?.find((e: any) => {
             // workDateとwork_dateの両方に対応
             const entryDate = e.workDate || e.work_date;
+            if (!entryDate) return false;
+            
             // 日付文字列を正規化（時刻部分を削除）
-            const normalizedEntryDate = entryDate ? entryDate.split('T')[0] : null;
-            return normalizedEntryDate === dateStr;
+            const normalizedEntryDate = entryDate.split('T')[0];
+            const match = normalizedEntryDate === dateStr;
+            
+            if (match) {
+              console.log(`    マッチしたエントリ: ${normalizedEntryDate} === ${dateStr}`);
+            }
+            
+            return match;
           });
 
           if (entry) {
-            console.log(`  日付 ${dateStr}: 出勤=${entry.startTime}, 退勤=${entry.endTime}`);
+            console.log(`  ✅ 日付 ${dateStr}: 出勤=${entry.startTime}, 退勤=${entry.endTime}`);
             
             // 出勤時間（メインドメインのロジックに合わせる）
             if (entry.startTime && entry.startTime !== '' && entry.startTime !== ' ') {
               const startTime = parseFloat(entry.startTime);
               if (!isNaN(startTime)) {
                 sheet.getCell(currentRow, startTimeColumns[dayIndex]).value = startTime;
+                console.log(`    出勤時間を書き込み: 行${currentRow}, 列${startTimeColumns[dayIndex]} = ${startTime}`);
               }
             }
             
@@ -1194,9 +1208,22 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
               const endTime = parseFloat(entry.endTime);
               if (!isNaN(endTime)) {
                 sheet.getCell(currentRow, endTimeColumns[dayIndex]).value = endTime;
+                console.log(`    退勤時間を書き込み: 行${currentRow}, 列${endTimeColumns[dayIndex]} = ${endTime}`);
               }
             }
+          } else {
+            console.log(`  ❌ 日付 ${dateStr}: エントリが見つかりません`);
+            // デバッグ用：利用可能なエントリの日付を表示
+            if (submission?.shiftEntries && submission.shiftEntries.length > 0) {
+              const availableDates = submission.shiftEntries.map((e: any) => {
+                const entryDate = e.workDate || e.work_date;
+                return entryDate ? entryDate.split('T')[0] : null;
+              }).filter(Boolean);
+              console.log(`    利用可能な日付:`, availableDates);
+            }
           }
+        } else {
+          console.log(`  ⚠️ 日付インデックス ${dayIndex} は範囲外（最大${startTimeColumns.length}日まで）`);
         }
       });
 
