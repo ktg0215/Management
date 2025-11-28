@@ -203,6 +203,21 @@ const CAFE_ALL_FIELDS: SalesFieldConfig[] = [
     aggregationMethod: 'average',
     order: 8
   },
+  {
+    id: 'field_aggregator',
+    key: 'aggregator',
+    label: '集計担当者',
+    category: 'basic',
+    type: 'text',
+    fieldSource: 'linked',
+    isVisible: true,
+    isVisibleInDailySales: true,
+    isVisibleInMonthlySales: true,
+    isEditable: true,
+    isCalculated: false,
+    aggregationMethod: 'none',
+    order: 9
+  },
 
   // 店舗売上
   {
@@ -219,7 +234,7 @@ const CAFE_ALL_FIELDS: SalesFieldConfig[] = [
     isEditable: true,
     isCalculated: false,
     aggregationMethod: 'sum',
-    order: 9
+    order: 10
   },
   {
     id: 'field_netSalesCumulative',

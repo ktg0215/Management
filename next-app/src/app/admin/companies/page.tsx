@@ -66,15 +66,20 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
   const [error, setError] = useState<string | null>(null);
   const [availableCategories, setAvailableCategories] = useState<string[]>(EXPENSE_CATEGORIES);
 
-  // PL科目一覧を取得
+  // PL科目一覧を取得（損益管理にある科目すべてを使用）
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await apiClient.getPLSubjects();
         if (response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
-          // 既存のEXPENSE_CATEGORIESとPL科目をマージして重複を除去
-          const merged = [...new Set([...EXPENSE_CATEGORIES, ...response.data])].sort();
+          // PL科目を優先し、既存のEXPENSE_CATEGORIESとマージして重複を除去
+          // PL科目が存在する場合は、それらをすべて含める
+          const merged = [...new Set([...response.data, ...EXPENSE_CATEGORIES])].sort();
           setAvailableCategories(merged);
+          console.log('利用可能な経費科目:', merged);
+        } else {
+          // PL科目が取得できない場合はデフォルトの科目リストを使用
+          setAvailableCategories(EXPENSE_CATEGORIES);
         }
       } catch (error) {
         console.error('科目一覧の取得に失敗しました:', error);
