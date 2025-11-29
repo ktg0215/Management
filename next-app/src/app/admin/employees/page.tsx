@@ -388,8 +388,8 @@ const EmployeeManagement = () => {
             // バックエンドが期待するフィールドのみを抽出
             return apiClient.updateEmployee(id, {
               fullName: employee.fullName,
-              nickname: employee.nickname || null,
-              storeId: employee.storeId || null,
+              nickname: employee.nickname ?? undefined,
+              storeId: employee.storeId ?? undefined,
               role: newRole
             });
           }
