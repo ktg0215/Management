@@ -76,7 +76,7 @@ function PLCreateWithSearchParams() {
   const [newSubjectName, setNewSubjectName] = useState('');
   const [year, setYear] = useState(2024);
   const [month, setMonth] = useState(1);
-  const { user } = useAuthStore();
+  const { user, isSuperAdmin } = useAuthStore();
   const { stores, fetchStores } = useStoreStore();
   const [storeId, setStoreId] = useState<string>(''); // 初期値を空文字列に変更
   const [isSaving, setIsSaving] = useState(false);
@@ -198,7 +198,7 @@ function PLCreateWithSearchParams() {
         // 一般管理者の場合は自分の店舗をセット
         console.log('管理者の店舗IDをセット:', user.storeId);
         setStoreId(user.storeId);
-      } else if (user.role === 'super_admin') {
+      } else if (isSuperAdmin()) {
         // 総管理者の場合は最初の有効な店舗をセット
         const firstStore = stores.find(store => store.name !== '無所属' && store.name !== 'Manager');
         if (firstStore) {

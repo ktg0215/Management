@@ -5,15 +5,17 @@ import { SalesHeader } from '@/components/sales/SalesHeader';
 import { SimpleSalesTable } from '@/components/sales/SimpleSalesTable';
 import { SimpleSalesForm } from '@/components/sales/SimpleSalesForm';
 import { SalesFieldConfiguration } from '@/components/sales/SalesFieldConfiguration';
+import { SalesCsvExportModal } from '@/components/sales/SalesCsvExportModal';
 import { useSalesData, usePrefetchAdjacentMonths } from '@/hooks/queries/useSalesQueries';
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
 import { formatStoreName } from '@/utils/storeDisplay';
 import { useBusinessTypeFields } from '@/hooks/useBusinessTypeFields';
 import { getDefaultFieldConfigs } from '@/types/sales-field-config';
+import apiClient from '@/lib/api';
 
 const SalesManagementPage = () => {
-  const { user } = useAuthStore();
+  const { user, hasPermission } = useAuthStore();
   const { stores, fetchStores } = useStoreStore();
   const [selectedStoreId, setSelectedStoreId] = useState<string>('');
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -53,6 +55,7 @@ const SalesManagementPage = () => {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
+  const [isCsvExportModalOpen, setIsCsvExportModalOpen] = useState(false);
 
   // Hydration確認
   useEffect(() => {
@@ -61,10 +64,10 @@ const SalesManagementPage = () => {
 
   // 店舗データを取得
   useEffect(() => {
-    if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+    if (user && hasPermission('admin')) {
       fetchStores();
     }
-  }, [user, fetchStores]);
+  }, [user, hasPermission, fetchStores]);
 
   // ユーザーの権限に応じて初期店舗を設定
   useEffect(() => {
@@ -129,6 +132,113 @@ const SalesManagementPage = () => {
 
   const handleDataReload = () => {
     refetch();
+  };
+
+  // CSV出力処理
+  const handleCsvExport = async (options: {
+    startYear: number;
+    startMonth: number;
+    endYear: number;
+    endMonth: number;
+    selectedFields: string[];
+  }) => {
+    if (!selectedStoreId) {
+      alert('店舗を選択してください。');
+      return;
+    }
+
+    try {
+      // 期間内のすべての月のデータを取得
+      const months: { year: number; month: number }[] = [];
+      let currentYear = options.startYear;
+      let currentMonth = options.startMonth;
+
+      while (
+        currentYear < options.endYear ||
+        (currentYear === options.endYear && currentMonth <= options.endMonth)
+      ) {
+        months.push({ year: currentYear, month: currentMonth });
+        currentMonth++;
+        if (currentMonth > 12) {
+          currentMonth = 1;
+          currentYear++;
+        }
+      }
+
+      // すべての月のデータを取得
+      const allData: Array<{ date: string; [key: string]: any }> = [];
+      for (const { year, month } of months) {
+        const response = await apiClient.getSales(selectedStoreId, year, month);
+        if (response.success && response.data?.dailyData) {
+          const dailyData = response.data.dailyData;
+          for (const date in dailyData) {
+            const dayData = dailyData[date] as any;
+            const row: { date: string; [key: string]: any } = { date };
+            
+            // 選択されたフィールドのみを追加
+            options.selectedFields.forEach(fieldKey => {
+              const field = fieldConfigs.find(f => f.key === fieldKey);
+              if (field) {
+                const value = dayData[fieldKey];
+                row[field.label] = value !== null && value !== undefined ? value : '';
+              }
+            });
+            
+            allData.push(row);
+          }
+        }
+      }
+
+      // CSV生成
+      if (allData.length === 0) {
+        alert('出力するデータがありません。');
+        return;
+      }
+
+      // ヘッダー行
+      const headers = ['日付', ...options.selectedFields.map(key => {
+        const field = fieldConfigs.find(f => f.key === key);
+        return field ? field.label : key;
+      })];
+
+      // CSV行を生成
+      const csvRows = [
+        headers.join(','),
+        ...allData.map(row => {
+          const values = [
+            row.date,
+            ...options.selectedFields.map(key => {
+              const field = fieldConfigs.find(f => f.key === key);
+              const value = row[field?.label || key];
+              // CSVエスケープ処理
+              if (value === null || value === undefined) return '';
+              const stringValue = String(value);
+              if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                return `"${stringValue.replace(/"/g, '""')}"`;
+              }
+              return stringValue;
+            })
+          ];
+          return values.join(',');
+        })
+      ];
+
+      // BOM付きUTF-8でCSVファイルを生成
+      const csvContent = '\uFEFF' + csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `売上データ_${options.startYear}年${options.startMonth}月_${options.endYear}年${options.endMonth}月.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('CSV出力エラー:', error);
+      alert('CSV出力に失敗しました。');
+      throw error;
+    }
   };
 
   // Helper functions for compatibility with existing components
@@ -237,7 +347,7 @@ const SalesManagementPage = () => {
   };
 
   // 権限チェック（管理者以上のみアクセス可能）
-  if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+  if (!user || !hasPermission('admin')) {
     return (
       
         <div className="flex items-center justify-center h-96">
@@ -277,6 +387,7 @@ const SalesManagementPage = () => {
             setSelectedDate(todayStr);
             setIsFormOpen(true);
           }}
+          onCsvExport={() => setIsCsvExportModalOpen(true)}
           userRole={user.role}
           stores={stores}
           selectedStoreId={selectedStoreId}
@@ -340,7 +451,7 @@ const SalesManagementPage = () => {
                 <p className="text-gray-600">データを読み込み中...</p>
               </div>
             </div>
-          ) : selectedStoreId || user.role === 'admin' || user.role === 'super_admin' ? (
+          ) : selectedStoreId || hasPermission('admin') ? (
             <>
               {activeTab === 'data' ? (
                 <>
@@ -417,9 +528,19 @@ const SalesManagementPage = () => {
           year={currentYear}
           month={currentMonth}
         />
-      </div>
-    
-  );
-};
 
-export default SalesManagementPage; 
+        {/* CSV出力モーダル */}
+        <SalesCsvExportModal
+          isOpen={isCsvExportModalOpen}
+          onClose={() => setIsCsvExportModalOpen(false)}
+          onExport={handleCsvExport}
+          availableFields={fieldConfigs.length > 0 ? fieldConfigs : getDefaultFieldConfigs()}
+          currentYear={currentYear}
+          currentMonth={currentMonth}
+          type="daily"
+        />
+      </div>
+    );
+  };
+  
+  export default SalesManagementPage; 

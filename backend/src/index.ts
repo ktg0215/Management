@@ -236,13 +236,13 @@ function authenticateToken(req: Request, res: Response, next: Function) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) {
-    res.sendStatus(401);
+    res.status(401).json({ error: '認証トークンが提供されていません' });
     return;
   }
 
   verify(token as string, process.env.JWT_SECRET || 'default-secret', (err: any, user: any) => {
     if (err) {
-      res.sendStatus(403);
+      res.status(403).json({ error: '認証トークンが無効または期限切れです' });
       return;
     }
     (req as any).user = user;

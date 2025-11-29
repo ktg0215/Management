@@ -124,7 +124,7 @@ const LoginPage = () => {
           <form className="space-y-6" onSubmit={handleLogin}>
             <div>
               <label htmlFor="employeeId" className="form-label">
-                勤怠番号（4桁）
+                勤怠番号
               </label>
               <input
                 id="employeeId"
@@ -132,12 +132,11 @@ const LoginPage = () => {
                 type="text"
                 autoComplete="username"
                 required
-                maxLength={4}
-                pattern="[0-9]{4}"
+                maxLength={50}
                 className="form-input"
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
-                placeholder="4桁の数字を入力"
+                placeholder="勤怠番号を入力"
                 disabled={isSubmitting}
               />
             </div>

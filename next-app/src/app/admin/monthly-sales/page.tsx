@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { BusinessTypeFieldConfiguration } from '@/components/monthly-sales/BusinessTypeFieldConfiguration';
 import { StoreMonthlyDataTable } from '@/components/monthly-sales/StoreMonthlyDataTable';
 import { DataEntryModal } from '@/components/monthly-sales/DataEntryModal';
+import { MonthlySalesCsvExportModal } from '@/components/monthly-sales/MonthlySalesCsvExportModal';
 import {
   StoreMonthlyData,
   MonthlyData,
@@ -12,7 +13,8 @@ import {
 import { useLocalStorage } from '../../../hooks/useLocalStorage';
 import { useStoreStore } from '../../../stores/storeStore';
 import { useAuthStore } from '../../../stores/authStore';
-import { BarChart3, Settings, Database, ShieldCheck } from 'lucide-react';
+import { BarChart3, Settings, Database, ShieldCheck, Download } from 'lucide-react';
+import apiClient from '@/lib/api';
 
 // API Base URLを取得
 const getApiBaseUrl = (): string => {
@@ -55,7 +57,7 @@ const fetchMonthlyData = async (storeId: string, businessTypeId: string): Promis
 
 export default function MonthlySalesPage() {
   const { stores, fetchStores } = useStoreStore();
-  const { isSuperAdmin, user } = useAuthStore();
+  const { isSuperAdmin, user, hasPermission } = useAuthStore();
   const [masterFields, setMasterFields] = useState<Field[]>([]);
   const [storeData, setStoreData] = useLocalStorage<StoreMonthlyData[]>('monthly-sales-store-data', []);
   const [activeTab, setActiveTab] = useState<'data' | 'fields'>('data');
@@ -64,13 +66,15 @@ export default function MonthlySalesPage() {
   // editingBusinessTypeId is used to reset state on modal close
   const [, setEditingBusinessTypeId] = useState<string>('');
   const [isDataLoading, setIsDataLoading] = useState<boolean>(false);
+  const [isCsvExportModalOpen, setIsCsvExportModalOpen] = useState(false);
+  const [currentYear] = useState(new Date().getFullYear());
 
   // 店舗データを取得
   useEffect(() => {
-    if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+    if (user && hasPermission('admin')) {
       fetchStores();
     }
-  }, [user, fetchStores]);
+  }, [user, hasPermission, fetchStores]);
 
   // 店舗データの初期化
   useEffect(() => {
@@ -210,6 +214,13 @@ export default function MonthlySalesPage() {
                 <Database className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform duration-200" />
                 <span className="font-semibold">データ読み込み</span>
               </button>
+              <button
+                onClick={() => setIsCsvExportModalOpen(true)}
+                className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              >
+                <Download className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform duration-200" />
+                <span className="font-semibold">CSV出力</span>
+              </button>
             </div>
           )}
         </div>
@@ -265,6 +276,115 @@ export default function MonthlySalesPage() {
               onSave={handleDataSave}
             />
           )}
+
+          {/* CSV出力モーダル */}
+          <MonthlySalesCsvExportModal
+            isOpen={isCsvExportModalOpen}
+            onClose={() => setIsCsvExportModalOpen(false)}
+            onExport={async (options) => {
+              try {
+                // 期間内のすべての月のデータを取得
+                const months: { year: number; month: number }[] = [];
+                let currentYear = options.startYear;
+                let currentMonth = options.startMonth;
+
+                while (
+                  currentYear < options.endYear ||
+                  (currentYear === options.endYear && currentMonth <= options.endMonth)
+                ) {
+                  months.push({ year: currentYear, month: currentMonth });
+                  currentMonth++;
+                  if (currentMonth > 12) {
+                    currentMonth = 1;
+                    currentYear++;
+                  }
+                }
+
+                // すべての店舗のデータを取得
+                const allData: Array<{ storeName: string; year: number; month: number; [key: string]: any }> = [];
+                for (const storeDataItem of storeData) {
+                  for (const { year, month } of months) {
+                    const monthlyData = storeDataItem.monthlyData.find(
+                      md => md.year === year && md.month === month
+                    );
+                    if (monthlyData) {
+                      const row: { storeName: string; year: number; month: number; [key: string]: any } = {
+                        storeName: storeDataItem.storeName,
+                        year,
+                        month,
+                      };
+                      
+                      // 選択されたフィールドのみを追加
+                      options.selectedFields.forEach(fieldName => {
+                        const value = monthlyData.data[fieldName];
+                        row[fieldName] = value !== null && value !== undefined ? value : '';
+                      });
+                      
+                      allData.push(row);
+                    }
+                  }
+                }
+
+                // CSV生成
+                if (allData.length === 0) {
+                  alert('出力するデータがありません。');
+                  return;
+                }
+
+                // ヘッダー行
+                const headers = ['店舗名', '年', '月', ...options.selectedFields];
+
+                // CSV行を生成
+                const csvRows = [
+                  headers.join(','),
+                  ...allData.map(row => {
+                    const values = [
+                      row.storeName,
+                      row.year,
+                      row.month,
+                      ...options.selectedFields.map(fieldName => {
+                        const value = row[fieldName];
+                        // CSVエスケープ処理
+                        if (value === null || value === undefined) return '';
+                        const stringValue = String(value);
+                        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                          return `"${stringValue.replace(/"/g, '""')}"`;
+                        }
+                        return stringValue;
+                      })
+                    ];
+                    return values.join(',');
+                  })
+                ];
+
+                // BOM付きUTF-8でCSVファイルを生成
+                const csvContent = '\uFEFF' + csvRows.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `月次売上データ_${options.startYear}年${options.startMonth}月_${options.endYear}年${options.endMonth}月.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+              } catch (error) {
+                console.error('CSV出力エラー:', error);
+                alert('CSV出力に失敗しました。');
+                throw error;
+              }
+            }}
+            availableFields={masterFields.length > 0 ? masterFields : (storeData.length > 0 && storeData[0].monthlyData.length > 0 ? Object.keys(storeData[0].monthlyData[0].data).map((key, index) => ({
+              id: `field_${index}`,
+              name: key,
+              category: 'other' as const,
+              type: 'text' as const,
+              isRequired: false,
+              isCalculated: false,
+              order: index
+            })) : [])}
+            currentYear={currentYear}
+          />
         </div>
     
   );

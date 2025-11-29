@@ -390,6 +390,22 @@ class ApiClient {
     return this.request<{ success: boolean; data: string[] }>('/pl/subjects');
   }
 
+  // 売上データ取得
+  async getSales(storeId: string, year: number, month: number) {
+    return this.request<{
+      success: boolean;
+      data: {
+        id: string;
+        year: number;
+        month: number;
+        store_id: string;
+        daily_data: Record<string, any>;
+        created_at: string;
+        updated_at: string;
+      } | null;
+    }>(`/sales?storeId=${storeId}&year=${year}&month=${month}`);
+  }
+
   async savePL(data: {
     year: number;
     month: number;

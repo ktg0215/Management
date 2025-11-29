@@ -6,6 +6,7 @@ import { useStoreStore } from '@/stores/storeStore';
 import { Company } from '@/types/company';
 import apiClient from '@/lib/api';
 import { formatStoreName } from '@/utils/storeDisplay';
+import { normalizeSpecificMonths } from '@/utils/companyUtils';
 import { 
   Building2, 
   Plus, 
@@ -47,7 +48,7 @@ interface CompanyModalProps {
 }
 
 const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, company }) => {
-  const { user } = useAuthStore();
+  const { user, isSuperAdmin } = useAuthStore();
   const { stores } = useStoreStore();
   const [formData, setFormData] = useState<Omit<Company, 'id'>>({
     name: '',
@@ -97,9 +98,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
       // specificMonthsを数値配列として確実に設定
       setFormData({
         ...company,
-        specificMonths: Array.isArray(company.specificMonths) 
-          ? company.specificMonths.map((m: any) => typeof m === 'string' ? parseInt(m, 10) : m)
-          : (company.specificMonths ? [company.specificMonths] : [])
+        specificMonths: normalizeSpecificMonths(company.specificMonths)
       });
     } else {
       setFormData({
@@ -320,7 +319,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, onSave, co
                 </>
               )}
 
-              {user?.role === 'super_admin' && (
+              {isSuperAdmin() && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     店舗
@@ -412,9 +411,7 @@ function CompaniesPage() {
         // specificMonthsを数値配列に変換（データベースから取得した配列をそのまま使用）
         const processedData = response.data.map((company: any) => ({
           ...company,
-          specificMonths: Array.isArray(company.specificMonths) 
-            ? company.specificMonths.map((m: any) => typeof m === 'string' ? parseInt(m, 10) : m)
-            : (company.specificMonths ? [company.specificMonths] : [])
+          specificMonths: normalizeSpecificMonths(company.specificMonths)
         }));
         console.log('[取引先管理] Setting companies:', processedData);
         setCompanies(processedData);

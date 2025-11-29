@@ -1,5 +1,5 @@
 import React, { useMemo, memo } from 'react';
-import { RefreshCw, TrendingUp, Settings, FileText } from 'lucide-react';
+import { RefreshCw, TrendingUp, Settings, FileText, Download } from 'lucide-react';
 import { Store } from '@/types/store';
 import { formatStoreName } from '@/utils/storeDisplay';
 import Link from 'next/link';
@@ -11,6 +11,7 @@ interface SalesHeaderProps {
   onMonthChange: (month: number) => void;
   onDataReload: () => void;
   onOpenForm?: () => void;
+  onCsvExport?: () => void;
   // 店舗関連のprops
   userRole: 'admin' | 'super_admin';
   stores: Store[];
@@ -26,6 +27,7 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
   onMonthChange,
   onDataReload,
   onOpenForm,
+  onCsvExport,
   userRole,
   stores,
   selectedStoreId,
@@ -131,6 +133,15 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
               >
                 <FileText className="w-4 h-4 mr-2" />
                 データ入力
+              </button>
+            )}
+            {onCsvExport && (
+              <button
+                onClick={onCsvExport}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                CSV出力
               </button>
             )}
             <button

@@ -218,6 +218,23 @@ docker-compose -f docker-compose.prod.yml up -d
 docker-compose ps
 ```
 
+## 📖 ユーザーマニュアル
+
+システムの使い方については、以下のマニュアルを参照してください：
+
+- **[ユーザーマニュアル](docs/USER_MANUAL.md)**: 一般ユーザー・管理者・総管理者向けの詳細な操作手順
+- **[機能詳細仕様書](docs/FEATURES.md)**: 開発者向けの機能詳細仕様
+- **[システム概要](docs/SYSTEM_OVERVIEW.md)**: システム全体の概要とアーキテクチャ
+
+### クイックスタート
+
+1. **ログイン**: 従業員IDとパスワードでログイン
+2. **シフト提出**（一般ユーザー）: `/employee/shifts` でシフトを提出
+3. **売上管理**（管理者）: `/admin/sales-management` で売上データを入力
+4. **CSV出力**: 売上管理・月次売上管理画面からCSV出力が可能
+
+詳細は[ユーザーマニュアル](docs/USER_MANUAL.md)を参照してください。
+
 ## 📝 API ドキュメント
 
 ### 認証

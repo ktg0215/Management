@@ -606,7 +606,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
 
 function PaymentManagement() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, hasPermission, isSuperAdmin } = useAuthStore();
   const { stores, fetchStores } = useStoreStore();
   const [selectedStoreId, setSelectedStoreId] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -639,10 +639,10 @@ function PaymentManagement() {
 
   // 店舗データを取得
   useEffect(() => {
-    if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+    if (user && hasPermission('admin')) {
       fetchStores();
     }
-  }, [user, fetchStores]);
+  }, [user, hasPermission, fetchStores]);
 
   // ユーザーの権限に応じて初期店舗を設定
   useEffect(() => {
@@ -715,7 +715,7 @@ function PaymentManagement() {
 
                   {/* 店舗選択/表示 */}
                   {isHydrated && user && (
-                    user.role === 'super_admin' ? (
+                    isSuperAdmin() ? (
                       // 総管理者：店舗選択ドロップボックス
                       <select
                         value={selectedStoreId}
