@@ -148,84 +148,17 @@ const SalesManagementPage = () => {
     }
 
     try {
-      // 期間内のすべての月のデータを取得
-      const months: { year: number; month: number }[] = [];
-      let currentYear = options.startYear;
-      let currentMonth = options.startMonth;
+      // APIからCSVを取得
+      const blob = await apiClient.salesApi.exportSalesCsv(
+        selectedStoreId,
+        options.startYear,
+        options.startMonth,
+        options.endYear,
+        options.endMonth,
+        options.selectedFields
+      );
 
-      while (
-        currentYear < options.endYear ||
-        (currentYear === options.endYear && currentMonth <= options.endMonth)
-      ) {
-        months.push({ year: currentYear, month: currentMonth });
-        currentMonth++;
-        if (currentMonth > 12) {
-          currentMonth = 1;
-          currentYear++;
-        }
-      }
-
-      // すべての月のデータを取得
-      const allData: Array<{ date: string; [key: string]: any }> = [];
-      for (const { year, month } of months) {
-        const response = await apiClient.getSales(selectedStoreId, year, month);
-        if (response.success && response.data?.dailyData) {
-          const dailyData = response.data.dailyData;
-          for (const date in dailyData) {
-            const dayData = dailyData[date] as any;
-            const row: { date: string; [key: string]: any } = { date };
-            
-            // 選択されたフィールドのみを追加
-            options.selectedFields.forEach(fieldKey => {
-              const field = fieldConfigs.find(f => f.key === fieldKey);
-              if (field) {
-                const value = dayData[fieldKey];
-                row[field.label] = value !== null && value !== undefined ? value : '';
-              }
-            });
-            
-            allData.push(row);
-          }
-        }
-      }
-
-      // CSV生成
-      if (allData.length === 0) {
-        alert('出力するデータがありません。');
-        return;
-      }
-
-      // ヘッダー行
-      const headers = ['日付', ...options.selectedFields.map(key => {
-        const field = fieldConfigs.find(f => f.key === key);
-        return field ? field.label : key;
-      })];
-
-      // CSV行を生成
-      const csvRows = [
-        headers.join(','),
-        ...allData.map(row => {
-          const values = [
-            row.date,
-            ...options.selectedFields.map(key => {
-              const field = fieldConfigs.find(f => f.key === key);
-              const value = row[field?.label || key];
-              // CSVエスケープ処理
-              if (value === null || value === undefined) return '';
-              const stringValue = String(value);
-              if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-                return `"${stringValue.replace(/"/g, '""')}"`;
-              }
-              return stringValue;
-            })
-          ];
-          return values.join(',');
-        })
-      ];
-
-      // BOM付きUTF-8でCSVファイルを生成
-      const csvContent = '\uFEFF' + csvRows.join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      // ダウンロード用URLを作成
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -234,9 +167,9 @@ const SalesManagementPage = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error('CSV出力エラー:', error);
-      alert('CSV出力に失敗しました。');
+      alert(error.message || 'CSV出力に失敗しました。');
       throw error;
     }
   };

@@ -5,6 +5,7 @@ import { BusinessTypeFieldConfiguration } from '@/components/monthly-sales/Busin
 import { StoreMonthlyDataTable } from '@/components/monthly-sales/StoreMonthlyDataTable';
 import { DataEntryModal } from '@/components/monthly-sales/DataEntryModal';
 import { MonthlySalesCsvExportModal } from '@/components/monthly-sales/MonthlySalesCsvExportModal';
+import { PageHelpButton } from '@/components/common/PageHelpButton';
 import {
   StoreMonthlyData,
   MonthlyData,
@@ -168,9 +169,42 @@ export default function MonthlySalesPage() {
               <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl shadow-lg">
                 <BarChart3 className="w-8 h-8 text-white" />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">月次売上管理</h1>
-                <p className="text-gray-600 font-medium">Monthly Sales Management System</p>
+              <div className="flex items-center space-x-2">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">月次売上管理</h1>
+                  <p className="text-gray-600 font-medium">Monthly Sales Management System</p>
+                </div>
+                <PageHelpButton
+                  title="月次売上管理の使い方"
+                  content={
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2">月次データの確認・入力</h3>
+                        <ol className="list-decimal list-inside space-y-1 text-sm">
+                          <li>「データ読み込み」ボタンをクリックして、最新データを取得します</li>
+                          <li>店舗ごとの月次データが表示されます</li>
+                          <li>データをクリックすると、編集画面が開きます</li>
+                        </ol>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2">月次データの編集</h3>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          <li>各項目を入力・編集できます</li>
+                          <li>自動計算項目は自動的に計算されます</li>
+                          <li>「保存」ボタンをクリックして保存します</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2">CSV出力</h3>
+                        <ol className="list-decimal list-inside space-y-1 text-sm">
+                          <li>「CSV出力」ボタンをクリックします</li>
+                          <li>出力期間と出力項目を選択します</li>
+                          <li>「CSV出力」ボタンをクリックしてダウンロードします</li>
+                        </ol>
+                      </div>
+                    </div>
+                  }
+                />
               </div>
             </div>
 
@@ -283,83 +317,24 @@ export default function MonthlySalesPage() {
             onClose={() => setIsCsvExportModalOpen(false)}
             onExport={async (options) => {
               try {
-                // 期間内のすべての月のデータを取得
-                const months: { year: number; month: number }[] = [];
-                let currentYear = options.startYear;
-                let currentMonth = options.startMonth;
-
-                while (
-                  currentYear < options.endYear ||
-                  (currentYear === options.endYear && currentMonth <= options.endMonth)
-                ) {
-                  months.push({ year: currentYear, month: currentMonth });
-                  currentMonth++;
-                  if (currentMonth > 12) {
-                    currentMonth = 1;
-                    currentYear++;
-                  }
-                }
-
-                // すべての店舗のデータを取得
-                const allData: Array<{ storeName: string; year: number; month: number; [key: string]: any }> = [];
-                for (const storeDataItem of storeData) {
-                  for (const { year, month } of months) {
-                    const monthlyData = storeDataItem.monthlyData.find(
-                      md => md.year === year && md.month === month
-                    );
-                    if (monthlyData) {
-                      const row: { storeName: string; year: number; month: number; [key: string]: any } = {
-                        storeName: storeDataItem.storeName,
-                        year,
-                        month,
-                      };
-                      
-                      // 選択されたフィールドのみを追加
-                      options.selectedFields.forEach(fieldName => {
-                        const value = monthlyData.data[fieldName];
-                        row[fieldName] = value !== null && value !== undefined ? value : '';
-                      });
-                      
-                      allData.push(row);
-                    }
-                  }
-                }
-
-                // CSV生成
-                if (allData.length === 0) {
-                  alert('出力するデータがありません。');
+                // 選択された店舗IDを取得（最初の店舗を使用、または選択された店舗）
+                const selectedStoreId = storeData.length > 0 ? storeData[0].storeId : '';
+                if (!selectedStoreId) {
+                  alert('店舗を選択してください。');
                   return;
                 }
 
-                // ヘッダー行
-                const headers = ['店舗名', '年', '月', ...options.selectedFields];
+                // APIからCSVを取得
+                const blob = await apiClient.salesApi.exportMonthlySalesCsv(
+                  selectedStoreId,
+                  options.startYear,
+                  options.startMonth,
+                  options.endYear,
+                  options.endMonth,
+                  options.selectedFields
+                );
 
-                // CSV行を生成
-                const csvRows = [
-                  headers.join(','),
-                  ...allData.map(row => {
-                    const values = [
-                      row.storeName,
-                      row.year,
-                      row.month,
-                      ...options.selectedFields.map(fieldName => {
-                        const value = row[fieldName];
-                        // CSVエスケープ処理
-                        if (value === null || value === undefined) return '';
-                        const stringValue = String(value);
-                        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-                          return `"${stringValue.replace(/"/g, '""')}"`;
-                        }
-                        return stringValue;
-                      })
-                    ];
-                    return values.join(',');
-                  })
-                ];
-
-                // BOM付きUTF-8でCSVファイルを生成
-                const csvContent = '\uFEFF' + csvRows.join('\n');
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                // ダウンロード用URLを作成
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
@@ -368,9 +343,9 @@ export default function MonthlySalesPage() {
                 link.click();
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
-              } catch (error) {
+              } catch (error: any) {
                 console.error('CSV出力エラー:', error);
-                alert('CSV出力に失敗しました。');
+                alert(error.message || 'CSV出力に失敗しました。');
                 throw error;
               }
             }}

@@ -3,6 +3,7 @@ import { Plus, X, Calculator, TrendingUp, DollarSign, BarChart3, Save, Building2
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
 import { formatStoreName, sortStoresByBusinessType } from '@/utils/storeDisplay';
+import { PageHelpButton } from '@/components/common/PageHelpButton';
 import apiClient from '@/lib/api';
 import { useSearchParams } from 'next/navigation';
 import YearMonthSelector from '@/components/YearMonthSelector';
@@ -451,6 +452,42 @@ PaymentDetailList.displayName = 'PaymentDetailList';
             <div className="flex items-center space-x-2">
               <BarChart3 className="w-6 h-6 text-white" />
               <h1 className="text-xl font-bold text-white">損益計算書作成</h1>
+              <div className="ml-2">
+                <PageHelpButton
+                  title="損益（P&L）管理の使い方"
+                  content={
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2">P&Lの作成</h3>
+                        <ol className="list-decimal list-inside space-y-1 text-sm">
+                          <li>店舗を選択します</li>
+                          <li>年月を選択します</li>
+                          <li>「新規作成」ボタンをクリックします</li>
+                        </ol>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2">P&L項目の入力</h3>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          <li><strong>科目名</strong>: 損益項目の名称</li>
+                          <li><strong>見込</strong>: 予算・見込み金額</li>
+                          <li><strong>実績</strong>: 実際の金額</li>
+                          <li><strong>ハイライト</strong>: 重要な項目にチェック</li>
+                          <li><strong>小計</strong>: 小計行にチェック</li>
+                          <li><strong>インデント</strong>: 階層表示のためのインデント設定</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2">P&Lの保存</h3>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          <li>「保存」ボタンをクリックして保存します</li>
+                          <li>保存後は、年次損益推移画面で確認できます</li>
+                        </ul>
+                      </div>
+                    </div>
+                  }
+                  className="!text-white hover:!text-blue-200"
+                />
+              </div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1">
               <div className="text-white text-sm font-medium">

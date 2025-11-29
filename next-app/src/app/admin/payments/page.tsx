@@ -5,6 +5,7 @@ import { Building2, Edit2, EyeOff, Building, RotateCcw, Calendar, Plus, X, Save,
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
 import { formatStoreName } from '@/utils/storeDisplay';
+import { PageHelpButton } from '@/components/common/PageHelpButton';
 import apiClient from '@/lib/api';
 
 // 型定義
@@ -712,6 +713,44 @@ function PaymentManagement() {
                 <div className="flex items-center space-x-3">
                   <Building2 className="w-8 h-8 text-blue-600" />
                   <h1 className="text-xl font-bold text-gray-900">支払い管理システム</h1>
+                  <PageHelpButton
+                    title="支払い管理の使い方"
+                    content={
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="font-semibold text-lg mb-2">支払い履歴の確認</h3>
+                          <ol className="list-decimal list-inside space-y-1 text-sm">
+                            <li>店舗を選択します</li>
+                            <li>年月を選択します</li>
+                            <li>その月の支払い履歴が表示されます</li>
+                          </ol>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg mb-2">支払いデータの追加</h3>
+                          <ol className="list-decimal list-inside space-y-1 text-sm">
+                            <li>「新規追加」ボタンをクリックします</li>
+                            <li>以下の情報を入力します：
+                              <ul className="list-disc list-inside ml-4 mt-1">
+                                <li>取引先: 取引先を選択（または新規作成）</li>
+                                <li>支払月: 支払い月を選択</li>
+                                <li>金額: 支払い金額を入力</li>
+                                <li>備考: 備考を入力（任意）</li>
+                              </ul>
+                            </li>
+                            <li>「保存」ボタンをクリックします</li>
+                          </ol>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg mb-2">支払いデータの編集・削除</h3>
+                          <p className="text-sm">一覧からデータを選択して、「編集」または「削除」ボタンをクリックします</p>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg mb-2">月次支払総額</h3>
+                          <p className="text-sm">選択した月の支払い総額が自動的に計算されて表示されます</p>
+                        </div>
+                      </div>
+                    }
+                  />
 
                   {/* 店舗選択/表示 */}
                   {isHydrated && user && (

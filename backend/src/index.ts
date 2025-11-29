@@ -27,6 +27,27 @@ function requireDatabase(req: Request, res: Response, next: Function) {
   next();
 }
 
+// CSV生成用のユーティリティ関数
+function escapeCsvValue(value: any): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  const stringValue = String(value);
+  // カンマ、改行、ダブルクォートを含む場合はダブルクォートで囲む
+  if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n') || stringValue.includes('\r')) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+}
+
+function generateCsv(rows: string[][]): Buffer {
+  const csvRows = rows.map(row => row.map(escapeCsvValue).join(','));
+  const csvContent = csvRows.join('\r\n');
+  // BOM付きUTF-8エンコーディング
+  const bom = Buffer.from([0xEF, 0xBB, 0xBF]);
+  return Buffer.concat([bom, Buffer.from(csvContent, 'utf-8')]);
+}
+
 // スネークケースをキャメルケースに変換するヘルパー関数
 function toCamelCase(obj: any): any {
   if (obj === null || typeof obj !== 'object') {
@@ -279,6 +300,108 @@ app.post('/api/auth/logout', requireDatabase, authenticateToken, async (req: Req
   } catch (err) {
     console.error('ログアウトエラー:', err);
     res.status(500).json({ error: 'ログアウトに失敗しました' });
+  }
+});
+
+// パスワード変更API（自分のパスワードを変更）
+app.put('/api/auth/change-password', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { currentPassword, newPassword } = req.body;
+  const user = (req as any).user;
+
+  if (!currentPassword || !newPassword) {
+    res.status(400).json({ error: '現在のパスワードと新しいパスワードを入力してください' });
+    return;
+  }
+
+  if (newPassword.length < 8) {
+    res.status(400).json({ error: '新しいパスワードは8文字以上である必要があります' });
+    return;
+  }
+
+  try {
+    // 現在のパスワードを確認
+    const userResult = await pool!.query(
+      'SELECT password_hash FROM employees WHERE id = $1',
+      [user.id]
+    );
+
+    if (userResult.rows.length === 0) {
+      res.status(404).json({ error: 'ユーザーが見つかりません' });
+      return;
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, userResult.rows[0].password_hash);
+    if (!isMatch) {
+      res.status(401).json({ error: '現在のパスワードが正しくありません' });
+      return;
+    }
+
+    // 新しいパスワードをハッシュ化して更新
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await pool!.query(
+      'UPDATE employees SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+      [newPasswordHash, user.id]
+    );
+
+    res.json({ data: { success: true, message: 'パスワードが変更されました' } });
+  } catch (err) {
+    console.error('パスワード変更エラー:', err);
+    res.status(500).json({ error: 'パスワードの変更に失敗しました' });
+  }
+});
+
+// 管理者によるパスワードリセットAPI
+app.post('/api/auth/reset-password', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { employeeId, newPassword } = req.body;
+  const user = (req as any).user;
+
+  // 管理者のみ実行可能
+  if (user.role !== 'admin' && user.role !== 'super_admin') {
+    res.status(403).json({ error: 'この操作を実行する権限がありません' });
+    return;
+  }
+
+  if (!employeeId || !newPassword) {
+    res.status(400).json({ error: '従業員IDと新しいパスワードを入力してください' });
+    return;
+  }
+
+  if (newPassword.length < 8) {
+    res.status(400).json({ error: '新しいパスワードは8文字以上である必要があります' });
+    return;
+  }
+
+  try {
+    // 対象ユーザーを取得
+    const userResult = await pool!.query(
+      'SELECT id, role FROM employees WHERE employee_id = $1',
+      [employeeId]
+    );
+
+    if (userResult.rows.length === 0) {
+      res.status(404).json({ error: '従業員が見つかりません' });
+      return;
+    }
+
+    const targetUser = userResult.rows[0];
+
+    // 管理者は自分より上位の権限を持つユーザーのパスワードをリセットできない
+    if (user.role === 'admin' && (targetUser.role === 'admin' || targetUser.role === 'super_admin')) {
+      res.status(403).json({ error: 'このユーザーのパスワードをリセットする権限がありません' });
+      return;
+    }
+
+    // パスワードをリセット
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await pool!.query(
+      'UPDATE employees SET password_hash = $1, updated_at = NOW() WHERE employee_id = $2',
+      [newPasswordHash, employeeId]
+    );
+
+    res.json({ data: { success: true, message: 'パスワードがリセットされました' } });
+  } catch (err) {
+    console.error('パスワードリセットエラー:', err);
+    res.status(500).json({ error: 'パスワードのリセットに失敗しました' });
   }
 });
 
@@ -660,17 +783,18 @@ app.post('/api/employees', requireDatabase, authenticateToken, async (req: Reque
   try {
     // 既存ユーザーチェック
     const existingUser = await pool!.query(
-      'SELECT id FROM employees WHERE email = $1',
+      'SELECT id FROM employees WHERE employee_id = $1',
       [employeeId]
     );
     if (existingUser.rows.length > 0) {
       res.status(400).json({ error: '既に存在する従業員IDです' });
+      return;
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const userRole = role || 'user';
     const result = await pool!.query(
-      `INSERT INTO employees (email, password, name, store_id, role)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id, email as employee_id, name, role, store_id`,
+      `INSERT INTO employees (employee_id, password_hash, full_name, nickname, store_id, role)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, employee_id, full_name, nickname, role, store_id`,
       [employeeId, passwordHash, fullName, nickname, storeId, userRole]
     );
     const employee = toCamelCase(result.rows[0]);
@@ -1987,6 +2111,103 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
   }
 });
 
+// 売上データCSV出力API
+app.get('/api/sales/export-csv', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { storeId, startYear, startMonth, endYear, endMonth, fields } = req.query;
+
+  if (!storeId || !startYear || !startMonth || !endYear || !endMonth) {
+    res.status(400).json({ success: false, error: 'storeId, startYear, startMonth, endYear, endMonthは必須です' });
+    return;
+  }
+
+  try {
+    const fieldKeys = fields ? (fields as string).split(',') : [];
+    if (fieldKeys.length === 0) {
+      res.status(400).json({ success: false, error: 'fieldsは必須です' });
+      return;
+    }
+
+    // 期間内のすべての月を計算
+    const months: { year: number; month: number }[] = [];
+    let currentYear = parseInt(startYear as string);
+    let currentMonth = parseInt(startMonth as string);
+    const endYearInt = parseInt(endYear as string);
+    const endMonthInt = parseInt(endMonth as string);
+
+    while (
+      currentYear < endYearInt ||
+      (currentYear === endYearInt && currentMonth <= endMonthInt)
+    ) {
+      months.push({ year: currentYear, month: currentMonth });
+      currentMonth++;
+      if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear++;
+      }
+    }
+
+    // すべての月のデータを取得
+    const allData: Array<{ date: string; [key: string]: any }> = [];
+    for (const { year, month } of months) {
+      const result = await pool!.query(
+        `SELECT daily_data FROM sales_data
+         WHERE store_id = $1 AND year = $2 AND month = $3`,
+        [storeId, year, month]
+      );
+
+      if (result.rows.length > 0 && result.rows[0].daily_data) {
+        const dailyData = result.rows[0].daily_data;
+        for (const date in dailyData) {
+          const dayData = dailyData[date] as any;
+          const row: { date: string; [key: string]: any } = { date };
+          
+          // 選択されたフィールドのみを追加
+          fieldKeys.forEach(fieldKey => {
+            const value = dayData[fieldKey];
+            row[fieldKey] = value !== null && value !== undefined ? value : '';
+          });
+          
+          allData.push(row);
+        }
+      }
+    }
+
+    if (allData.length === 0) {
+      res.status(404).json({ success: false, error: '出力するデータがありません' });
+      return;
+    }
+
+    // CSVヘッダー（フィールドキーをそのまま使用、フロントエンドでラベルに変換）
+    const headers = ['日付', ...fieldKeys];
+    
+    // CSV行を生成
+    const csvRows: string[][] = [headers];
+    allData.forEach(row => {
+      const values = [
+        row.date,
+        ...fieldKeys.map(key => row[key] || '')
+      ];
+      csvRows.push(values);
+    });
+
+    // CSVを生成
+    const csvBuffer = generateCsv(csvRows);
+    
+    // ファイル名を生成
+    const filename = `sales-${storeId}-${startYear}${startMonth}-${endYear}${endMonth}.csv`;
+    
+    // レスポンスヘッダーを設定
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', csvBuffer.length.toString());
+    
+    res.send(csvBuffer);
+  } catch (err) {
+    console.error('売上データCSV出力エラー:', err);
+    res.status(500).json({ success: false, error: 'CSV出力に失敗しました' });
+  }
+});
+
 app.post('/api/sales', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { year, month, storeId, dailyData } = req.body;
   const user = (req as any).user;
@@ -2330,6 +2551,115 @@ app.post('/api/monthly-sales', requireDatabase, authenticateToken, async (req: R
   } catch (err) {
     console.error('月次売上データ保存エラー:', err);
     res.status(500).json({ success: false, error: '月次売上データの保存に失敗しました' });
+  }
+});
+
+// 月次売上データCSV出力API
+app.get('/api/monthly-sales/export-csv', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { storeId, startYear, startMonth, endYear, endMonth, fields } = req.query;
+
+  if (!storeId || !startYear || !startMonth || !endYear || !endMonth) {
+    res.status(400).json({ success: false, error: 'storeId, startYear, startMonth, endYear, endMonthは必須です' });
+    return;
+  }
+
+  try {
+    const fieldNames = fields ? (fields as string).split(',') : [];
+    if (fieldNames.length === 0) {
+      res.status(400).json({ success: false, error: 'fieldsは必須です' });
+      return;
+    }
+
+    // 期間内のすべての月を計算
+    const months: { year: number; month: number }[] = [];
+    let currentYear = parseInt(startYear as string);
+    let currentMonth = parseInt(startMonth as string);
+    const endYearInt = parseInt(endYear as string);
+    const endMonthInt = parseInt(endMonth as string);
+
+    while (
+      currentYear < endYearInt ||
+      (currentYear === endYearInt && currentMonth <= endMonthInt)
+    ) {
+      months.push({ year: currentYear, month: currentMonth });
+      currentMonth++;
+      if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear++;
+      }
+    }
+
+    // すべての月のデータを取得
+    const allData: Array<{ storeName: string; year: number; month: number; [key: string]: any }> = [];
+    for (const { year, month } of months) {
+      const result = await pool!.query(
+        `SELECT ms.*, s.name as store_name
+         FROM monthly_sales ms
+         JOIN stores s ON ms.store_id = s.id
+         WHERE ms.store_id = $1 AND ms.year = $2 AND ms.month = $3`,
+        [storeId, year, month]
+      );
+
+      if (result.rows.length > 0) {
+        const row = result.rows[0];
+        const monthlyRow: { storeName: string; year: number; month: number; [key: string]: any } = {
+          storeName: row.store_name || '',
+          year: row.year,
+          month: row.month,
+        };
+
+        // daily_dataから選択されたフィールドを取得
+        if (row.daily_data && typeof row.daily_data === 'object') {
+          fieldNames.forEach(fieldName => {
+            const value = row.daily_data[fieldName];
+            monthlyRow[fieldName] = value !== null && value !== undefined ? value : '';
+          });
+        } else {
+          // daily_dataがない場合は空文字を設定
+          fieldNames.forEach(fieldName => {
+            monthlyRow[fieldName] = '';
+          });
+        }
+
+        allData.push(monthlyRow);
+      }
+    }
+
+    if (allData.length === 0) {
+      res.status(404).json({ success: false, error: '出力するデータがありません' });
+      return;
+    }
+
+    // CSVヘッダー
+    const headers = ['店舗名', '年', '月', ...fieldNames];
+    
+    // CSV行を生成
+    const csvRows: string[][] = [headers];
+    allData.forEach(row => {
+      const values = [
+        row.storeName || '',
+        String(row.year),
+        String(row.month),
+        ...fieldNames.map(fieldName => row[fieldName] || '')
+      ];
+      csvRows.push(values);
+    });
+
+    // CSVを生成
+    const csvBuffer = generateCsv(csvRows);
+    
+    // ファイル名を生成
+    const filename = `monthly-sales-${storeId}-${startYear}${startMonth}-${endYear}${endMonth}.csv`;
+    
+    // レスポンスヘッダーを設定
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', csvBuffer.length.toString());
+    
+    res.send(csvBuffer);
+  } catch (err) {
+    console.error('月次売上データCSV出力エラー:', err);
+    res.status(500).json({ success: false, error: 'CSV出力に失敗しました' });
   }
 });
 

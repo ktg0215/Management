@@ -2,6 +2,7 @@ import React, { useMemo, memo } from 'react';
 import { RefreshCw, TrendingUp, Settings, FileText, Download } from 'lucide-react';
 import { Store } from '@/types/store';
 import { formatStoreName } from '@/utils/storeDisplay';
+import { PageHelpButton } from '@/components/common/PageHelpButton';
 import Link from 'next/link';
 
 interface SalesHeaderProps {
@@ -64,6 +65,49 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
               <h1 className="text-xl font-semibold text-gray-900">
                 売上管理
               </h1>
+              <PageHelpButton
+                title="売上管理の使い方"
+                content={
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">日次売上データの入力</h3>
+                      <ol className="list-decimal list-inside space-y-1 text-sm">
+                        <li>店舗を選択します（総管理者の場合）</li>
+                        <li>年月を選択します</li>
+                        <li>「データ入力」ボタンをクリックします</li>
+                        <li>日付を選択して、売上データを入力します</li>
+                      </ol>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">入力項目</h3>
+                      <p className="text-sm mb-2">売上管理では、以下のような項目を入力できます：</p>
+                      <ul className="list-disc list-inside space-y-1 text-sm ml-4">
+                        <li><strong>基本情報</strong>: 日付、曜日</li>
+                        <li><strong>売上関連</strong>: 店舗純売上、EDW純売上、OHB純売上、売上目標など</li>
+                        <li><strong>客数・組数</strong>: 組数（計）、客数（計）、組単価、客単価など</li>
+                        <li><strong>人件費関連</strong>: 社員時間、AS時間、人時売上高、人件費額、人件費率など</li>
+                        <li><strong>その他</strong>: VOID件数、VOID金額、売上金過不足など</li>
+                      </ul>
+                      <p className="text-sm mt-2 text-gray-600">※ 表示される項目は、業態によって異なります。</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">データの更新</h3>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        <li>「更新」ボタンをクリックすると、最新のデータを取得します</li>
+                        <li>データは自動的に保存されます</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">CSV出力</h3>
+                      <ol className="list-decimal list-inside space-y-1 text-sm">
+                        <li>「CSV出力」ボタンをクリックします</li>
+                        <li>出力期間と出力項目を選択します</li>
+                        <li>「CSV出力」ボタンをクリックしてダウンロードします</li>
+                      </ol>
+                    </div>
+                  </div>
+                }
+              />
               
               {/* 店舗選択/表示 */}
               {userRole === 'super_admin' ? (

@@ -7,6 +7,7 @@ import {
   Clock,  AlertTriangle, CheckCircle, Settings, X
 } from 'lucide-react';
 import { useStoreStore } from '@/stores/storeStore';
+import { PageHelpButton } from '@/components/common/PageHelpButton';
 import apiClient from '@/lib/api';
 // import ExcelJS from 'exceljs'; // 一時的にコメントアウト（権限エラー回避）
 import type { ShiftEntry, ShiftSubmission } from '@/types/shift';
@@ -654,7 +655,43 @@ const ShiftApproval = () => {
 
   return (
     <div className="space-y-6 slide-up">
-          <h1 className="text-2xl font-bold text-gray-900">シフト管理</h1>
+          <div className="flex items-center space-x-2">
+            <h1 className="text-2xl font-bold text-gray-900">シフト管理</h1>
+            <PageHelpButton
+              title="シフト管理の使い方"
+              content={
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">シフト提出状況の確認</h3>
+                    <ol className="list-decimal list-inside space-y-1 text-sm">
+                      <li>店舗を選択します</li>
+                      <li>期間を選択します（年月と前半/後半）</li>
+                      <li>提出状況を確認します：
+                        <ul className="list-disc list-inside ml-4 mt-1">
+                          <li><strong>提出済み</strong>: 緑色で表示</li>
+                          <li><strong>未提出</strong>: 赤色で表示</li>
+                          <li><strong>提出率</strong>: 全体の提出率が表示されます</li>
+                        </ul>
+                      </li>
+                    </ol>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">シフト詳細の確認</h3>
+                    <p className="text-sm">従業員名をクリックすると、その従業員のシフト詳細を確認できます。出勤時間・退勤時間・休日設定が表示されます。</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">Excel出力</h3>
+                    <ol className="list-decimal list-inside space-y-1 text-sm">
+                      <li>店舗と期間を選択します</li>
+                      <li>「Excelで出力」ボタンをクリックします</li>
+                      <li>Excelファイルがダウンロードされます</li>
+                      <li>テンプレート形式で出力され、編集可能です</li>
+                    </ol>
+                  </div>
+                </div>
+              }
+            />
+          </div>
 
           {/* Filters */}
           <div className="bg-white rounded-lg shadow-sm p-4">

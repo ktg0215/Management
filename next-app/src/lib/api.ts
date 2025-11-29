@@ -137,6 +137,22 @@ class ApiClient {
     return this.request<{ user: Employee }>('/auth/me');
   }
 
+  // パスワード変更
+  async changePassword(currentPassword: string, newPassword: string) {
+    return this.request<{ success: boolean; message?: string }>('/auth/change-password', {
+      method: 'PUT',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  }
+
+  // 管理者によるパスワードリセット
+  async resetPassword(employeeId: string, newPassword: string) {
+    return this.request<{ success: boolean; message?: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ employeeId, newPassword }),
+    });
+  }
+
   // Store endpoints
   async getStores() {
     return this.request<Store[]>('/stores');
@@ -658,6 +674,68 @@ export const salesApi = {
         shouldRetry: () => true,
       }
     );
+  },
+
+  // 売上データCSV出力
+  exportSalesCsv: async (
+    storeId: string,
+    startYear: number,
+    startMonth: number,
+    endYear: number,
+    endMonth: number,
+    fields: string[]
+  ): Promise<Blob> => {
+    const query = new URLSearchParams({
+      storeId,
+      startYear: String(startYear),
+      startMonth: String(startMonth),
+      endYear: String(endYear),
+      endMonth: String(endMonth),
+      fields: fields.join(',')
+    }).toString();
+    const url = `${API_BASE_URL}/sales/export-csv?${query}`;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    const headers: HeadersInit = {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`CSV出力に失敗しました: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+    return response.blob();
+  },
+
+  // 月次売上データCSV出力
+  exportMonthlySalesCsv: async (
+    storeId: string,
+    startYear: number,
+    startMonth: number,
+    endYear: number,
+    endMonth: number,
+    fields: string[]
+  ): Promise<Blob> => {
+    const query = new URLSearchParams({
+      storeId,
+      startYear: String(startYear),
+      startMonth: String(startMonth),
+      endYear: String(endYear),
+      endMonth: String(endMonth),
+      fields: fields.join(',')
+    }).toString();
+    const url = `${API_BASE_URL}/monthly-sales/export-csv?${query}`;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    const headers: HeadersInit = {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`CSV出力に失敗しました: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+    return response.blob();
   },
 };
 
