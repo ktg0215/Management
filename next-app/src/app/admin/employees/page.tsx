@@ -376,7 +376,13 @@ const EmployeeManagement = () => {
         selectedEmployeeIds.map(id => {
           const employee = employees.find(e => e.id === id);
           if (employee) {
-            return apiClient.updateEmployee(id, { ...employee, role: newRole });
+            // バックエンドが期待するフィールドのみを抽出
+            return apiClient.updateEmployee(id, {
+              fullName: employee.fullName,
+              nickname: employee.nickname || null,
+              storeId: employee.storeId || null,
+              role: newRole
+            });
           }
           return Promise.reject(new Error('従業員が見つかりません'));
         })
@@ -384,6 +390,15 @@ const EmployeeManagement = () => {
 
       const successCount = results.filter(r => r.status === 'fulfilled').length;
       const failCount = results.filter(r => r.status === 'rejected').length;
+
+      // エラーの詳細をログに出力
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const employeeId = selectedEmployeeIds[index];
+          const employee = employees.find(e => e.id === employeeId);
+          console.error(`従業員 ${employee?.fullName || employeeId} の権限変更に失敗:`, result.reason);
+        }
+      });
 
       if (successCount > 0) {
         alert(`${successCount}名の従業員の権限を更新しました${failCount > 0 ? `（${failCount}名は更新できませんでした）` : ''}`);
