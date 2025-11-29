@@ -15,7 +15,7 @@ import { useLocalStorage } from '../../../hooks/useLocalStorage';
 import { useStoreStore } from '../../../stores/storeStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { BarChart3, Settings, Database, ShieldCheck, Download } from 'lucide-react';
-import apiClient from '@/lib/api';
+import apiClient, { salesApi } from '@/lib/api';
 
 // API Base URLを取得
 const getApiBaseUrl = (): string => {
@@ -325,7 +325,7 @@ export default function MonthlySalesPage() {
                 }
 
                 // APIからCSVを取得
-                const blob = await apiClient.salesApi.exportMonthlySalesCsv(
+                const blob = await salesApi.exportMonthlySalesCsv(
                   selectedStoreId,
                   options.startYear,
                   options.startMonth,

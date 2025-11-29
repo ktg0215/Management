@@ -12,7 +12,7 @@ import { useStoreStore } from '@/stores/storeStore';
 import { formatStoreName } from '@/utils/storeDisplay';
 import { useBusinessTypeFields } from '@/hooks/useBusinessTypeFields';
 import { getDefaultFieldConfigs } from '@/types/sales-field-config';
-import apiClient from '@/lib/api';
+import apiClient, { salesApi } from '@/lib/api';
 
 const SalesManagementPage = () => {
   const { user, hasPermission } = useAuthStore();
@@ -149,7 +149,7 @@ const SalesManagementPage = () => {
 
     try {
       // APIからCSVを取得
-      const blob = await apiClient.salesApi.exportSalesCsv(
+      const blob = await salesApi.exportSalesCsv(
         selectedStoreId,
         options.startYear,
         options.startMonth,
