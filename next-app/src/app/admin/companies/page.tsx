@@ -579,8 +579,8 @@ function CompaniesPage() {
               accountNumber: company.accountNumber || '',
               category: company.category || '',
               paymentType: company.paymentType,
-              regularAmount: company.regularAmount || null,
-              specificMonths: company.specificMonths || null,
+              regularAmount: company.regularAmount ?? undefined,
+              specificMonths: company.specificMonths ?? undefined,
               isVisible: isVisible,
               storeId: company.storeId
             });
