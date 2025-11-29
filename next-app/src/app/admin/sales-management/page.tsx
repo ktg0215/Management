@@ -321,7 +321,7 @@ const SalesManagementPage = () => {
             setIsFormOpen(true);
           }}
           onCsvExport={() => setIsCsvExportModalOpen(true)}
-          userRole={user.role}
+          userRole={user.role === 'user' ? 'admin' : user.role}
           stores={stores}
           selectedStoreId={selectedStoreId}
           currentStoreName={getCurrentStoreName()}
