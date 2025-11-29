@@ -7,6 +7,7 @@ import { Company } from '@/types/company';
 import apiClient from '@/lib/api';
 import { formatStoreName } from '@/utils/storeDisplay';
 import { normalizeSpecificMonths } from '@/utils/companyUtils';
+import { PageHelpButton } from '@/components/common/PageHelpButton';
 import { 
   Building2, 
   Plus, 
@@ -388,6 +389,8 @@ function CompaniesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | undefined>();
+  const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([]);
+  const [isBulkActionMode, setIsBulkActionMode] = useState(false);
 
   const loadCompanies = useCallback(async () => {
     if (!selectedStoreId) {
@@ -495,6 +498,119 @@ function CompaniesPage() {
       }
     } catch (error) {
       throw error;
+    }
+  };
+
+  // 一括操作の関数
+  const toggleSelectAll = () => {
+    if (selectedCompanyIds.length === filteredCompanies.length) {
+      setSelectedCompanyIds([]);
+    } else {
+      setSelectedCompanyIds(filteredCompanies.map(c => c.id));
+    }
+  };
+
+  const toggleSelectCompany = (companyId: string) => {
+    setSelectedCompanyIds(prev => 
+      prev.includes(companyId)
+        ? prev.filter(id => id !== companyId)
+        : [...prev, companyId]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedCompanyIds.length === 0) {
+      alert('削除する取引先を選択してください');
+      return;
+    }
+
+    if (!confirm(`${selectedCompanyIds.length}件の取引先を削除しますか？`)) {
+      return;
+    }
+
+    try {
+      // 各取引先を削除（支払いデータがある場合はスキップ）
+      const results = await Promise.allSettled(
+        selectedCompanyIds.map(id => apiClient.deleteCompany(id))
+      );
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failCount = results.filter(r => r.status === 'rejected').length;
+
+      // エラーの詳細をログに出力
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const companyId = selectedCompanyIds[index];
+          const company = companies.find(c => c.id === companyId);
+          console.error(`取引先 ${company?.name || companyId} の削除に失敗:`, result.reason);
+        }
+      });
+
+      if (successCount > 0) {
+        alert(`${successCount}件の取引先を削除しました${failCount > 0 ? `（${failCount}件は削除できませんでした）` : ''}`);
+        setSelectedCompanyIds([]);
+        loadCompanies();
+      } else {
+        alert('削除に失敗しました。支払いデータが存在する取引先は削除できません。');
+      }
+    } catch (error) {
+      console.error('一括削除エラー:', error);
+      alert('一括削除に失敗しました');
+    }
+  };
+
+  const handleBulkToggleVisibility = async (isVisible: boolean) => {
+    if (selectedCompanyIds.length === 0) {
+      alert('操作する取引先を選択してください');
+      return;
+    }
+
+    try {
+      const results = await Promise.allSettled(
+        selectedCompanyIds.map(id => {
+          const company = companies.find(c => c.id === id);
+          if (company) {
+            // バックエンドが期待するフィールドのみを抽出
+            return apiClient.updateCompany(id, {
+              name: company.name,
+              bankName: company.bankName || '',
+              branchName: company.branchName || '',
+              accountType: company.accountType || '',
+              accountNumber: company.accountNumber || '',
+              category: company.category || '',
+              paymentType: company.paymentType,
+              regularAmount: company.regularAmount || null,
+              specificMonths: company.specificMonths || null,
+              isVisible: isVisible,
+              storeId: company.storeId
+            });
+          }
+          return Promise.reject(new Error('取引先が見つかりません'));
+        })
+      );
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failCount = results.filter(r => r.status === 'rejected').length;
+
+      // エラーの詳細をログに出力
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const companyId = selectedCompanyIds[index];
+          const company = companies.find(c => c.id === companyId);
+          console.error(`取引先 ${company?.name || companyId} の表示設定更新に失敗:`, result.reason);
+        }
+      });
+
+      if (successCount > 0) {
+        alert(`${successCount}件の取引先の表示設定を更新しました${failCount > 0 ? `（${failCount}件は更新できませんでした）` : ''}`);
+        setSelectedCompanyIds([]);
+        loadCompanies();
+      } else {
+        alert('表示設定の更新に失敗しました');
+      }
+    } catch (error) {
+      console.error('一括更新エラー:', error);
+      alert('一括更新に失敗しました');
     }
   };
 
@@ -618,6 +734,43 @@ function CompaniesPage() {
             <div className="flex items-center space-x-3">
               <Building2 className="w-8 h-8 text-blue-600" />
               <h1 className="text-2xl font-bold text-gray-900">取引先管理</h1>
+              <PageHelpButton
+                title="取引先管理の使い方"
+                content={
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">取引先の登録</h3>
+                      <ol className="list-decimal list-inside space-y-1 text-sm">
+                        <li>「新規追加」ボタンをクリックします</li>
+                        <li>以下の情報を入力します：
+                          <ul className="list-disc list-inside ml-4 mt-1">
+                            <li><strong>取引先名</strong>: 必須</li>
+                            <li><strong>銀行名・支店名・口座情報</strong>: 任意</li>
+                            <li><strong>科目</strong>: 経費科目を選択（損益管理の科目から選択可能）</li>
+                            <li><strong>支払いタイプ</strong>: 
+                              <ul className="list-disc list-inside ml-4 mt-1">
+                                <li>定期支払い（毎月）: 毎月支払う</li>
+                                <li>定期支払い（選択した月）: 指定した月のみ支払う</li>
+                                <li>不定期支払い: 不定期に支払う</li>
+                              </ul>
+                            </li>
+                            <li><strong>定期支払い金額</strong>: 定期支払いの場合の金額</li>
+                            <li><strong>支払い月</strong>: 選択した月のみ支払う場合の月を選択</li>
+                          </ul>
+                        </li>
+                        <li>「保存」ボタンをクリックします</li>
+                      </ol>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">取引先の編集・削除</h3>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        <li>一覧から取引先を選択して、「編集」または「削除」ボタンをクリックします</li>
+                        <li><strong>注意</strong>: 支払いデータが存在する取引先は削除できません</li>
+                      </ul>
+                    </div>
+                  </div>
+                }
+              />
             </div>
             <button
               onClick={openCreateModal}
@@ -695,10 +848,48 @@ function CompaniesPage() {
 
         {/* 取引先一覧 */}
         <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">
               取引先一覧 ({filteredCompanies.length}社)
             </h2>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => {
+                  setIsBulkActionMode(!isBulkActionMode);
+                  setSelectedCompanyIds([]);
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isBulkActionMode
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {isBulkActionMode ? '一括操作を終了' : '一括操作'}
+              </button>
+              
+              {isBulkActionMode && selectedCompanyIds.length > 0 && (
+                <>
+                  <button
+                    onClick={() => handleBulkToggleVisibility(true)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700"
+                  >
+                    選択を表示 ({selectedCompanyIds.length})
+                  </button>
+                  <button
+                    onClick={() => handleBulkToggleVisibility(false)}
+                    className="px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-medium hover:bg-yellow-700"
+                  >
+                    選択を非表示 ({selectedCompanyIds.length})
+                  </button>
+                  <button
+                    onClick={handleBulkDelete}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700"
+                  >
+                    選択を削除 ({selectedCompanyIds.length})
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           {filteredCompanies.length === 0 ? (
@@ -726,6 +917,16 @@ function CompaniesPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
+                    {isBulkActionMode && (
+                      <th className="px-6 py-3 text-left">
+                        <input
+                          type="checkbox"
+                          checked={selectedCompanyIds.length === filteredCompanies.length && filteredCompanies.length > 0}
+                          onChange={toggleSelectAll}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                      </th>
+                    )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       取引先名
                     </th>
@@ -749,6 +950,16 @@ function CompaniesPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredCompanies.map((company) => (
                     <tr key={company.id} className="hover:bg-gray-50">
+                      {isBulkActionMode && (
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedCompanyIds.includes(company.id)}
+                            onChange={() => toggleSelectCompany(company.id)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           {company.name}

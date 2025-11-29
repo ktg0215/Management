@@ -348,6 +348,15 @@ const EmployeeManagement = () => {
       const successCount = results.filter(r => r.status === 'fulfilled').length;
       const failCount = results.filter(r => r.status === 'rejected').length;
 
+      // エラーの詳細をログに出力
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const employeeId = selectedEmployeeIds[index];
+          const employee = employees.find(e => e.id === employeeId);
+          console.error(`従業員 ${employee?.fullName || employeeId} の削除に失敗:`, result.reason);
+        }
+      });
+
       if (successCount > 0) {
         alert(`${successCount}名の従業員を削除しました${failCount > 0 ? `（${failCount}名は削除できませんでした）` : ''}`);
         setSelectedEmployeeIds([]);
