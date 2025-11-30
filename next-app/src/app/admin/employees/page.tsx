@@ -301,8 +301,8 @@ const EmployeeManagement = () => {
     setShowPasswordResetModal(true);
   };
 
-  const handlePasswordReset = async (employeeId: string, newPassword: string) => {
-    const response = await apiClient.resetPassword(employeeId, newPassword);
+  const handlePasswordReset = async (email: string, newPassword: string) => {
+    const response = await apiClient.resetPassword(email, newPassword);
     if (response.success) {
       setSuccess('パスワードがリセットされました');
       setShowPasswordResetModal(false);
@@ -1175,7 +1175,7 @@ const PasswordResetModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
   employee: Employee;
-  onReset: (employeeId: string, newPassword: string) => Promise<void>;
+  onReset: (email: string, newPassword: string) => Promise<void>;
 }> = ({ isOpen, onClose, employee, onReset }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -1205,7 +1205,7 @@ const PasswordResetModal: React.FC<{
 
     setIsSubmitting(true);
     try {
-      await onReset(employee.employeeId, newPassword);
+      await onReset(employee.email, newPassword);
       setNewPassword('');
       setConfirmPassword('');
       onClose();

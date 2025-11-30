@@ -29,7 +29,7 @@ interface AuthState {
   hasPermission: (requiredRole: UserRole) => boolean;
   
   // 認証関連関数
-  login: (employeeId: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
   register: (employeeId: string, nickname: string, fullName: string, storeId: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -82,9 +82,9 @@ export const useAuthStore = create<AuthState>()(
         return userLevel >= requiredLevel;
       },
 
-      login: async (employeeId, password) => {
+      login: async (email, password) => {
         try {
-          const response = await apiClient.login(employeeId, password);
+          const response = await apiClient.login(email, password);
           
           if (!response.success || !response.data) {
             console.error('ログイン失敗:', response.error);

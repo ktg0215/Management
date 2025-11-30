@@ -104,10 +104,10 @@ class ApiClient {
   }
 
   // Authentication endpoints
-  async login(employeeId: string, password: string) {
+  async login(email: string, password: string) {
     const response = await this.request<{ user: Employee; token: string }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ employeeId, password }),
+      body: JSON.stringify({ email, password }),
     });
     return response;
   }
@@ -146,10 +146,10 @@ class ApiClient {
   }
 
   // 管理者によるパスワードリセット
-  async resetPassword(employeeId: string, newPassword: string) {
+  async resetPassword(email: string, newPassword: string) {
     return this.request<{ success: boolean; message?: string }>('/auth/reset-password', {
       method: 'POST',
-      body: JSON.stringify({ employeeId, newPassword }),
+      body: JSON.stringify({ email, newPassword }),
     });
   }
 

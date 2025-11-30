@@ -144,6 +144,7 @@ app.post('/api/admin/create-account', requireDatabase, async (req, res) => {
       return;
     }
     const employeeId = '0000';
+    const email = 'admin@example.com';
     const password = 'toyama2023';
     const fullName = '総管理者';
     const nickname = 'superadmin';
@@ -159,9 +160,9 @@ app.post('/api/admin/create-account', requireDatabase, async (req, res) => {
     }
     const role = 'super_admin';
     const result = await pool!.query(
-      `INSERT INTO employees (email, password, name, store_id, role)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id, email as employee_id, name, role, store_id`,
-      [employeeId, passwordHash, fullName, nickname, storeId, role]
+      `INSERT INTO employees (employee_id, email, password_hash, full_name, nickname, store_id, role)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, employee_id, email, full_name, nickname, role, store_id`,
+      [employeeId, email, passwordHash, fullName, nickname, storeId, role]
     );
     const user = toCamelCase(result.rows[0]);
     delete user.passwordHash;
@@ -186,15 +187,27 @@ app.get('/api/admin/check-existing', requireDatabase, async (req, res) => {
 
 // ログインAPI（デバッグ版）
 app.post('/api/auth/login', requireDatabase, async (req: Request, res: Response) => {
-  const { employeeId, password } = req.body;
+  const { email, password } = req.body;
   console.log('=== ログイン試行 ===');
-  console.log('Employee ID:', employeeId);
+  console.log('Email:', email);
   console.log('Password:', password);
+  
+  if (!email || !password) {
+    res.status(400).json({ error: 'メールアドレスとパスワードを入力してください' });
+    return;
+  }
+  
+  // メールアドレスの形式チェック
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    res.status(400).json({ error: '有効なメールアドレスを入力してください' });
+    return;
+  }
   
   try {
     const userResult = await pool!.query(
-      `SELECT id, employee_id, full_name, nickname, store_id, password_hash, role, is_active FROM employees WHERE employee_id = $1 LIMIT 1`,
-      [employeeId]
+      `SELECT id, employee_id, email, full_name, nickname, store_id, password_hash, role, is_active FROM employees WHERE email = $1 LIMIT 1`,
+      [email]
     );
     
     console.log('DB検索結果:', userResult.rows.length);
@@ -208,15 +221,16 @@ app.post('/api/auth/login', requireDatabase, async (req: Request, res: Response)
     const user = toCamelCase(userResult.rows[0]);
     console.log('ユーザー情報:', { 
       id: user.id, 
-      employeeId: user.employeeId, 
+      employeeId: user.employeeId,
+      email: user.email,
       role: user.role, 
       isActive: user.isActive,
       hasPasswordHash: !!user.passwordHash
     });
     
-    // 一時的にパスワードチェックをスキップ（従業員ID 0000 & パスワード admin123 の場合）
+    // 一時的にパスワードチェックをスキップ（メールアドレス admin@example.com & パスワード admin123 の場合）
     let isMatch = false;
-    if (employeeId === '0000' && password === 'admin123') {
+    if (email === 'admin@example.com' && password === 'admin123') {
       console.log('管理者アカウント: パスワードチェックをスキップ');
       isMatch = true;
     } else {
@@ -233,7 +247,7 @@ app.post('/api/auth/login', requireDatabase, async (req: Request, res: Response)
     
     delete user.passwordHash;
     const token = jwt.sign(
-      { id: user.id, employeeId: user.employeeId, role: user.role },
+      { id: user.id, employeeId: user.employeeId, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'default-secret',
       { expiresIn: '7d' }
     );
@@ -352,7 +366,7 @@ app.put('/api/auth/change-password', requireDatabase, authenticateToken, async (
 
 // 管理者によるパスワードリセットAPI
 app.post('/api/auth/reset-password', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
-  const { employeeId, newPassword } = req.body;
+  const { email, newPassword } = req.body;
   const user = (req as any).user;
 
   // 管理者のみ実行可能
@@ -361,8 +375,8 @@ app.post('/api/auth/reset-password', requireDatabase, authenticateToken, async (
     return;
   }
 
-  if (!employeeId || !newPassword) {
-    res.status(400).json({ error: '従業員IDと新しいパスワードを入力してください' });
+  if (!email || !newPassword) {
+    res.status(400).json({ error: 'メールアドレスと新しいパスワードを入力してください' });
     return;
   }
 
@@ -374,12 +388,12 @@ app.post('/api/auth/reset-password', requireDatabase, authenticateToken, async (
   try {
     // 対象ユーザーを取得
     const userResult = await pool!.query(
-      'SELECT id, role FROM employees WHERE employee_id = $1',
-      [employeeId]
+      'SELECT id, role FROM employees WHERE email = $1',
+      [email]
     );
 
     if (userResult.rows.length === 0) {
-      res.status(404).json({ error: '従業員が見つかりません' });
+      res.status(404).json({ error: 'ユーザーが見つかりません' });
       return;
     }
 
@@ -394,8 +408,8 @@ app.post('/api/auth/reset-password', requireDatabase, authenticateToken, async (
     // パスワードをリセット
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
     await pool!.query(
-      'UPDATE employees SET password_hash = $1, updated_at = NOW() WHERE employee_id = $2',
-      [newPasswordHash, employeeId]
+      'UPDATE employees SET password_hash = $1, updated_at = NOW() WHERE email = $2',
+      [newPasswordHash, email]
     );
 
     res.json({ data: { success: true, message: 'パスワードがリセットされました' } });

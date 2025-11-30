@@ -14,7 +14,7 @@ const LoginPage = () => {
     hasExistingAdmins,
     checkExistingAdmins 
   } = useAuthStore();
-  const [employeeId, setEmployeeId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,8 +27,15 @@ const LoginPage = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!employeeId || !password) {
-      setError('勤怠番号とパスワードを入力してください。');
+    if (!email || !password) {
+      setError('メールアドレスとパスワードを入力してください。');
+      return;
+    }
+    
+    // メールアドレスの形式チェック
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('有効なメールアドレスを入力してください。');
       return;
     }
     
@@ -36,7 +43,7 @@ const LoginPage = () => {
     setError('');
     
     try {
-      const success = await login(employeeId, password);
+      const success = await login(email, password);
       
       if (success) {
         // Wait for Zustand persist to complete localStorage write (increased from 100ms to 500ms)
@@ -60,7 +67,7 @@ const LoginPage = () => {
           router.push(isAdmin() ? '/admin/dashboard' : '/employee/dashboard');
         }
       } else {
-        setError('ログインに失敗しました。勤怠番号またはパスワードを確認してください。');
+        setError('ログインに失敗しました。メールアドレスまたはパスワードを確認してください。');
       }
     } catch (err: unknown) {
       console.error('Login error:', err);
@@ -83,9 +90,9 @@ const LoginPage = () => {
       
       if (success) {
         setError('');
-        alert('管理者アカウントが作成/修復されました。勤怠番号: 0000, パスワード: toyama2023 でログインしてください。');
+        alert('管理者アカウントが作成/修復されました。メールアドレス: admin@example.com, パスワード: toyama2023 でログインしてください。');
         checkExistingAdmins();
-        setEmployeeId('0000');
+        setEmail('admin@example.com');
         setPassword('toyama2023');
       } else {
         setError('管理者アカウントの作成に失敗しました。');
@@ -115,7 +122,7 @@ const LoginPage = () => {
         </div>
         <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">シフト提出システム</h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          勤怠番号とパスワードでログインしてください
+          メールアドレスとパスワードでログインしてください
         </p>
       </div>
 
@@ -123,20 +130,20 @@ const LoginPage = () => {
         <div className="card">
           <form className="space-y-6" onSubmit={handleLogin}>
             <div>
-              <label htmlFor="employeeId" className="form-label">
-                勤怠番号
+              <label htmlFor="email" className="form-label">
+                メールアドレス
               </label>
               <input
-                id="employeeId"
-                name="employeeId"
-                type="text"
-                autoComplete="username"
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
                 required
-                maxLength={50}
+                maxLength={255}
                 className="form-input"
-                value={employeeId}
-                onChange={(e) => setEmployeeId(e.target.value)}
-                placeholder="勤怠番号を入力"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="メールアドレスを入力"
                 disabled={isSubmitting}
               />
             </div>
