@@ -4,6 +4,9 @@ export interface Store {
   businessTypeId?: string;
   businessTypeName?: string;
   businessTypeDescription?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
   created_at: string;
   updated_at: string;
 }

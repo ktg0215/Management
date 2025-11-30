@@ -17,6 +17,7 @@ const StoreManagement = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [newStoreName, setNewStoreName] = useState('');
   const [selectedBusinessTypeId, setSelectedBusinessTypeId] = useState('');
+  const [newStoreAddress, setNewStoreAddress] = useState('');
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   
   useEffect(() => {
@@ -48,9 +49,10 @@ const StoreManagement = () => {
     }
     
     try {
-      await createStore(newStoreName, selectedBusinessTypeId);
+      await createStore(newStoreName, selectedBusinessTypeId, newStoreAddress.trim() || undefined);
       setNewStoreName('');
       setSelectedBusinessTypeId('');
+      setNewStoreAddress('');
       setShowAddModal(false);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -74,10 +76,11 @@ const StoreManagement = () => {
     }
     
     try {
-      await updateStore(selectedStore.id, newStoreName, selectedBusinessTypeId);
+      await updateStore(selectedStore.id, newStoreName, selectedBusinessTypeId, newStoreAddress.trim() || undefined);
       setSelectedStore(null);
       setNewStoreName('');
       setSelectedBusinessTypeId('');
+      setNewStoreAddress('');
       setShowEditModal(false);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -110,6 +113,7 @@ const StoreManagement = () => {
     setSelectedStore(store);
     setNewStoreName(store.name);
     setSelectedBusinessTypeId(store.businessTypeId || '');
+    setNewStoreAddress(store.address || '');
     setShowEditModal(true);
   };
   
@@ -138,6 +142,7 @@ const StoreManagement = () => {
               onClick={() => {
                 setNewStoreName('');
                 setSelectedBusinessTypeId('');
+                setNewStoreAddress('');
                 setShowAddModal(true);
               }}
               className="btn-primary flex items-center"
@@ -158,6 +163,7 @@ const StoreManagement = () => {
                 onClick={() => {
                   setNewStoreName('');
                   setSelectedBusinessTypeId('');
+                  setNewStoreAddress('');
                   setShowAddModal(true);
                 }}
                 className="btn-primary inline-flex items-center"
@@ -267,6 +273,21 @@ const StoreManagement = () => {
                   </select>
                 </div>
                 
+                <div className="mb-4">
+                  <label htmlFor="store-address" className="form-label">住所</label>
+                  <input
+                    type="text"
+                    id="store-address"
+                    className="form-input"
+                    value={newStoreAddress}
+                    onChange={(e) => setNewStoreAddress(e.target.value)}
+                    placeholder="例: 富山県富山市〇〇1-2-3（天気データ取得用）"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    住所を入力すると、自動的に緯度・経度が取得され、その店舗の天気データを取得できます。
+                  </p>
+                </div>
+                
                 <div className="flex justify-end space-x-3">
                   <button
                     type="button"
@@ -330,6 +351,21 @@ const StoreManagement = () => {
                       </option>
                     ))}
                   </select>
+                </div>
+                
+                <div className="mb-4">
+                  <label htmlFor="store-address-edit" className="form-label">住所</label>
+                  <input
+                    type="text"
+                    id="store-address-edit"
+                    className="form-input"
+                    value={newStoreAddress}
+                    onChange={(e) => setNewStoreAddress(e.target.value)}
+                    placeholder="例: 富山県富山市〇〇1-2-3（天気データ取得用）"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    住所を入力すると、自動的に緯度・経度が取得され、その店舗の天気データを取得できます。
+                  </p>
                 </div>
                 
                 <div className="flex justify-end space-x-3">

@@ -11,6 +11,7 @@ import { WebSocketManager } from './websocket/WebSocketServer';
 import ExcelJS from 'exceljs';
 import path from 'path';
 import fs from 'fs';
+import https from 'https';
 
 // 環境変数の読み込み
 dotenv.config();
@@ -456,7 +457,7 @@ app.post('/api/auth/register', requireDatabase, async (req: Request, res: Respon
 app.get('/api/stores', requireDatabase, async (req: Request, res: Response) => {
   try {
     const result = await pool!.query(`
-      SELECT s.id, s.name, s.business_type_id, s.created_at, s.updated_at,
+      SELECT s.id, s.name, s.business_type_id, s.address, s.latitude, s.longitude, s.created_at, s.updated_at,
              bt.name as business_type_name, bt.description as business_type_description
       FROM stores s
       LEFT JOIN business_types bt ON s.business_type_id = bt.id
@@ -470,8 +471,45 @@ app.get('/api/stores', requireDatabase, async (req: Request, res: Response) => {
   }
 });
 
+// 住所から緯度経度を取得する関数（OpenStreetMap Nominatim APIを使用）
+async function geocodeAddress(address: string): Promise<{ latitude: number; longitude: number } | null> {
+  return new Promise((resolve, reject) => {
+    const encodedAddress = encodeURIComponent(address);
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodedAddress}&format=json&limit=1&countrycodes=jp`;
+    
+    https.get(url, {
+      headers: {
+        'User-Agent': 'ManagementSystem/1.0'
+      }
+    }, (res) => {
+      let data = '';
+      
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      res.on('end', () => {
+        try {
+          const results = JSON.parse(data);
+          if (results && results.length > 0) {
+            const lat = parseFloat(results[0].lat);
+            const lon = parseFloat(results[0].lon);
+            resolve({ latitude: lat, longitude: lon });
+          } else {
+            resolve(null);
+          }
+        } catch (err) {
+          reject(err);
+        }
+      });
+    }).on('error', (err) => {
+      reject(err);
+    });
+  });
+}
+
 app.post('/api/stores', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
-  const { name, businessTypeId } = req.body;
+  const { name, businessTypeId, address } = req.body;
   
   // 入力バリデーション
   if (!name || !name.trim()) {
@@ -492,15 +530,34 @@ app.post('/api/stores', requireDatabase, authenticateToken, async (req: Request,
       return;
     }
     
+    // 住所から緯度経度を取得
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    
+    if (address && address.trim()) {
+      try {
+        const geoResult = await geocodeAddress(address.trim());
+        if (geoResult) {
+          latitude = geoResult.latitude;
+          longitude = geoResult.longitude;
+        } else {
+          console.warn(`住所から緯度経度を取得できませんでした: ${address}`);
+        }
+      } catch (geoErr) {
+        console.error('ジオコーディングエラー:', geoErr);
+        // エラーが発生しても店舗作成は続行（緯度経度はnullのまま）
+      }
+    }
+    
     const result = await pool!.query(
-      'INSERT INTO stores (name, business_type_id) VALUES ($1, $2) RETURNING id',
-      [name.trim(), businessTypeId]
+      'INSERT INTO stores (name, business_type_id, address, latitude, longitude) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [name.trim(), businessTypeId, address?.trim() || null, latitude, longitude]
     );
     const newStoreId = result.rows[0].id;
 
     // 業態名を含めて再取得
     const storeWithBT = await pool!.query(`
-      SELECT s.id, s.name, s.business_type_id, s.created_at, s.updated_at,
+      SELECT s.id, s.name, s.business_type_id, s.address, s.latitude, s.longitude, s.created_at, s.updated_at,
              bt.name as business_type_name, bt.description as business_type_description
       FROM stores s
       LEFT JOIN business_types bt ON s.business_type_id = bt.id
@@ -521,7 +578,7 @@ app.post('/api/stores', requireDatabase, authenticateToken, async (req: Request,
 
 app.put('/api/stores/:id', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, businessTypeId } = req.body;
+  const { name, businessTypeId, address } = req.body;
   
   // 入力バリデーション
   if (!name || !name.trim()) {
@@ -542,10 +599,29 @@ app.put('/api/stores/:id', requireDatabase, authenticateToken, async (req: Reque
       return;
     }
     
+    // 住所から緯度経度を取得
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    
+    if (address && address.trim()) {
+      try {
+        const geoResult = await geocodeAddress(address.trim());
+        if (geoResult) {
+          latitude = geoResult.latitude;
+          longitude = geoResult.longitude;
+        } else {
+          console.warn(`住所から緯度経度を取得できませんでした: ${address}`);
+        }
+      } catch (geoErr) {
+        console.error('ジオコーディングエラー:', geoErr);
+        // エラーが発生しても店舗更新は続行（緯度経度はnullのまま）
+      }
+    }
+    
     const result = await pool!.query(
-      `UPDATE stores SET name = $1, business_type_id = $2, updated_at = NOW() WHERE id = $3
-       RETURNING id, name, business_type_id, created_at, updated_at`,
-      [name.trim(), businessTypeId, id]
+      `UPDATE stores SET name = $1, business_type_id = $2, address = $3, latitude = $4, longitude = $5, updated_at = NOW() WHERE id = $6
+       RETURNING id, name, business_type_id, address, latitude, longitude, created_at, updated_at`,
+      [name.trim(), businessTypeId, address?.trim() || null, latitude, longitude, id]
     );
     if (result.rows.length === 0) {
       res.status(404).json({ error: '店舗が見つかりません' });
@@ -2122,6 +2198,139 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
   } catch (err) {
     console.error('売上データ取得エラー:', err);
     res.status(500).json({ success: false, error: '売上データの取得に失敗しました' });
+  }
+});
+
+// 特徴量取得API（売上予測用）
+app.get('/api/sales/features', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { storeId, startDate, endDate, includeTarget } = req.query;
+  
+  if (!storeId) {
+    res.status(400).json({ success: false, error: 'storeIdは必須です' });
+    return;
+  }
+  
+  try {
+    const startDateStr = startDate as string || new Date().toISOString().split('T')[0];
+    const endDateStr = endDate as string || new Date().toISOString().split('T')[0];
+    const includeTargetBool = includeTarget === 'true';
+    
+    // 期間内の売上データを取得
+    const startDateObj = new Date(startDateStr);
+    const endDateObj = new Date(endDateStr);
+    const startYear = startDateObj.getFullYear();
+    const startMonth = startDateObj.getMonth() + 1;
+    const endYear = endDateObj.getFullYear();
+    const endMonth = endDateObj.getMonth() + 1;
+    
+    // 期間内のすべての月のデータを取得
+    const allFeatures: any[] = [];
+    let currentYear = startYear;
+    let currentMonth = startMonth;
+    
+    while (
+      currentYear < endYear ||
+      (currentYear === endYear && currentMonth <= endMonth)
+    ) {
+      const result = await pool!.query(
+        `SELECT daily_data FROM sales_data
+         WHERE store_id = $1 AND year = $2 AND month = $3`,
+        [storeId, currentYear, currentMonth]
+      );
+      
+      if (result.rows.length > 0 && result.rows[0].daily_data) {
+        const dailyData = result.rows[0].daily_data;
+        for (const dateStr in dailyData) {
+          const dayData = dailyData[dateStr] as any;
+          const date = new Date(dateStr);
+          
+          // 基本特徴量を生成
+          const features: any = {
+            date: dateStr,
+            weekday: date.getDay(), // 0=日曜日, 1=月曜日, ..., 6=土曜日
+            month: date.getMonth() + 1,
+            day: date.getDate(),
+            is_month_start: date.getDate() === 1 ? 1 : 0,
+            dayofyear: Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24)),
+          };
+          
+          // 月末判定
+          const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+          features.is_month_end = date.getDate() === lastDay ? 1 : 0;
+          
+          // 天気データ（将来実装予定、現在はnull）
+          features.temperature = dayData.temperature || null;
+          features.humidity = dayData.humidity || null;
+          features.precipitation = dayData.precipitation || null;
+          features.snow = dayData.snow || null;
+          features.gust = dayData.gust || null;
+          features.windspeed = dayData.windspeed || null;
+          features.pressure = dayData.pressure || null;
+          features.feelslike = dayData.feelslike || null;
+          features.is_holiday = dayData.is_holiday ? 1 : 0;
+          
+          // ターゲット変数がある場合
+          if (includeTargetBool) {
+            features.netSales = dayData.netSales || 0;
+            features.edwNetSales = dayData.edwNetSales || 0;
+            features.ohbNetSales = dayData.ohbNetSales || 0;
+          }
+          
+          allFeatures.push(features);
+        }
+      }
+      
+      currentMonth++;
+      if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear++;
+      }
+    }
+    
+    // 日付でソート
+    allFeatures.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    // ターゲット変数がある場合、移動平均とラグ特徴量を計算
+    if (includeTargetBool && allFeatures.length > 0) {
+      // 移動平均とラグ特徴量を計算
+      for (let i = 0; i < allFeatures.length; i++) {
+        const current = allFeatures[i];
+        
+        // 7日移動平均（過去7日間）
+        if (i >= 7) {
+          const ma7Values = allFeatures.slice(i - 7, i).map(f => f.netSales || 0);
+          current.netSales_ma7 = ma7Values.reduce((sum, val) => sum + val, 0) / 7;
+        } else {
+          current.netSales_ma7 = null;
+        }
+        
+        // 90日移動平均（過去90日間）
+        if (i >= 90) {
+          const ma90Values = allFeatures.slice(i - 90, i).map(f => f.netSales || 0);
+          current.netSales_ma90 = ma90Values.reduce((sum, val) => sum + val, 0) / 90;
+        } else {
+          current.netSales_ma90 = null;
+        }
+        
+        // ラグ特徴量（7日前、14日前）
+        if (i >= 7) {
+          current.netSales_lag7 = allFeatures[i - 7].netSales || 0;
+        } else {
+          current.netSales_lag7 = null;
+        }
+        
+        if (i >= 14) {
+          current.netSales_lag14 = allFeatures[i - 14].netSales || 0;
+        } else {
+          current.netSales_lag14 = null;
+        }
+      }
+    }
+    
+    res.json({ success: true, data: allFeatures });
+  } catch (err) {
+    console.error('特徴量取得エラー:', err);
+    res.status(500).json({ success: false, error: '特徴量の取得に失敗しました' });
   }
 });
 

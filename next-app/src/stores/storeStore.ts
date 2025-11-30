@@ -8,8 +8,8 @@ interface StoreState {
   stores: Store[];
   isLoading: boolean;
   fetchStores: () => Promise<void>;
-  createStore: (name: string, businessTypeId?: string) => Promise<Store | null>;
-  updateStore: (id: string, name: string, businessTypeId?: string) => Promise<boolean>;
+  createStore: (name: string, businessTypeId?: string, address?: string) => Promise<Store | null>;
+  updateStore: (id: string, name: string, businessTypeId?: string, address?: string) => Promise<boolean>;
   deleteStore: (id: string) => Promise<boolean>;
 }
 
@@ -39,11 +39,11 @@ export const useStoreStore = create<StoreState>((set) => ({
     }
   },
   
-  createStore: async (name, businessTypeId) => {
+  createStore: async (name, businessTypeId, address) => {
     set({ isLoading: true });
     
     try {
-      const response = await apiClient.createStore(name, businessTypeId);
+      const response = await apiClient.createStore(name, businessTypeId, address);
 
       if (response.success && response.data) {
         set(state => ({ 
@@ -62,11 +62,11 @@ export const useStoreStore = create<StoreState>((set) => ({
     }
   },
   
-  updateStore: async (id, name, businessTypeId) => {
+  updateStore: async (id, name, businessTypeId, address) => {
     set({ isLoading: true });
     
     try {
-      const response = await apiClient.updateStore(id, name, businessTypeId);
+      const response = await apiClient.updateStore(id, name, businessTypeId, address);
 
       if (response.success && response.data) {
         set(state => ({

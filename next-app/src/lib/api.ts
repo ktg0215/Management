@@ -158,17 +158,29 @@ class ApiClient {
     return this.request<Store[]>('/stores');
   }
 
-  async createStore(name: string, businessTypeId?: string) {
+  async createStore(name: string, businessTypeId?: string, address?: string) {
     return this.request<Store>('/stores', {
       method: 'POST',
-      body: JSON.stringify({ name, businessTypeId }),
+      body: JSON.stringify({ name, businessTypeId, address }),
     });
   }
 
-  async updateStore(id: string, name: string, businessTypeId?: string) {
+  async updateStore(id: string, name: string, businessTypeId?: string, address?: string) {
     return this.request<Store>(`/stores/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ name, businessTypeId }),
+      body: JSON.stringify({ name, businessTypeId, address }),
+    });
+  }
+  
+  async getSalesFeatures(storeId: string, startDate?: string, endDate?: string, includeTarget?: boolean) {
+    const params = new URLSearchParams({
+      storeId,
+      ...(startDate ? { startDate } : {}),
+      ...(endDate ? { endDate } : {}),
+      ...(includeTarget !== undefined ? { includeTarget: String(includeTarget) } : {}),
+    });
+    return this.request<any>(`/sales/features?${params.toString()}`, {
+      method: 'GET',
     });
   }
 
