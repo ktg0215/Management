@@ -22,7 +22,28 @@
 4. **test_super_admin@example.com**
    - パスワード: `super1234`
    - 権限: `super_admin`
-   - **注意**: パスワードが正しく動作しない場合は、`node reset_test_user_password.js`を実行してパスワードをリセットしてください
+
+## パスワードリセット方法
+
+テストユーザーのパスワードが正しく動作しない場合は、以下のコマンドを実行してパスワードをリセットしてください：
+
+```bash
+cd ~/Management/backend
+node reset_test_user_password.js
+```
+
+これにより、すべてのテストユーザーのパスワードが正しく設定されます。
+
+## ログインテスト方法
+
+ログインが正しく動作するか確認するには、以下のコマンドを実行してください：
+
+```bash
+cd ~/Management/backend
+node test_login.js
+```
+
+これにより、パスワードの検証が実行され、ログイン可能かどうかが確認されます。
 
 ## デバッグ手順
 
