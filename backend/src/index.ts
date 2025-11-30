@@ -2218,14 +2218,23 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
       );
       
       const store = storeResult.rows[0];
-      let latitude = store?.latitude;
-      let longitude = store?.longitude;
+      if (!store) {
+        console.error(`[天気データ取得] 店舗ID ${storeId} が見つかりません`);
+        res.status(404).json({ success: false, error: '店舗が見つかりません' });
+        return;
+      }
+      
+      let latitude = store.latitude;
+      let longitude = store.longitude;
+      const address = store.address;
+      
+      console.log(`[天気データ取得] 店舗ID: ${storeId}, 住所: ${address}, 緯度: ${latitude}, 経度: ${longitude}`);
       
       // 緯度経度が設定されていない場合、住所から取得を試みる
-      if ((!latitude || !longitude) && store?.address) {
-        console.log(`[天気データ取得] 店舗ID ${storeId} の緯度経度が未設定のため、住所から取得を試みます: ${store.address}`);
+      if ((!latitude || !longitude) && address) {
+        console.log(`[天気データ取得] 店舗ID ${storeId} の緯度経度が未設定のため、住所から取得を試みます: ${address}`);
         try {
-          const geoResult = await geocodeAddress(store.address);
+          const geoResult = await geocodeAddress(address);
           if (geoResult) {
             latitude = geoResult.latitude;
             longitude = geoResult.longitude;
@@ -2236,14 +2245,16 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
             );
             console.log(`[天気データ取得] 緯度経度を取得して保存しました: 緯度=${latitude}, 経度=${longitude}`);
           } else {
-            console.warn(`[天気データ取得] 住所から緯度経度を取得できませんでした: ${store.address}`);
+            console.warn(`[天気データ取得] 住所から緯度経度を取得できませんでした: ${address}`);
           }
         } catch (geoErr) {
           console.error(`[天気データ取得] ジオコーディングエラー:`, geoErr);
         }
+      } else if (!address) {
+        console.warn(`[天気データ取得] 店舗ID ${storeId} に住所が設定されていません`);
       }
       
-      console.log(`[天気データ取得] 店舗ID: ${storeId}, 緯度: ${latitude}, 経度: ${longitude}`);
+      console.log(`[天気データ取得] 最終的な店舗ID: ${storeId}, 緯度: ${latitude}, 経度: ${longitude}`);
       
       // 天気データとイベント情報を追加
       const enrichedDailyData: any = {};
