@@ -2213,13 +2213,35 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
       
       // 店舗の緯度経度を取得
       const storeResult = await pool!.query(
-        'SELECT latitude, longitude FROM stores WHERE id = $1',
+        'SELECT latitude, longitude, address FROM stores WHERE id = $1',
         [storeId]
       );
       
       const store = storeResult.rows[0];
-      const latitude = store?.latitude;
-      const longitude = store?.longitude;
+      let latitude = store?.latitude;
+      let longitude = store?.longitude;
+      
+      // 緯度経度が設定されていない場合、住所から取得を試みる
+      if ((!latitude || !longitude) && store?.address) {
+        console.log(`[天気データ取得] 店舗ID ${storeId} の緯度経度が未設定のため、住所から取得を試みます: ${store.address}`);
+        try {
+          const geoResult = await geocodeAddress(store.address);
+          if (geoResult) {
+            latitude = geoResult.latitude;
+            longitude = geoResult.longitude;
+            // データベースに保存
+            await pool!.query(
+              'UPDATE stores SET latitude = $1, longitude = $2 WHERE id = $3',
+              [latitude, longitude, storeId]
+            );
+            console.log(`[天気データ取得] 緯度経度を取得して保存しました: 緯度=${latitude}, 経度=${longitude}`);
+          } else {
+            console.warn(`[天気データ取得] 住所から緯度経度を取得できませんでした: ${store.address}`);
+          }
+        } catch (geoErr) {
+          console.error(`[天気データ取得] ジオコーディングエラー:`, geoErr);
+        }
+      }
       
       console.log(`[天気データ取得] 店舗ID: ${storeId}, 緯度: ${latitude}, 経度: ${longitude}`);
       
@@ -2233,15 +2255,68 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
           let dayOfMonth: number;
           let date: Date;
           
-          if (dateStr.includes('-')) {
-            // YYYY-MM-DD形式の場合
-            date = new Date(dateStr);
-            dayOfMonth = date.getDate();
-          } else {
-            // 日付（1-31）形式の場合
-            dayOfMonth = parseInt(dateStr);
-            // 年月から日付オブジェクトを作成
-            date = new Date(parseInt(row.year), parseInt(row.month) - 1, dayOfMonth);
+          try {
+            if (dateStr.includes('-')) {
+              // YYYY-MM-DD形式の場合
+              date = new Date(dateStr);
+              if (isNaN(date.getTime())) {
+                console.error(`[天気データ取得] 無効な日付形式: ${dateStr}`);
+                enrichedDailyData[dateStr] = {
+                  ...dayData,
+                  weather: '',
+                  temperature: null,
+                  event: ''
+                };
+                continue;
+              }
+              dayOfMonth = date.getDate();
+            } else {
+              // 日付（1-31）形式の場合
+              dayOfMonth = parseInt(dateStr);
+              if (isNaN(dayOfMonth) || dayOfMonth < 1 || dayOfMonth > 31) {
+                console.error(`[天気データ取得] 無効な日付: ${dateStr}`);
+                enrichedDailyData[dateStr] = {
+                  ...dayData,
+                  weather: '',
+                  temperature: null,
+                  event: ''
+                };
+                continue;
+              }
+              // 年月から日付オブジェクトを作成
+              const year = parseInt(String(row.year));
+              const month = parseInt(String(row.month));
+              if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+                console.error(`[天気データ取得] 無効な年月: year=${row.year}, month=${row.month}`);
+                enrichedDailyData[dateStr] = {
+                  ...dayData,
+                  weather: '',
+                  temperature: null,
+                  event: ''
+                };
+                continue;
+              }
+              date = new Date(year, month - 1, dayOfMonth);
+              if (isNaN(date.getTime())) {
+                console.error(`[天気データ取得] 無効な日付オブジェクト: ${year}-${month}-${dayOfMonth}`);
+                enrichedDailyData[dateStr] = {
+                  ...dayData,
+                  weather: '',
+                  temperature: null,
+                  event: ''
+                };
+                continue;
+              }
+            }
+          } catch (dateErr) {
+            console.error(`[天気データ取得] 日付解析エラー (${dateStr}):`, dateErr);
+            enrichedDailyData[dateStr] = {
+              ...dayData,
+              weather: '',
+              temperature: null,
+              event: ''
+            };
+            continue;
           }
           
           // イベント情報を追加
@@ -2394,11 +2469,23 @@ const WEATHER_CODE_TRANSLATIONS: Record<number, string> = {
 // 2. 未来のデータは日付が変わった時点で再度読み込む（当日起点で未来1週間）
 // 3. 未来のデータAPIを読み込む際に一日前の天気の実績を読み込み再度保存する
 async function fetchWeatherData(latitude: number, longitude: number, date: Date): Promise<{ weather: string; temperature: number | null }> {
+  // 日付のバリデーション
+  if (isNaN(date.getTime())) {
+    console.error(`[fetchWeatherData] 無効な日付オブジェクト:`, date);
+    return { weather: '', temperature: null };
+  }
+  
   const dateStr = date.toISOString().split('T')[0];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const targetDate = new Date(date);
   targetDate.setHours(0, 0, 0, 0);
+  
+  // 再度バリデーション
+  if (isNaN(targetDate.getTime())) {
+    console.error(`[fetchWeatherData] 無効なtargetDate:`, date, dateStr);
+    return { weather: '', temperature: null };
+  }
   
   // まずデータベースから取得を試みる
   try {
