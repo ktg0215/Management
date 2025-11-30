@@ -228,9 +228,9 @@ app.post('/api/auth/login', requireDatabase, async (req: Request, res: Response)
       hasPasswordHash: !!user.passwordHash
     });
     
-    // 一時的にパスワードチェックをスキップ（メールアドレス admin@example.com & パスワード admin123 の場合）
+    // 一時的にパスワードチェックをスキップ（メールアドレス admin@example.com & パスワード toyama2023 の場合）
     let isMatch = false;
-    if (email === 'admin@example.com' && password === 'admin123') {
+    if (email === 'admin@example.com' && password === 'toyama2023') {
       console.log('管理者アカウント: パスワードチェックをスキップ');
       isMatch = true;
     } else {
