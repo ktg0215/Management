@@ -786,6 +786,59 @@ app.delete('/api/business-types/:id', requireDatabase, authenticateToken, async 
   }
 });
 
+// 業態別フィールド設定API
+// インメモリストレージ（本番ではDBに保存することを推奨）
+const businessTypeFieldsStorage: Record<string, any[]> = {};
+
+app.get('/api/business-type-fields', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { businessTypeId } = req.query;
+
+    if (!businessTypeId) {
+      res.status(400).json({ success: false, error: 'businessTypeId is required' });
+      return;
+    }
+
+    // 保存されている設定を取得、なければnullを返す
+    const fields = businessTypeFieldsStorage[String(businessTypeId)] || null;
+
+    res.json({
+      success: true,
+      data: fields
+    });
+  } catch (error) {
+    console.error('業態別フィールド設定取得エラー:', error);
+    res.status(500).json({ success: false, error: 'フィールド設定の取得に失敗しました' });
+  }
+});
+
+app.post('/api/business-type-fields', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { businessTypeId, fields } = req.body;
+
+    if (!businessTypeId) {
+      res.status(400).json({ success: false, error: 'businessTypeId is required' });
+      return;
+    }
+
+    if (!fields || !Array.isArray(fields)) {
+      res.status(400).json({ success: false, error: 'fields must be an array' });
+      return;
+    }
+
+    // フィールド設定を保存
+    businessTypeFieldsStorage[String(businessTypeId)] = fields;
+
+    res.json({
+      success: true,
+      message: 'フィールド設定を保存しました'
+    });
+  } catch (error) {
+    console.error('業態別フィールド設定保存エラー:', error);
+    res.status(500).json({ success: false, error: 'フィールド設定の保存に失敗しました' });
+  }
+});
+
 app.get('/api/activity-logs', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { limit = '5' } = req.query;
   const user = (req as any).user;
