@@ -2175,7 +2175,21 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
       if (row.daily_data) {
         for (const dateStr in row.daily_data) {
           const dayData = row.daily_data[dateStr];
-          const date = new Date(dateStr);
+          
+          // dateStrが日付形式（YYYY-MM-DD）か日付（1-31）かを判定
+          let dayOfMonth: number;
+          let date: Date;
+          
+          if (dateStr.includes('-')) {
+            // YYYY-MM-DD形式の場合
+            date = new Date(dateStr);
+            dayOfMonth = date.getDate();
+          } else {
+            // 日付（1-31）形式の場合
+            dayOfMonth = parseInt(dateStr);
+            // 年月から日付オブジェクトを作成
+            date = new Date(parseInt(row.year), parseInt(row.month) - 1, dayOfMonth);
+          }
           
           // イベント情報を追加
           const eventName = getEventName(date);
@@ -2187,21 +2201,17 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
           
           if (latitude && longitude) {
             try {
-              console.log(`[天気データ取得] 日付: ${dateStr}, 緯度: ${latitude}, 経度: ${longitude}`);
+              console.log(`[天気データ取得] 日付: ${dayOfMonth}, 緯度: ${latitude}, 経度: ${longitude}`);
               const weatherData = await fetchWeatherData(latitude, longitude, date);
               weather = weatherData.weather;
               temperature = weatherData.temperature;
-              console.log(`[天気データ取得] 結果: ${dateStr} - 天気: ${weather}, 気温: ${temperature}°C`);
+              console.log(`[天気データ取得] 結果: ${dayOfMonth}日 - 天気: ${weather}, 気温: ${temperature}°C`);
             } catch (err) {
-              console.error(`天気データ取得エラー (${dateStr}):`, err);
+              console.error(`天気データ取得エラー (${dayOfMonth}日):`, err);
             }
           } else {
             console.log(`[天気データ取得] 店舗ID ${storeId} に緯度経度が設定されていません`);
           }
-          
-          // 日付キーを日付のみ（1-31）に変換
-          const dateObj = new Date(dateStr);
-          const dayOfMonth = dateObj.getDate();
           
           enrichedDailyData[dayOfMonth] = {
             ...dayData,
