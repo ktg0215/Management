@@ -22,6 +22,7 @@
 4. **test_super_admin@example.com**
    - パスワード: `super1234`
    - 権限: `super_admin`
+   - **注意**: パスワードが正しく動作しない場合は、`node reset_test_user_password.js`を実行してパスワードをリセットしてください
 
 ## デバッグ手順
 
