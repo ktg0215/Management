@@ -477,6 +477,8 @@ async function geocodeAddress(address: string): Promise<{ latitude: number; long
     const encodedAddress = encodeURIComponent(address);
     const url = `https://nominatim.openstreetmap.org/search?q=${encodedAddress}&format=json&limit=1&countrycodes=jp`;
     
+    console.log(`[ジオコーディング] 住所から緯度経度を取得中: ${address}`);
+    
     https.get(url, {
       headers: {
         'User-Agent': 'ManagementSystem/1.0'
@@ -490,19 +492,29 @@ async function geocodeAddress(address: string): Promise<{ latitude: number; long
       
       res.on('end', () => {
         try {
+          if (res.statusCode !== 200) {
+            console.error(`[ジオコーディング] HTTPエラー: ${res.statusCode}`);
+            resolve(null);
+            return;
+          }
+          
           const results = JSON.parse(data);
           if (results && results.length > 0) {
             const lat = parseFloat(results[0].lat);
             const lon = parseFloat(results[0].lon);
+            console.log(`[ジオコーディング] 成功: 緯度=${lat}, 経度=${lon}`);
             resolve({ latitude: lat, longitude: lon });
           } else {
+            console.warn(`[ジオコーディング] 結果が見つかりませんでした: ${address}`);
             resolve(null);
           }
         } catch (err) {
+          console.error(`[ジオコーディング] パースエラー:`, err);
           reject(err);
         }
       });
     }).on('error', (err) => {
+      console.error(`[ジオコーディング] ネットワークエラー:`, err);
       reject(err);
     });
   });
