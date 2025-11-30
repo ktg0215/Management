@@ -2246,7 +2246,9 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
       if ((!latitude || !longitude) && address) {
         console.log(`[天気データ取得] 店舗ID ${storeId} の緯度経度が未設定のため、住所から取得を試みます: ${address}`);
         try {
+          console.log(`[天気データ取得] geocodeAddress関数を呼び出します`);
           const geoResult = await geocodeAddress(address);
+          console.log(`[天気データ取得] geocodeAddress関数の結果:`, geoResult);
           if (geoResult) {
             latitude = geoResult.latitude;
             longitude = geoResult.longitude;
@@ -2261,6 +2263,8 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
           }
         } catch (geoErr) {
           console.error(`[天気データ取得] ジオコーディングエラー:`, geoErr);
+          console.error(`[天気データ取得] エラーの詳細:`, geoErr instanceof Error ? geoErr.message : String(geoErr));
+          console.error(`[天気データ取得] エラースタック:`, geoErr instanceof Error ? geoErr.stack : 'スタック情報なし');
         }
       } else if (!address) {
         console.warn(`[天気データ取得] 店舗ID ${storeId} に住所が設定されていません`);
