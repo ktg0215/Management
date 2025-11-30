@@ -2158,6 +2158,56 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
         dailyDataType: typeof row.daily_data
       });
       
+      // 店舗の緯度経度を取得
+      const storeResult = await pool!.query(
+        'SELECT latitude, longitude FROM stores WHERE id = $1',
+        [storeId]
+      );
+      
+      const store = storeResult.rows[0];
+      const latitude = store?.latitude;
+      const longitude = store?.longitude;
+      
+      console.log(`[天気データ取得] 店舗ID: ${storeId}, 緯度: ${latitude}, 経度: ${longitude}`);
+      
+      // 天気データとイベント情報を追加
+      const enrichedDailyData: any = {};
+      if (row.daily_data) {
+        for (const dateStr in row.daily_data) {
+          const dayData = row.daily_data[dateStr];
+          const date = new Date(dateStr);
+          
+          // イベント情報を追加
+          const eventName = getEventName(date);
+          
+          // 天気データを取得（緯度経度がある場合）
+          // データベースから取得を試み、なければAPIから取得
+          let weather = '';
+          let temperature: number | null = null;
+          
+          if (latitude && longitude) {
+            try {
+              console.log(`[天気データ取得] 日付: ${dateStr}, 緯度: ${latitude}, 経度: ${longitude}`);
+              const weatherData = await fetchWeatherData(latitude, longitude, date);
+              weather = weatherData.weather;
+              temperature = weatherData.temperature;
+              console.log(`[天気データ取得] 結果: ${dateStr} - 天気: ${weather}, 気温: ${temperature}°C`);
+            } catch (err) {
+              console.error(`天気データ取得エラー (${dateStr}):`, err);
+            }
+          } else {
+            console.log(`[天気データ取得] 店舗ID ${storeId} に緯度経度が設定されていません`);
+          }
+          
+          enrichedDailyData[dateStr] = {
+            ...dayData,
+            weather,
+            temperature,
+            event: eventName
+          };
+        }
+      }
+      
       res.json({
         success: true,
         data: {
@@ -2165,7 +2215,7 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
           year: row.year,
           month: row.month,
           store_id: row.store_id,
-          daily_data: row.daily_data,
+          daily_data: enrichedDailyData,
           created_at: row.created_at,
           updated_at: row.updated_at
         }
@@ -2200,6 +2250,409 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
     res.status(500).json({ success: false, error: '売上データの取得に失敗しました' });
   }
 });
+
+// イベント判定関数（祝日、ホワイトデー、クリスマス、母の日など）
+function getEventName(date: Date): string {
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const weekday = date.getDay(); // 0=日曜日, 1=月曜日, ..., 6=土曜日
+
+  // バレンタインデー
+  if (month === 2 && day === 14) {
+    return 'バレンタインデー';
+  }
+  // ホワイトデー
+  if (month === 3 && day === 14) {
+    return 'ホワイトデー';
+  }
+  // ハロウィン
+  if (month === 10 && day === 31) {
+    return 'ハロウィン';
+  }
+  // 母の日（5月の第2日曜日）
+  if (month === 5 && weekday === 0 && day > 7 && day <= 14) {
+    return '母の日';
+  }
+  // 父の日（6月の第3日曜日）
+  if (month === 6 && weekday === 0 && day > 14 && day <= 21) {
+    return '父の日';
+  }
+  // クリスマスイブ
+  if (month === 12 && day === 24) {
+    return 'クリスマスイブ';
+  }
+  // クリスマス
+  if (month === 12 && day === 25) {
+    return 'クリスマス';
+  }
+  // 卒業シーズン
+  if (month === 3 && day >= 1 && day <= 25) {
+    return '卒業シーズン';
+  }
+  // 入学・新生活
+  if (month === 4 && day <= 10) {
+    return '入学・新生活';
+  }
+  // お盆
+  if (month === 8 && day >= 13 && day <= 16) {
+    return 'お盆';
+  }
+  
+  return '';
+}
+
+// 天気コード → 日本語（Tomorrow.io用）
+const WEATHER_CODE_TRANSLATIONS: Record<number, string> = {
+  1000: "晴れ",
+  1001: "曇り",
+  1100: "晴れ",
+  1101: "晴れ時々曇り",
+  1102: "曇り",
+  2000: "霧",
+  4000: "弱い雨",
+  4001: "雨",
+  4200: "弱い雨",
+  4201: "強い雨",
+  5000: "雪",
+  5100: "弱い雪",
+  5101: "強い雪",
+  6000: "凍雨",
+  6001: "凍雨",
+  8000: "雷雨",
+};
+
+// 天気データ取得関数
+// ルール：
+// 1. 一度取得した天気データは保存して、再度API取得は行わない
+// 2. 未来のデータは日付が変わった時点で再度読み込む（当日起点で未来1週間）
+// 3. 未来のデータAPIを読み込む際に一日前の天気の実績を読み込み再度保存する
+async function fetchWeatherData(latitude: number, longitude: number, date: Date): Promise<{ weather: string; temperature: number | null }> {
+  const dateStr = date.toISOString().split('T')[0];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const targetDate = new Date(date);
+  targetDate.setHours(0, 0, 0, 0);
+  
+  // まずデータベースから取得を試みる
+  try {
+    const cachedResult = await pool!.query(
+      `SELECT weather, temperature, updated_at FROM weather_data 
+       WHERE latitude = $1 AND longitude = $2 AND date = $3`,
+      [latitude, longitude, dateStr]
+    );
+    
+    if (cachedResult.rows.length > 0) {
+      const cached = cachedResult.rows[0];
+      const updatedAt = new Date(cached.updated_at);
+      const isToday = targetDate.getTime() === today.getTime();
+      const isFuture = targetDate > today;
+      
+      // 過去のデータ：一度取得したら再取得しない
+      if (targetDate < today) {
+        return {
+          weather: cached.weather || '',
+          temperature: cached.temperature !== null ? Math.round(cached.temperature) : null
+        };
+      }
+      
+      // 未来のデータ：今日更新されていればキャッシュを使用
+      if (isFuture && updatedAt >= today) {
+        return {
+          weather: cached.weather || '',
+          temperature: cached.temperature !== null ? Math.round(cached.temperature) : null
+        };
+      }
+      
+      // 今日のデータ：今日更新されていればキャッシュを使用
+      if (isToday && updatedAt >= today) {
+        return {
+          weather: cached.weather || '',
+          temperature: cached.temperature !== null ? Math.round(cached.temperature) : null
+        };
+      }
+    }
+  } catch (err: any) {
+    // weather_dataテーブルが存在しない場合はエラーを無視してAPIから取得
+    if (err?.code === '42P01') {
+      console.log('weather_dataテーブルが存在しません。APIから取得します。');
+    } else {
+      console.error('天気データキャッシュ取得エラー:', err);
+    }
+  }
+  
+  // データベースにない、または未来データで更新が必要な場合はAPIから取得
+  let weatherData: { weather: string; temperature: number | null };
+  
+  // 過去のデータはTomorrow.io APIを使用
+  if (targetDate < today) {
+    weatherData = await fetchPastWeatherData(latitude, longitude, date);
+  } else {
+    // 未来のデータはVisual Crossing APIを使用
+    weatherData = await fetchFutureWeatherData(latitude, longitude, date);
+    
+    // 未来データ取得時に、昨日の実績も取得して保存
+    if (targetDate > today) {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      // 昨日のデータがデータベースにない場合のみ取得
+      const yesterdayCheck = await pool!.query(
+        `SELECT id FROM weather_data WHERE latitude = $1 AND longitude = $2 AND date = $3`,
+        [latitude, longitude, yesterdayStr]
+      );
+      
+      if (yesterdayCheck.rows.length === 0) {
+        try {
+          const yesterdayData = await fetchPastWeatherData(latitude, longitude, yesterday);
+          if (yesterdayData.weather || yesterdayData.temperature !== null) {
+            await pool!.query(
+              `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, updated_at)
+               VALUES ($1, $2, $3, $4, $5, NOW())
+               ON CONFLICT (latitude, longitude, date) 
+               DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, updated_at = NOW()`,
+              [latitude, longitude, yesterdayStr, yesterdayData.weather || null, yesterdayData.temperature]
+            );
+            console.log(`昨日(${yesterdayStr})の天気実績データを保存しました`);
+          }
+        } catch (err) {
+          console.error('昨日の天気実績データ取得エラー:', err);
+        }
+      }
+    }
+  }
+  
+  // 取得したデータをデータベースに保存（テーブルが存在する場合のみ）
+  if (weatherData.weather || weatherData.temperature !== null) {
+    try {
+      await pool!.query(
+        `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, updated_at)
+         VALUES ($1, $2, $3, $4, $5, NOW())
+         ON CONFLICT (latitude, longitude, date) 
+         DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, updated_at = NOW()`,
+        [latitude, longitude, dateStr, weatherData.weather || null, weatherData.temperature]
+      );
+      console.log(`天気データを保存しました: ${dateStr}, ${weatherData.weather}, ${weatherData.temperature}°C`);
+    } catch (err: any) {
+      // weather_dataテーブルが存在しない場合はエラーを無視
+      if (err?.code === '42P01') {
+        console.log('weather_dataテーブルが存在しないため、データを保存できませんでした。');
+      } else {
+        console.error('天気データ保存エラー:', err);
+      }
+    }
+  }
+  
+  return weatherData;
+}
+
+// 未来1週間の天気データを一括更新する関数（日次バッチ用）
+async function updateFutureWeatherData(latitude: number, longitude: number): Promise<void> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // 未来1週間（今日を含む8日分）のデータを取得
+  for (let i = 0; i < 8; i++) {
+    const targetDate = new Date(today);
+    targetDate.setDate(targetDate.getDate() + i);
+    const dateStr = targetDate.toISOString().split('T')[0];
+    
+    try {
+      const weatherData = await fetchFutureWeatherData(latitude, longitude, targetDate);
+      if (weatherData.weather || weatherData.temperature !== null) {
+        await pool!.query(
+          `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, updated_at)
+           VALUES ($1, $2, $3, $4, $5, NOW())
+           ON CONFLICT (latitude, longitude, date) 
+           DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, updated_at = NOW()`,
+          [latitude, longitude, dateStr, weatherData.weather || null, weatherData.temperature]
+        );
+      }
+    } catch (err) {
+      console.error(`未来天気データ更新エラー (${dateStr}):`, err);
+    }
+  }
+  
+  // 昨日の実績データも取得
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  
+  const yesterdayCheck = await pool!.query(
+    `SELECT id FROM weather_data WHERE latitude = $1 AND longitude = $2 AND date = $3`,
+    [latitude, longitude, yesterdayStr]
+  );
+  
+  if (yesterdayCheck.rows.length === 0) {
+    try {
+      const yesterdayData = await fetchPastWeatherData(latitude, longitude, yesterday);
+      if (yesterdayData.weather || yesterdayData.temperature !== null) {
+        await pool!.query(
+          `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, updated_at)
+           VALUES ($1, $2, $3, $4, $5, NOW())
+           ON CONFLICT (latitude, longitude, date) 
+           DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, updated_at = NOW()`,
+          [latitude, longitude, yesterdayStr, yesterdayData.weather || null, yesterdayData.temperature]
+        );
+        console.log(`昨日(${yesterdayStr})の天気実績データを保存しました`);
+      }
+    } catch (err) {
+      console.error('昨日の天気実績データ取得エラー:', err);
+    }
+  }
+}
+
+// 過去の天気データ取得（Tomorrow.io API）
+async function fetchPastWeatherData(latitude: number, longitude: number, date: Date): Promise<{ weather: string; temperature: number | null }> {
+  const API_KEY = process.env.TOMORROW_IO_API_KEY || 'LaRsCCbEFOwKGaqHNtprA8Ejyw3ulHCl';
+  const url = 'https://api.tomorrow.io/v4/timelines';
+  
+  const startTime = new Date(date);
+  startTime.setHours(0, 0, 0, 0);
+  const endTime = new Date(date);
+  endTime.setHours(23, 59, 59, 999);
+  
+  const payload = {
+    location: `${latitude},${longitude}`,
+    fields: ['temperatureAvg', 'humidityAvg', 'rainAccumulationSum', 'weatherCodeMax'],
+    units: 'metric',
+    timesteps: ['1d'],
+    startTime: startTime.toISOString(),
+    endTime: endTime.toISOString()
+  };
+
+  try {
+    return new Promise((resolve) => {
+      const postData = JSON.stringify(payload);
+      const options = {
+        hostname: 'api.tomorrow.io',
+        path: '/v4/timelines',
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'content-type': 'application/json',
+          'apikey': API_KEY,
+          'Content-Length': Buffer.byteLength(postData)
+        }
+      };
+
+      const req = https.request(options, (res) => {
+        let data = '';
+        
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        res.on('end', () => {
+          try {
+            if (res.statusCode !== 200) {
+              console.error(`Tomorrow.io API Error: ${res.statusCode}`);
+              resolve({ weather: '', temperature: null });
+              return;
+            }
+            
+            const weatherData = JSON.parse(data);
+            const intervals = weatherData?.data?.timelines?.[0]?.intervals;
+            
+            if (intervals && intervals.length > 0) {
+              const item = intervals[0];
+              const values = item.values;
+              const temp = values.temperatureAvg;
+              const weatherCode = values.weatherCodeMax;
+              const weather = WEATHER_CODE_TRANSLATIONS[weatherCode] || '不明';
+              
+              resolve({
+                weather,
+                temperature: temp !== null && temp !== undefined ? Math.round(temp) : null
+              });
+            } else {
+              resolve({ weather: '', temperature: null });
+            }
+          } catch (err) {
+            console.error('過去天気データパースエラー:', err);
+            resolve({ weather: '', temperature: null });
+          }
+        });
+      });
+
+      req.on('error', (err) => {
+        console.error('過去天気データ取得エラー:', err);
+        resolve({ weather: '', temperature: null });
+      });
+
+      req.write(postData);
+      req.end();
+    });
+  } catch (err) {
+    console.error('過去天気データ取得エラー:', err);
+    return { weather: '', temperature: null };
+  }
+}
+
+// 未来の天気データ取得（Visual Crossing API）
+async function fetchFutureWeatherData(latitude: number, longitude: number, date: Date): Promise<{ weather: string; temperature: number | null }> {
+  const API_KEY = process.env.VISUAL_CROSSING_API_KEY || '2BE5S9Y63SA2EXGEALZG7S7QM';
+  const dateStr = date.toISOString().split('T')[0];
+  const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${latitude},${longitude}/${dateStr}?unitGroup=metric&key=${API_KEY}`;
+
+  const weatherTranslation: Record<string, string> = {
+    "Clear": "晴れ",
+    "Partially cloudy": "晴れ時々曇り",
+    "Rain": "雨",
+    "Snow": "雪",
+    "Overcast": "曇り",
+    "Fog": "霧",
+    "Thunderstorm": "雷雨",
+    "Showers": "にわか雨",
+  };
+
+  try {
+    return new Promise((resolve) => {
+      https.get(url, (res) => {
+        let data = '';
+        
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        res.on('end', () => {
+          try {
+            const weatherData = JSON.parse(data);
+            if (weatherData.days && weatherData.days.length > 0) {
+              const day = weatherData.days[0];
+              const condition = day.conditions || '';
+              let weather = condition;
+              
+              // 天気を日本語に翻訳
+              for (const [key, value] of Object.entries(weatherTranslation)) {
+                if (condition.toLowerCase().includes(key.toLowerCase())) {
+                  weather = value;
+                  break;
+                }
+              }
+              
+              resolve({
+                weather,
+                temperature: day.temp || null
+              });
+            } else {
+              resolve({ weather: '', temperature: null });
+            }
+          } catch (err) {
+            console.error('未来天気データパースエラー:', err);
+            resolve({ weather: '', temperature: null });
+          }
+        });
+      }).on('error', (err) => {
+        console.error('未来天気データ取得エラー:', err);
+        resolve({ weather: '', temperature: null });
+      });
+    });
+  } catch (err) {
+    console.error('未来天気データ取得エラー:', err);
+    return { weather: '', temperature: null };
+  }
+}
 
 // 特徴量取得API（売上予測用）
 app.get('/api/sales/features', requireDatabase, authenticateToken, async (req: Request, res: Response) => {

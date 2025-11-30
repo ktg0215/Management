@@ -1,5 +1,5 @@
 import React, { useMemo, memo } from 'react';
-import { Edit2 } from 'lucide-react';
+import { Edit2, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudDrizzle } from 'lucide-react';
 import { formatNumber, isSaturday, isSunday } from '../../utils/salesUtils';
 
 interface SimpleDailySalesData {
@@ -74,6 +74,10 @@ interface SimpleDailySalesData {
   revenue?: number;
   cost?: number;
   profit?: number;
+  // 天気・イベント関連
+  weather?: string;
+  temperature?: number | null;
+  event?: string;
 }
 
 interface SimpleSalesTableProps {
@@ -167,6 +171,34 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
   const formatDecimal = (value: any) => {
     if (value === undefined || value === null || value === '') return '-';
     return typeof value === 'number' ? value.toFixed(1) : String(value);
+  };
+
+  // 天気アイコンを取得
+  const getWeatherIcon = (weather: string) => {
+    if (!weather) return null;
+    
+    const weatherLower = weather.toLowerCase();
+    const iconClass = "w-4 h-4 inline-block";
+    
+    if (weatherLower.includes('晴れ')) {
+      if (weatherLower.includes('時々曇り') || weatherLower.includes('のち')) {
+        return <Cloud className={iconClass} style={{ color: '#60a5fa' }} />;
+      }
+      return <Sun className={iconClass} style={{ color: '#fbbf24' }} />;
+    } else if (weatherLower.includes('雨')) {
+      if (weatherLower.includes('にわか')) {
+        return <CloudDrizzle className={iconClass} style={{ color: '#3b82f6' }} />;
+      }
+      return <CloudRain className={iconClass} style={{ color: '#2563eb' }} />;
+    } else if (weatherLower.includes('雪')) {
+      return <CloudSnow className={iconClass} style={{ color: '#93c5fd' }} />;
+    } else if (weatherLower.includes('雷')) {
+      return <CloudLightning className={iconClass} style={{ color: '#7c3aed' }} />;
+    } else if (weatherLower.includes('曇り')) {
+      return <Cloud className={iconClass} style={{ color: '#9ca3af' }} />;
+    }
+    
+    return <Cloud className={iconClass} style={{ color: '#9ca3af' }} />;
   };
 
   // Memoize expensive cell className calculations
@@ -298,7 +330,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
           <thead className="bg-gray-50">
             {/* グループヘッダー */}
             <tr className="border-b border-gray-300">
-              <th colSpan={2} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-gray-100"></th>
+              <th colSpan={4} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-gray-100"></th>
               <th colSpan={6} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-yellow-100">目標・前年比</th>
               <th colSpan={6} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-green-100">店舗売上</th>
               <th colSpan={4} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-gray-100">客数・組数</th>
@@ -315,6 +347,8 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
             <tr>
               <th className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 whitespace-nowrap">日</th>
               <th className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 whitespace-nowrap">曜</th>
+              <th className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 whitespace-nowrap">天気</th>
+              <th className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 whitespace-nowrap">気温</th>
               {/* 目標・前年比 */}
               <th className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-200 whitespace-nowrap bg-yellow-50">売上目標</th>
               <th className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-200 whitespace-nowrap bg-yellow-50">目標累計</th>
@@ -378,6 +412,8 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
               {/* アンケート */}
               <th className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-200 whitespace-nowrap bg-teal-50">枚数</th>
               <th className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 whitespace-nowrap bg-teal-50">取得率</th>
+              {/* イベント */}
+              <th className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 whitespace-nowrap bg-yellow-50">イベント</th>
               {/* 操作 */}
               <th className="px-1 py-1 text-center font-medium text-gray-700 whitespace-nowrap">操作</th>
             </tr>
@@ -387,6 +423,16 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
               <tr key={date} className="hover:bg-gray-50">
                 <td className={dateCellClass}>{day}</td>
                 <td className={dayOfWeekCellClass}>{data?.dayOfWeek || ''}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>
+                  <div className="flex items-center justify-center">
+                    {getWeatherIcon(data?.weather || '')}
+                  </div>
+                </td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>
+                  {data?.temperature !== null && data?.temperature !== undefined 
+                    ? `${Math.round(data.temperature)}°C` 
+                    : '-'}
+                </td>
                 {/* 目標・前年比 */}
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.salesTarget)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.targetCumulative)}</td>
@@ -450,6 +496,10 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
                 {/* アンケート */}
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.surveyCount)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.surveyRate)}</td>
+                {/* イベント */}
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>
+                  {data?.event || ''}
+                </td>
                 {/* 操作 */}
                 <td className={actionCellClass}>
                   <button
@@ -533,6 +583,8 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
                 {/* アンケート */}
                 <td className="px-1 py-2 text-right border-r border-gray-200 text-xs text-gray-900" style={cellTextStyle}>{formatValue(monthlySummary.surveyCount)}</td>
                 <td className="px-1 py-2 text-right border-r border-gray-300 text-xs text-gray-900" style={cellTextStyle}>{formatPercent(monthlySummary.surveyRate)}</td>
+                {/* イベント */}
+                <td className="px-1 py-2 text-center border-r border-gray-300 text-xs text-gray-900 bg-yellow-50"></td>
                 {/* 操作 */}
                 <td className="px-1 py-2 text-center text-xs text-gray-900" style={cellTextStyle}>-</td>
               </tr>
