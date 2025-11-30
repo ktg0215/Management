@@ -2199,7 +2199,11 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
             console.log(`[天気データ取得] 店舗ID ${storeId} に緯度経度が設定されていません`);
           }
           
-          enrichedDailyData[dateStr] = {
+          // 日付キーを日付のみ（1-31）に変換
+          const dateObj = new Date(dateStr);
+          const dayOfMonth = dateObj.getDate();
+          
+          enrichedDailyData[dayOfMonth] = {
             ...dayData,
             weather,
             temperature,
