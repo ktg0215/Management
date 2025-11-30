@@ -148,6 +148,15 @@ const SalesManagementPage = () => {
     }
 
     try {
+      // フィールドキーとラベルのマッピングを作成
+      const fieldLabels: Record<string, string> = {};
+      const availableFields = fieldConfigs.length > 0 ? fieldConfigs : getDefaultFieldConfigs();
+      availableFields.forEach(field => {
+        if (options.selectedFields.includes(field.key)) {
+          fieldLabels[field.key] = field.label;
+        }
+      });
+
       // APIからCSVを取得
       const blob = await salesApi.exportSalesCsv(
         selectedStoreId,
@@ -155,7 +164,8 @@ const SalesManagementPage = () => {
         options.startMonth,
         options.endYear,
         options.endMonth,
-        options.selectedFields
+        options.selectedFields,
+        fieldLabels
       );
 
       // ダウンロード用URLを作成
@@ -377,18 +387,18 @@ const SalesManagementPage = () => {
                 </button>
               </div>
             </div>
-          ) : isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">データを読み込み中...</p>
-              </div>
-            </div>
           ) : selectedStoreId || hasPermission('admin') ? (
             <>
               {activeTab === 'data' ? (
                 <>
-                  {monthlyData && monthlyData.dailyData && (
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">データを読み込み中...</p>
+                      </div>
+                    </div>
+                  ) : monthlyData && monthlyData.dailyData ? (
                     <SimpleSalesTable
                       dailyData={transformedDailyData}
                       hasData={hasData}
@@ -396,11 +406,10 @@ const SalesManagementPage = () => {
                       currentYear={currentYear}
                       currentMonth={currentMonth}
                     />
-                  )}
-                  {!monthlyData && !isLoading && (
+                  ) : (
                     <div className="flex items-center justify-center h-64">
                       <div className="text-center text-gray-600">
-                        店舗を選択してください
+                        {selectedStoreId ? 'データがありません' : '店舗を選択してください'}
                       </div>
                     </div>
                   )}

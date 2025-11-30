@@ -324,6 +324,25 @@ export default function MonthlySalesPage() {
                   return;
                 }
 
+                // フィールドキーとラベルのマッピングを作成
+                const fieldLabels: Record<string, string> = {};
+                const availableFields = masterFields.length > 0 ? masterFields : (storeData.length > 0 && storeData[0].monthlyData.length > 0 ? Object.keys(storeData[0].monthlyData[0].data).map((key, index) => ({
+                  id: `field_${index}`,
+                  name: key,
+                  category: 'other' as const,
+                  type: 'text' as const,
+                  isRequired: false,
+                  isCalculated: false,
+                  order: index + 1
+                })) : []);
+                availableFields.forEach(field => {
+                  if (options.selectedFields.includes(field.name)) {
+                    // Field型では name がキー、name がラベルとしても使用される可能性がある
+                    // もし label プロパティがあればそれを使用、なければ name を使用
+                    fieldLabels[field.name] = (field as any).label || field.name;
+                  }
+                });
+
                 // APIからCSVを取得
                 const blob = await salesApi.exportMonthlySalesCsv(
                   selectedStoreId,
@@ -331,7 +350,8 @@ export default function MonthlySalesPage() {
                   options.startMonth,
                   options.endYear,
                   options.endMonth,
-                  options.selectedFields
+                  options.selectedFields,
+                  fieldLabels
                 );
 
                 // ダウンロード用URLを作成

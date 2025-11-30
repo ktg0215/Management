@@ -2127,7 +2127,7 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
 
 // 売上データCSV出力API
 app.get('/api/sales/export-csv', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
-  const { storeId, startYear, startMonth, endYear, endMonth, fields } = req.query;
+  const { storeId, startYear, startMonth, endYear, endMonth, fields, fieldLabels } = req.query;
 
   if (!storeId || !startYear || !startMonth || !endYear || !endMonth) {
     res.status(400).json({ success: false, error: 'storeId, startYear, startMonth, endYear, endMonthは必須です' });
@@ -2139,6 +2139,16 @@ app.get('/api/sales/export-csv', requireDatabase, authenticateToken, async (req:
     if (fieldKeys.length === 0) {
       res.status(400).json({ success: false, error: 'fieldsは必須です' });
       return;
+    }
+
+    // フィールドラベルのマッピングを取得
+    let labelsMap: Record<string, string> = {};
+    if (fieldLabels) {
+      try {
+        labelsMap = JSON.parse(fieldLabels as string);
+      } catch (e) {
+        console.warn('フィールドラベルのパースに失敗しました。フィールドキーをそのまま使用します。', e);
+      }
     }
 
     // 期間内のすべての月を計算
@@ -2160,8 +2170,8 @@ app.get('/api/sales/export-csv', requireDatabase, authenticateToken, async (req:
       }
     }
 
-    // すべての月のデータを取得
-    const allData: Array<{ date: string; [key: string]: any }> = [];
+    // すべての月のデータを取得（月ごとにグループ化）
+    const monthlyDataGroups: Array<{ year: number; month: number; data: Array<{ date: string; [key: string]: any }> }> = [];
     for (const { year, month } of months) {
       const result = await pool!.query(
         `SELECT daily_data FROM sales_data
@@ -2169,6 +2179,7 @@ app.get('/api/sales/export-csv', requireDatabase, authenticateToken, async (req:
         [storeId, year, month]
       );
 
+      const monthData: Array<{ date: string; [key: string]: any }> = [];
       if (result.rows.length > 0 && result.rows[0].daily_data) {
         const dailyData = result.rows[0].daily_data;
         for (const date in dailyData) {
@@ -2181,27 +2192,39 @@ app.get('/api/sales/export-csv', requireDatabase, authenticateToken, async (req:
             row[fieldKey] = value !== null && value !== undefined ? value : '';
           });
           
-          allData.push(row);
+          monthData.push(row);
         }
+      }
+
+      if (monthData.length > 0) {
+        monthlyDataGroups.push({ year, month, data: monthData });
       }
     }
 
-    if (allData.length === 0) {
+    if (monthlyDataGroups.length === 0) {
       res.status(404).json({ success: false, error: '出力するデータがありません' });
       return;
     }
 
-    // CSVヘッダー（フィールドキーをそのまま使用、フロントエンドでラベルに変換）
-    const headers = ['日付', ...fieldKeys];
+    // CSVヘッダー（フィールドラベルを使用、なければフィールドキー）
+    const headers = ['日付', ...fieldKeys.map(key => labelsMap[key] || key)];
     
-    // CSV行を生成
+    // CSV行を生成（月ごとにグループ化し、月の間に空行を挿入）
     const csvRows: string[][] = [headers];
-    allData.forEach(row => {
-      const values = [
-        row.date,
-        ...fieldKeys.map(key => row[key] || '')
-      ];
-      csvRows.push(values);
+    monthlyDataGroups.forEach((monthGroup, monthIndex) => {
+      // 月のデータを追加
+      monthGroup.data.forEach(row => {
+        const values = [
+          row.date,
+          ...fieldKeys.map(key => row[key] || '')
+        ];
+        csvRows.push(values);
+      });
+      
+      // 最後の月でない場合、空行を追加
+      if (monthIndex < monthlyDataGroups.length - 1) {
+        csvRows.push([]);
+      }
     });
 
     // CSVを生成
@@ -2570,7 +2593,7 @@ app.post('/api/monthly-sales', requireDatabase, authenticateToken, async (req: R
 
 // 月次売上データCSV出力API
 app.get('/api/monthly-sales/export-csv', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
-  const { storeId, startYear, startMonth, endYear, endMonth, fields } = req.query;
+  const { storeId, startYear, startMonth, endYear, endMonth, fields, fieldLabels } = req.query;
 
   if (!storeId || !startYear || !startMonth || !endYear || !endMonth) {
     res.status(400).json({ success: false, error: 'storeId, startYear, startMonth, endYear, endMonthは必須です' });
@@ -2582,6 +2605,16 @@ app.get('/api/monthly-sales/export-csv', requireDatabase, authenticateToken, asy
     if (fieldNames.length === 0) {
       res.status(400).json({ success: false, error: 'fieldsは必須です' });
       return;
+    }
+
+    // フィールドラベルのマッピングを取得
+    let labelsMap: Record<string, string> = {};
+    if (fieldLabels) {
+      try {
+        labelsMap = JSON.parse(fieldLabels as string);
+      } catch (e) {
+        console.warn('フィールドラベルのパースに失敗しました。フィールドキーをそのまま使用します。', e);
+      }
     }
 
     // 期間内のすべての月を計算
@@ -2603,8 +2636,8 @@ app.get('/api/monthly-sales/export-csv', requireDatabase, authenticateToken, asy
       }
     }
 
-    // すべての月のデータを取得
-    const allData: Array<{ storeName: string; year: number; month: number; [key: string]: any }> = [];
+    // すべての月のデータを取得（月ごとにグループ化）
+    const monthlyDataGroups: Array<{ year: number; month: number; data: Array<{ storeName: string; year: number; month: number; [key: string]: any }> }> = [];
     for (const { year, month } of months) {
       const result = await pool!.query(
         `SELECT ms.*, s.name as store_name
@@ -2614,6 +2647,7 @@ app.get('/api/monthly-sales/export-csv', requireDatabase, authenticateToken, asy
         [storeId, year, month]
       );
 
+      const monthData: Array<{ storeName: string; year: number; month: number; [key: string]: any }> = [];
       if (result.rows.length > 0) {
         const row = result.rows[0];
         const monthlyRow: { storeName: string; year: number; month: number; [key: string]: any } = {
@@ -2635,28 +2669,40 @@ app.get('/api/monthly-sales/export-csv', requireDatabase, authenticateToken, asy
           });
         }
 
-        allData.push(monthlyRow);
+        monthData.push(monthlyRow);
+      }
+
+      if (monthData.length > 0) {
+        monthlyDataGroups.push({ year, month, data: monthData });
       }
     }
 
-    if (allData.length === 0) {
+    if (monthlyDataGroups.length === 0) {
       res.status(404).json({ success: false, error: '出力するデータがありません' });
       return;
     }
 
-    // CSVヘッダー
-    const headers = ['店舗名', '年', '月', ...fieldNames];
+    // CSVヘッダー（フィールドラベルを使用、なければフィールドキー）
+    const headers = ['店舗名', '年', '月', ...fieldNames.map(key => labelsMap[key] || key)];
     
-    // CSV行を生成
+    // CSV行を生成（月ごとにグループ化し、月の間に空行を挿入）
     const csvRows: string[][] = [headers];
-    allData.forEach(row => {
-      const values = [
-        row.storeName || '',
-        String(row.year),
-        String(row.month),
-        ...fieldNames.map(fieldName => row[fieldName] || '')
-      ];
-      csvRows.push(values);
+    monthlyDataGroups.forEach((monthGroup, monthIndex) => {
+      // 月のデータを追加
+      monthGroup.data.forEach(row => {
+        const values = [
+          row.storeName || '',
+          String(row.year),
+          String(row.month),
+          ...fieldNames.map(fieldName => row[fieldName] || '')
+        ];
+        csvRows.push(values);
+      });
+      
+      // 最後の月でない場合、空行を追加
+      if (monthIndex < monthlyDataGroups.length - 1) {
+        csvRows.push([]);
+      }
     });
 
     // CSVを生成

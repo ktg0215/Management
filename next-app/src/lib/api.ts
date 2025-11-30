@@ -683,7 +683,8 @@ export const salesApi = {
     startMonth: number,
     endYear: number,
     endMonth: number,
-    fields: string[]
+    fields: string[],
+    fieldLabels?: Record<string, string>
   ): Promise<Blob> => {
     const query = new URLSearchParams({
       storeId,
@@ -691,7 +692,8 @@ export const salesApi = {
       startMonth: String(startMonth),
       endYear: String(endYear),
       endMonth: String(endMonth),
-      fields: fields.join(',')
+      fields: fields.join(','),
+      ...(fieldLabels ? { fieldLabels: JSON.stringify(fieldLabels) } : {})
     }).toString();
     const url = `${API_BASE_URL}/sales/export-csv?${query}`;
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
@@ -714,7 +716,8 @@ export const salesApi = {
     startMonth: number,
     endYear: number,
     endMonth: number,
-    fields: string[]
+    fields: string[],
+    fieldLabels?: Record<string, string>
   ): Promise<Blob> => {
     const query = new URLSearchParams({
       storeId,
@@ -722,7 +725,8 @@ export const salesApi = {
       startMonth: String(startMonth),
       endYear: String(endYear),
       endMonth: String(endMonth),
-      fields: fields.join(',')
+      fields: fields.join(','),
+      ...(fieldLabels ? { fieldLabels: JSON.stringify(fieldLabels) } : {})
     }).toString();
     const url = `${API_BASE_URL}/monthly-sales/export-csv?${query}`;
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
