@@ -330,7 +330,8 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
           <thead className="bg-gray-50">
             {/* グループヘッダー */}
             <tr className="border-b border-gray-300">
-              <th colSpan={4} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-gray-100"></th>
+              <th colSpan={2} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-gray-100"></th>
+              <th colSpan={2} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-blue-100">天気情報</th>
               <th colSpan={6} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-yellow-100">目標・前年比</th>
               <th colSpan={6} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-green-100">店舗売上</th>
               <th colSpan={4} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-gray-100">客数・組数</th>
@@ -341,6 +342,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
               <th colSpan={6} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-indigo-100">生産性</th>
               <th colSpan={4} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-pink-100">OHB予約</th>
               <th colSpan={2} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-teal-100">アンケート</th>
+              <th colSpan={1} className="px-1 py-1 text-center font-medium text-gray-700 border-r border-gray-300 bg-yellow-100">イベント</th>
               <th className="px-1 py-1 text-center font-medium text-gray-700 bg-gray-100"></th>
             </tr>
             {/* 項目ヘッダー */}
