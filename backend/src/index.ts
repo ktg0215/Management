@@ -2800,7 +2800,14 @@ async function fetchPastWeatherData(latitude: number, longitude: number, date: D
           console.log(`[fetchPastWeatherData] レスポンスデータ受信完了: 長さ=${data.length}`);
           try {
             if (res.statusCode !== 200) {
-              console.error(`[fetchPastWeatherData] HTTPエラー: ${res.statusCode}, レスポンス: ${data.substring(0, 500)}`);
+              console.error(`[fetchPastWeatherData] HTTPエラー: ${res.statusCode}`);
+              console.error(`[fetchPastWeatherData] エラーレスポンス全文: ${data}`);
+              try {
+                const errorData = JSON.parse(data);
+                console.error(`[fetchPastWeatherData] エラーデータ:`, JSON.stringify(errorData, null, 2));
+              } catch (parseErr) {
+                console.error(`[fetchPastWeatherData] エラーレスポンスのパースに失敗:`, parseErr);
+              }
               resolve({ weather: '', temperature: null });
               return;
             }
