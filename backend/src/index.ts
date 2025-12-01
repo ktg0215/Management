@@ -474,14 +474,25 @@ app.get('/api/stores', requireDatabase, async (req: Request, res: Response) => {
 // 住所から緯度経度を取得する関数（OpenStreetMap Nominatim APIを使用）
 async function geocodeAddress(address: string): Promise<{ latitude: number; longitude: number } | null> {
   return new Promise((resolve, reject) => {
-    const encodedAddress = encodeURIComponent(address);
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodedAddress}&format=json&limit=1&countrycodes=jp`;
+    // 住所の形式を調整（「富山県富山市二口町5-10-3」→「富山県富山市二口町」など）
+    let searchAddress = address;
+    // 番地を削除して検索を試みる
+    const addressWithoutNumber = address.replace(/\d+[-\d]*/g, '').trim();
+    if (addressWithoutNumber && addressWithoutNumber !== address) {
+      searchAddress = addressWithoutNumber;
+      console.log(`[ジオコーディング] 番地を削除して検索: ${address} → ${searchAddress}`);
+    }
     
-    console.log(`[ジオコーディング] 住所から緯度経度を取得中: ${address}`);
+    const encodedAddress = encodeURIComponent(searchAddress);
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodedAddress}&format=json&limit=1&countrycodes=jp&addressdetails=1`;
+    
+    console.log(`[ジオコーディング] 住所から緯度経度を取得中: ${address} (検索: ${searchAddress})`);
+    console.log(`[ジオコーディング] URL: ${url}`);
     
     https.get(url, {
       headers: {
-        'User-Agent': 'ManagementSystem/1.0'
+        'User-Agent': 'ManagementSystem/1.0',
+        'Accept-Language': 'ja'
       }
     }, (res) => {
       let data = '';
