@@ -421,7 +421,18 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 text-gray-900">
-            {memoizedCellData.map(({ date, data, day, index, dateCellClass, dayOfWeekCellClass, actionCellClass }) => (
+            {memoizedCellData.map(({ date, data, day, index, dateCellClass, dayOfWeekCellClass, actionCellClass }) => {
+              // Debug logging for weather data
+              if (index < 3) {
+                console.log(`[SimpleSalesTable] Row ${index} (${date}):`, {
+                  weather: data?.weather,
+                  temperature: data?.temperature,
+                  event: data?.event,
+                  hasWeather: !!data?.weather,
+                  hasTemperature: data?.temperature !== null && data?.temperature !== undefined
+                });
+              }
+              return (
               <tr key={date} className="hover:bg-gray-50">
                 <td className={dateCellClass}>{day}</td>
                 <td className={dayOfWeekCellClass}>{data?.dayOfWeek || ''}</td>
@@ -513,7 +524,8 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
           {/* 月間累計行 */}
           {monthlySummary && (
