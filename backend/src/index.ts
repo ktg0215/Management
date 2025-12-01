@@ -521,7 +521,8 @@ async function geocodeAddress(address: string): Promise<{ latitude: number; long
         try {
           if (res.statusCode !== 200) {
             console.error(`[ジオコーディング] HTTPエラー: ${res.statusCode}, レスポンス: ${data.substring(0, 200)}`);
-            resolve(null);
+            // 次のパターンを試す
+            tryGeocode(patternIndex + 1);
             return;
           }
           
@@ -532,25 +533,33 @@ async function geocodeAddress(address: string): Promise<{ latitude: number; long
             const lon = parseFloat(results[0].lon);
             if (isNaN(lat) || isNaN(lon)) {
               console.error(`[ジオコーディング] 無効な緯度経度: lat=${results[0].lat}, lon=${results[0].lon}`);
-              resolve(null);
+              // 次のパターンを試す
+              tryGeocode(patternIndex + 1);
               return;
             }
-            console.log(`[ジオコーディング] 成功: 緯度=${lat}, 経度=${lon}`);
+            console.log(`[ジオコーディング] 成功: 緯度=${lat}, 経度=${lon} (パターン: ${pattern})`);
             resolve({ latitude: lat, longitude: lon });
           } else {
-            console.warn(`[ジオコーディング] 結果が見つかりませんでした: ${address}, レスポンス: ${data.substring(0, 200)}`);
-            resolve(null);
+            console.warn(`[ジオコーディング] 結果が見つかりませんでした (パターン${patternIndex + 1}): ${pattern}`);
+            // 次のパターンを試す
+            tryGeocode(patternIndex + 1);
           }
         } catch (err) {
           console.error(`[ジオコーディング] パースエラー:`, err);
           console.error(`[ジオコーディング] レスポンスデータ: ${data.substring(0, 500)}`);
-          reject(err);
+          // 次のパターンを試す
+          tryGeocode(patternIndex + 1);
         }
       });
     }).on('error', (err) => {
       console.error(`[ジオコーディング] ネットワークエラー:`, err);
-      reject(err);
+      // 次のパターンを試す
+      tryGeocode(patternIndex + 1);
     });
+    };
+    
+    // 最初のパターンから試す
+    tryGeocode(0);
   });
 }
 
