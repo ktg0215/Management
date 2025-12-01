@@ -2288,12 +2288,17 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
               date = new Date(dateStr);
               if (isNaN(date.getTime())) {
                 console.error(`[天気データ取得] 無効な日付形式: ${dateStr}`);
-                enrichedDailyData[dateStr] = {
-                  ...dayData,
-                  weather: '',
-                  temperature: null,
-                  event: ''
-                };
+                // 日付文字列から日付部分を抽出してdayOfMonthを取得
+                const dayMatch = dateStr.match(/-(\d{2})$/);
+                if (dayMatch) {
+                  dayOfMonth = parseInt(dayMatch[1]);
+                  enrichedDailyData[dayOfMonth] = {
+                    ...dayData,
+                    weather: '',
+                    temperature: null,
+                    event: ''
+                  };
+                }
                 continue;
               }
               dayOfMonth = date.getDate();
@@ -2302,7 +2307,7 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
               dayOfMonth = parseInt(dateStr);
               if (isNaN(dayOfMonth) || dayOfMonth < 1 || dayOfMonth > 31) {
                 console.error(`[天気データ取得] 無効な日付: ${dateStr}`);
-                enrichedDailyData[dateStr] = {
+                enrichedDailyData[dayOfMonth] = {
                   ...dayData,
                   weather: '',
                   temperature: null,
@@ -2315,7 +2320,7 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
               const month = parseInt(String(row.month));
               if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
                 console.error(`[天気データ取得] 無効な年月: year=${row.year}, month=${row.month}`);
-                enrichedDailyData[dateStr] = {
+                enrichedDailyData[dayOfMonth] = {
                   ...dayData,
                   weather: '',
                   temperature: null,
@@ -2326,7 +2331,7 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
               date = new Date(year, month - 1, dayOfMonth);
               if (isNaN(date.getTime())) {
                 console.error(`[天気データ取得] 無効な日付オブジェクト: ${year}-${month}-${dayOfMonth}`);
-                enrichedDailyData[dateStr] = {
+                enrichedDailyData[dayOfMonth] = {
                   ...dayData,
                   weather: '',
                   temperature: null,
@@ -2337,12 +2342,17 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
             }
           } catch (dateErr) {
             console.error(`[天気データ取得] 日付解析エラー (${dateStr}):`, dateErr);
-            enrichedDailyData[dateStr] = {
-              ...dayData,
-              weather: '',
-              temperature: null,
-              event: ''
-            };
+            // エラー時もdayOfMonthを取得しようとする
+            const dayMatch = dateStr.match(/-(\d{2})$/) || [null, dateStr];
+            const fallbackDay = parseInt(dayMatch[1] || dateStr);
+            if (!isNaN(fallbackDay) && fallbackDay >= 1 && fallbackDay <= 31) {
+              enrichedDailyData[fallbackDay] = {
+                ...dayData,
+                weather: '',
+                temperature: null,
+                event: ''
+              };
+            }
             continue;
           }
           
