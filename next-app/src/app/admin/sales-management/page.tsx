@@ -275,6 +275,10 @@ const SalesManagementPage = () => {
         // アンケート
         surveyCount: data.surveyCount,
         surveyRate: data.surveyRate,
+        // 天気・イベント関連
+        weather: data.weather,
+        temperature: data.temperature,
+        event: data.event,
         // 旧フィールド（互換性のため）
         revenue: data.netSales,
         cost: data.laborCost,
