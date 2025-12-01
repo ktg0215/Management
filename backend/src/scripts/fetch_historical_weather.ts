@@ -5,10 +5,10 @@ import dotenv from 'dotenv';
 import { Pool } from 'pg';
 import https from 'https';
 
-dotenv.config({ path: '../../.env' });
+dotenv.config();
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL?.trim(),
+  connectionString: process.env.DATABASE_URL?.trim() || '',
 });
 
 const API_KEY = process.env.VISUAL_CROSSING_API_KEY || '2BE5S9Y63SA2EXGEALZG7S7QM';
