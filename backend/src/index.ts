@@ -493,23 +493,30 @@ async function geocodeAddress(address: string): Promise<{ latitude: number; long
       res.on('end', () => {
         try {
           if (res.statusCode !== 200) {
-            console.error(`[ジオコーディング] HTTPエラー: ${res.statusCode}`);
+            console.error(`[ジオコーディング] HTTPエラー: ${res.statusCode}, レスポンス: ${data.substring(0, 200)}`);
             resolve(null);
             return;
           }
           
           const results = JSON.parse(data);
+          console.log(`[ジオコーディング] APIレスポンス: ${JSON.stringify(results).substring(0, 500)}`);
           if (results && results.length > 0) {
             const lat = parseFloat(results[0].lat);
             const lon = parseFloat(results[0].lon);
+            if (isNaN(lat) || isNaN(lon)) {
+              console.error(`[ジオコーディング] 無効な緯度経度: lat=${results[0].lat}, lon=${results[0].lon}`);
+              resolve(null);
+              return;
+            }
             console.log(`[ジオコーディング] 成功: 緯度=${lat}, 経度=${lon}`);
             resolve({ latitude: lat, longitude: lon });
           } else {
-            console.warn(`[ジオコーディング] 結果が見つかりませんでした: ${address}`);
+            console.warn(`[ジオコーディング] 結果が見つかりませんでした: ${address}, レスポンス: ${data.substring(0, 200)}`);
             resolve(null);
           }
         } catch (err) {
           console.error(`[ジオコーディング] パースエラー:`, err);
+          console.error(`[ジオコーディング] レスポンスデータ: ${data.substring(0, 500)}`);
           reject(err);
         }
       });
