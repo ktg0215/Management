@@ -2625,76 +2625,10 @@ async function fetchWeatherData(latitude: number, longitude: number, date: Date)
     }
   }
   
-  // データベースにない、または未来データで更新が必要な場合はAPIから取得
-  let weatherData: { weather: string; temperature: number | null };
-  
-  console.log(`[fetchWeatherData] 日付: ${dateStr}, 過去/未来判定: ${targetDate < today ? '過去' : '未来'}`);
-  
-  // 過去のデータはTomorrow.io APIを使用
-  if (targetDate < today) {
-    console.log(`[fetchWeatherData] 過去データを取得します: ${dateStr}`);
-    weatherData = await fetchPastWeatherData(latitude, longitude, date);
-    console.log(`[fetchWeatherData] 過去データ取得結果: 天気=${weatherData.weather}, 気温=${weatherData.temperature}`);
-  } else {
-    // 未来のデータはVisual Crossing APIを使用
-    console.log(`[fetchWeatherData] 未来データを取得します: ${dateStr}`);
-    weatherData = await fetchFutureWeatherData(latitude, longitude, date);
-    console.log(`[fetchWeatherData] 未来データ取得結果: 天気=${weatherData.weather}, 気温=${weatherData.temperature}`);
-    
-    // 未来データ取得時に、昨日の実績も取得して保存
-    if (targetDate > today) {
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
-      
-      // 昨日のデータがデータベースにない場合のみ取得
-      const yesterdayCheck = await pool!.query(
-        `SELECT id FROM weather_data WHERE latitude = $1 AND longitude = $2 AND date = $3`,
-        [latitude, longitude, yesterdayStr]
-      );
-      
-      if (yesterdayCheck.rows.length === 0) {
-        try {
-          const yesterdayData = await fetchPastWeatherData(latitude, longitude, yesterday);
-          if (yesterdayData.weather || yesterdayData.temperature !== null) {
-            await pool!.query(
-              `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, updated_at)
-               VALUES ($1, $2, $3, $4, $5, NOW())
-               ON CONFLICT (latitude, longitude, date) 
-               DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, updated_at = NOW()`,
-              [latitude, longitude, yesterdayStr, yesterdayData.weather || null, yesterdayData.temperature]
-            );
-            console.log(`昨日(${yesterdayStr})の天気実績データを保存しました`);
-          }
-        } catch (err) {
-          console.error('昨日の天気実績データ取得エラー:', err);
-        }
-      }
-    }
-  }
-  
-  // 取得したデータをデータベースに保存（テーブルが存在する場合のみ）
-  if (weatherData.weather || weatherData.temperature !== null) {
-    try {
-      await pool!.query(
-        `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, updated_at)
-         VALUES ($1, $2, $3, $4, $5, NOW())
-         ON CONFLICT (latitude, longitude, date) 
-         DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, updated_at = NOW()`,
-        [latitude, longitude, dateStr, weatherData.weather || null, weatherData.temperature]
-      );
-      console.log(`天気データを保存しました: ${dateStr}, ${weatherData.weather}, ${weatherData.temperature}°C`);
-    } catch (err: any) {
-      // weather_dataテーブルが存在しない場合はエラーを無視
-      if (err?.code === '42P01') {
-        console.log('weather_dataテーブルが存在しないため、データを保存できませんでした。');
-      } else {
-        console.error('天気データ保存エラー:', err);
-      }
-    }
-  }
-  
-  return weatherData;
+  // データベースにキャッシュがない場合は、APIから取得を試みずに空のデータを返す
+  // レート制限を回避するため、キャッシュがある日付のみ表示する
+  console.log(`[fetchWeatherData] データベースにキャッシュがないため、空のデータを返します: ${dateStr}`);
+  return { weather: '', temperature: null };
 }
 
 // 未来1週間の天気データを一括更新する関数（日次バッチ用）
