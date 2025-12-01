@@ -2549,6 +2549,8 @@ const WEATHER_CODE_TRANSLATIONS: Record<number, string> = {
 // 2. 未来のデータは日付が変わった時点で再度読み込む（当日起点で未来1週間）
 // 3. 未来のデータAPIを読み込む際に一日前の天気の実績を読み込み再度保存する
 async function fetchWeatherData(latitude: number, longitude: number, date: Date): Promise<{ weather: string; temperature: number | null }> {
+  console.log(`[fetchWeatherData] 関数開始: 緯度=${latitude}, 経度=${longitude}, 日付=${date}`);
+  
   // 日付のバリデーション
   if (isNaN(date.getTime())) {
     console.error(`[fetchWeatherData] 無効な日付オブジェクト:`, date);
@@ -2567,6 +2569,8 @@ async function fetchWeatherData(latitude: number, longitude: number, date: Date)
     return { weather: '', temperature: null };
   }
   
+  console.log(`[fetchWeatherData] データベースからキャッシュを確認中: ${dateStr}`);
+  
   // まずデータベースから取得を試みる
   try {
     const cachedResult = await pool!.query(
@@ -2574,6 +2578,8 @@ async function fetchWeatherData(latitude: number, longitude: number, date: Date)
        WHERE latitude = $1 AND longitude = $2 AND date = $3`,
       [latitude, longitude, dateStr]
     );
+    
+    console.log(`[fetchWeatherData] キャッシュ検索結果: ${cachedResult.rows.length}件`);
     
     if (cachedResult.rows.length > 0) {
       const cached = cachedResult.rows[0];
