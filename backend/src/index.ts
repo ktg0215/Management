@@ -2780,12 +2780,19 @@ async function fetchPastWeatherData(latitude: number, longitude: number, date: D
         res.on('end', () => {
           try {
             if (res.statusCode !== 200) {
-              console.error(`Tomorrow.io API Error: ${res.statusCode}`);
+              console.error(`[Tomorrow.io API] HTTPエラー: ${res.statusCode}, レスポンス: ${data.substring(0, 500)}`);
               resolve({ weather: '', temperature: null });
               return;
             }
             
             const weatherData = JSON.parse(data);
+            console.log(`[Tomorrow.io API] レスポンス構造:`, JSON.stringify({
+              hasData: !!weatherData.data,
+              hasTimelines: !!weatherData.data?.timelines,
+              timelinesLength: weatherData.data?.timelines?.length || 0,
+              intervalsLength: weatherData.data?.timelines?.[0]?.intervals?.length || 0
+            }));
+            
             const intervals = weatherData?.data?.timelines?.[0]?.intervals;
             
             if (intervals && intervals.length > 0) {
@@ -2795,15 +2802,19 @@ async function fetchPastWeatherData(latitude: number, longitude: number, date: D
               const weatherCode = values.weatherCodeMax;
               const weather = WEATHER_CODE_TRANSLATIONS[weatherCode] || '不明';
               
+              console.log(`[Tomorrow.io API] 取得データ: 天気コード=${weatherCode}, 天気=${weather}, 気温=${temp}`);
+              
               resolve({
                 weather,
                 temperature: temp !== null && temp !== undefined ? Math.round(temp) : null
               });
             } else {
+              console.warn(`[Tomorrow.io API] インターバルが見つかりませんでした。レスポンス: ${JSON.stringify(weatherData).substring(0, 1000)}`);
               resolve({ weather: '', temperature: null });
             }
           } catch (err) {
-            console.error('過去天気データパースエラー:', err);
+            console.error('[Tomorrow.io API] パースエラー:', err);
+            console.error('[Tomorrow.io API] レスポンスデータ:', data.substring(0, 1000));
             resolve({ weather: '', temperature: null });
           }
         });
@@ -2851,7 +2862,18 @@ async function fetchFutureWeatherData(latitude: number, longitude: number, date:
         
         res.on('end', () => {
           try {
+            if (res.statusCode !== 200) {
+              console.error(`[Visual Crossing API] HTTPエラー: ${res.statusCode}, レスポンス: ${data.substring(0, 500)}`);
+              resolve({ weather: '', temperature: null });
+              return;
+            }
+            
             const weatherData = JSON.parse(data);
+            console.log(`[Visual Crossing API] レスポンス構造:`, JSON.stringify({
+              hasDays: !!weatherData.days,
+              daysLength: weatherData.days?.length || 0
+            }));
+            
             if (weatherData.days && weatherData.days.length > 0) {
               const day = weatherData.days[0];
               const condition = day.conditions || '';
@@ -2865,15 +2887,19 @@ async function fetchFutureWeatherData(latitude: number, longitude: number, date:
                 }
               }
               
+              console.log(`[Visual Crossing API] 取得データ: 天気=${weather}, 気温=${day.temp}`);
+              
               resolve({
                 weather,
-                temperature: day.temp || null
+                temperature: day.temp !== null && day.temp !== undefined ? Math.round(day.temp) : null
               });
             } else {
+              console.warn(`[Visual Crossing API] 日次データが見つかりませんでした。レスポンス: ${JSON.stringify(weatherData).substring(0, 1000)}`);
               resolve({ weather: '', temperature: null });
             }
           } catch (err) {
-            console.error('未来天気データパースエラー:', err);
+            console.error('[Visual Crossing API] パースエラー:', err);
+            console.error('[Visual Crossing API] レスポンスデータ:', data.substring(0, 1000));
             resolve({ weather: '', temperature: null });
           }
         });
