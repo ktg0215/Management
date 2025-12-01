@@ -2617,12 +2617,18 @@ async function fetchWeatherData(latitude: number, longitude: number, date: Date)
   // データベースにない、または未来データで更新が必要な場合はAPIから取得
   let weatherData: { weather: string; temperature: number | null };
   
+  console.log(`[fetchWeatherData] 日付: ${dateStr}, 過去/未来判定: ${targetDate < today ? '過去' : '未来'}`);
+  
   // 過去のデータはTomorrow.io APIを使用
   if (targetDate < today) {
+    console.log(`[fetchWeatherData] 過去データを取得します: ${dateStr}`);
     weatherData = await fetchPastWeatherData(latitude, longitude, date);
+    console.log(`[fetchWeatherData] 過去データ取得結果: 天気=${weatherData.weather}, 気温=${weatherData.temperature}`);
   } else {
     // 未来のデータはVisual Crossing APIを使用
+    console.log(`[fetchWeatherData] 未来データを取得します: ${dateStr}`);
     weatherData = await fetchFutureWeatherData(latitude, longitude, date);
+    console.log(`[fetchWeatherData] 未来データ取得結果: 天気=${weatherData.weather}, 気温=${weatherData.temperature}`);
     
     // 未来データ取得時に、昨日の実績も取得して保存
     if (targetDate > today) {
