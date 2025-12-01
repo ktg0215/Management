@@ -12,8 +12,8 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL?.trim() || '',
 });
 
-// CSVファイルのパス（サーバー上のパス）
-const CSV_FILE_PATH = path.join(__dirname, '../../weather_data_toyama.csv');
+// CSVファイルのパス（サーバー上のパス、または環境変数から取得）
+const CSV_FILE_PATH = process.env.CSV_FILE_PATH || path.join(__dirname, '../../weather_data_toyama.csv');
 
 // 店舗ID 1（富山二口店）の緯度経度
 const STORE_ID = 1;
