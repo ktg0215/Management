@@ -35,11 +35,14 @@ const SalesManagementPage = () => {
   } = useBusinessTypeFields(businessTypeId);
 
   // Use React Query for data fetching
-  const { data: monthlyData, isLoading, error, refetch } = useSalesData(selectedStoreId, currentYear, currentMonth);
+  const { data: monthlyData, isLoading, isFetching, error, refetch } = useSalesData(selectedStoreId, currentYear, currentMonth);
+  
+  // Combine isLoading and isFetching to show loading state during any fetch
+  const isDataLoading = isLoading || isFetching;
 
   // Debug logging (using JSON.stringify for better visibility)
   const renderState = {
-    isLoading,
+    isLoading: isDataLoading,
     error: error ? String(error) : null,
     hasMonthlyData: !!monthlyData,
     dailyDataKeys: monthlyData?.dailyData ? Object.keys(monthlyData.dailyData).length : 0,
@@ -395,7 +398,7 @@ const SalesManagementPage = () => {
             <>
               {activeTab === 'data' ? (
                 <>
-                  {isLoading ? (
+                  {isDataLoading ? (
                     <div className="flex items-center justify-center h-64">
                       <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>

@@ -166,7 +166,7 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
     storeId,
     year,
     month,
-    isLoading: result.isLoading,
+    isLoading: result.isLoading || result.isFetching,
     isError: result.isError,
     error: result.error ? String(result.error) : null,
     dataExists: !!result.data,

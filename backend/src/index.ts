@@ -2315,6 +2315,38 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
       
       console.log(`[天気データ取得] 最終的な店舗ID: ${storeId}, 緯度: ${latitude}, 経度: ${longitude}`);
       
+      // 月の全日の天気データを一括取得（パフォーマンス改善）
+      const year = parseInt(String(row.year));
+      const month = parseInt(String(row.month));
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const monthStartDate = `${year}-${String(month).padStart(2, '0')}-01`;
+      const monthEndDate = `${year}-${String(month).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+      
+      let weatherCache: Map<string, { weather: string; temperature: number | null }> = new Map();
+      
+      if (latitude && longitude) {
+        try {
+          console.log(`[天気データ取得] 月の全日の天気データを一括取得中: ${monthStartDate} ～ ${monthEndDate}`);
+          const weatherResult = await pool!.query(
+            `SELECT date, weather, temperature FROM weather_data 
+             WHERE latitude = $1 AND longitude = $2 
+             AND date >= $3 AND date <= $4`,
+            [latitude, longitude, monthStartDate, monthEndDate]
+          );
+          
+          console.log(`[天気データ取得] 一括取得結果: ${weatherResult.rows.length}件`);
+          
+          for (const weatherRow of weatherResult.rows) {
+            weatherCache.set(weatherRow.date, {
+              weather: weatherRow.weather || '',
+              temperature: weatherRow.temperature !== null ? Math.round(weatherRow.temperature) : null
+            });
+          }
+        } catch (err) {
+          console.error(`[天気データ取得] 一括取得エラー:`, err);
+        }
+      }
+      
       // 天気データとイベント情報を追加
       const enrichedDailyData: any = {};
       if (row.daily_data) {
@@ -2324,6 +2356,7 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
           // dateStrが日付形式（YYYY-MM-DD）か日付（1-31）かを判定
           let dayOfMonth: number;
           let date: Date;
+          let dateKey: string;
           
           try {
             if (dateStr.includes('-')) {
@@ -2345,6 +2378,7 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
                 continue;
               }
               dayOfMonth = date.getDate();
+              dateKey = dateStr;
             } else {
               // 日付（1-31）形式の場合
               dayOfMonth = parseInt(dateStr);
@@ -2382,6 +2416,7 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
                 };
                 continue;
               }
+              dateKey = date.toISOString().split('T')[0];
             }
           } catch (dateErr) {
             console.error(`[天気データ取得] 日付解析エラー (${dateStr}):`, dateErr);
@@ -2402,28 +2437,16 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
           // イベント情報を追加
           const eventName = getEventName(date);
           
-          // 天気データを取得（緯度経度がある場合）
-          // データベースから取得を試み、なければAPIから取得
+          // 天気データを取得（キャッシュから）
           let weather = '';
           let temperature: number | null = null;
           
-          if (latitude && longitude) {
-            try {
-              console.log(`[天気データ取得] 日付: ${dayOfMonth}, 緯度: ${latitude}, 経度: ${longitude}`);
-              const weatherData = await fetchWeatherData(latitude, longitude, date);
-              weather = weatherData.weather;
-              temperature = weatherData.temperature;
-              console.log(`[天気データ取得] 結果: ${dayOfMonth}日 - 天気: ${weather}, 気温: ${temperature}°C`);
-              
-              // レート制限を回避するために、リクエスト間に100msの遅延を追加
-              await new Promise(resolve => setTimeout(resolve, 100));
-            } catch (err) {
-              console.error(`天気データ取得エラー (${dayOfMonth}日):`, err);
-              // エラー時も遅延を追加
-              await new Promise(resolve => setTimeout(resolve, 100));
+          if (latitude && longitude && dateKey) {
+            const cachedWeather = weatherCache.get(dateKey);
+            if (cachedWeather) {
+              weather = cachedWeather.weather;
+              temperature = cachedWeather.temperature;
             }
-          } else {
-            console.log(`[天気データ取得] 店舗ID ${storeId} に緯度経度が設定されていません`);
           }
           
           enrichedDailyData[dayOfMonth] = {
