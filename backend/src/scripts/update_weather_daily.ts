@@ -34,6 +34,68 @@ async function updateFutureWeatherForAllStores() {
   }
 }
 
+// Visual Crossing APIから天気データを取得する関数
+async function fetchWeatherDataFromVisualCrossing(latitude: number, longitude: number, date: Date): Promise<{ weather: string; temperature: number | null; humidity: number | null; precipitation: number | null; snow: number | null }> {
+  const API_KEY = process.env.VISUAL_CROSSING_API_KEY || '2BE5S9Y63SA2EXGEALZG7S7QM';
+  const dateStr = date.toISOString().split('T')[0];
+  const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${latitude},${longitude}/${dateStr}?unitGroup=metric&key=${API_KEY}`;
+
+  const weatherTranslation: Record<string, string> = {
+    "Clear": "晴れ",
+    "Partially cloudy": "晴れ時々曇り",
+    "Rain": "雨",
+    "Snow": "雪",
+    "Overcast": "曇り",
+    "Fog": "霧",
+    "Thunderstorm": "雷雨",
+    "Showers": "にわか雨",
+  };
+
+  return new Promise((resolve) => {
+    const https = require('https');
+    https.get(url, (res: any) => {
+      let data = '';
+      res.on('data', (chunk: string) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          if (res.statusCode !== 200) {
+            resolve({ weather: '', temperature: null, humidity: null, precipitation: null, snow: null });
+            return;
+          }
+          const weatherData = JSON.parse(data);
+          if (weatherData.days && weatherData.days.length > 0) {
+            const day = weatherData.days[0];
+            const condition = day.conditions || '';
+            let weather = condition;
+            for (const [key, value] of Object.entries(weatherTranslation)) {
+              if (condition.toLowerCase().includes(key.toLowerCase())) {
+                weather = value;
+                break;
+              }
+            }
+            const humidity = day.humidity !== null && day.humidity !== undefined ? Math.round(day.humidity * 100) / 100 : null;
+            const precipitation = day.precip !== null && day.precip !== undefined ? Math.round(day.precip * 100) / 100 : (day.precipitation !== null && day.precipitation !== undefined ? Math.round(day.precipitation * 100) / 100 : null);
+            const snow = day.snow !== null && day.snow !== undefined ? Math.round(day.snow * 100) / 100 : null;
+            resolve({
+              weather,
+              temperature: day.temp !== null && day.temp !== undefined ? Math.round(day.temp) : null,
+              humidity,
+              precipitation,
+              snow
+            });
+          } else {
+            resolve({ weather: '', temperature: null, humidity: null, precipitation: null, snow: null });
+          }
+        } catch (err) {
+          resolve({ weather: '', temperature: null, humidity: null, precipitation: null, snow: null });
+        }
+      });
+    }).on('error', () => {
+      resolve({ weather: '', temperature: null, humidity: null, precipitation: null, snow: null });
+    });
+  });
+}
+
 // 未来1週間の天気データを一括更新する関数
 async function updateFutureWeatherData(latitude: number, longitude: number): Promise<void> {
   const today = new Date();
@@ -89,19 +151,22 @@ async function updateFutureWeatherData(latitude: number, longitude: number): Pro
           }
         }
         
-        const temperature = day.temp || null;
+        const temperature = day.temp !== null && day.temp !== undefined ? Math.round(day.temp) : null;
+        const humidity = day.humidity !== null && day.humidity !== undefined ? Math.round(day.humidity * 100) / 100 : null;
+        const precipitation = day.precip !== null && day.precip !== undefined ? Math.round(day.precip * 100) / 100 : (day.precipitation !== null && day.precipitation !== undefined ? Math.round(day.precipitation * 100) / 100 : null);
+        const snow = day.snow !== null && day.snow !== undefined ? Math.round(day.snow * 100) / 100 : null;
         
         await pool.query(
-          `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, updated_at)
-           VALUES ($1, $2, $3, $4, $5, NOW())
+          `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, humidity, precipitation, snow, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
            ON CONFLICT (latitude, longitude, date) 
-           DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, updated_at = NOW()`,
-          [latitude, longitude, dateStr, weather || null, temperature]
+           DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, humidity = EXCLUDED.humidity, precipitation = EXCLUDED.precipitation, snow = EXCLUDED.snow, updated_at = NOW()`,
+          [latitude, longitude, dateStr, weather || null, temperature, humidity, precipitation, snow]
         );
       }
     }
     
-    // 昨日の実績データも取得（Tomorrow.io API）
+    // 昨日の実績データも取得（Visual Crossing API）
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
@@ -112,14 +177,29 @@ async function updateFutureWeatherData(latitude: number, longitude: number): Pro
     );
     
     if (yesterdayCheck.rows.length === 0) {
-      await updateYesterdayWeatherData(latitude, longitude, yesterday);
+      try {
+        const yesterdayData = await fetchWeatherDataFromVisualCrossing(latitude, longitude, yesterday);
+        if (yesterdayData.weather || yesterdayData.temperature !== null) {
+          await pool.query(
+            `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, humidity, precipitation, snow, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+             ON CONFLICT (latitude, longitude, date) 
+             DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, humidity = EXCLUDED.humidity, precipitation = EXCLUDED.precipitation, snow = EXCLUDED.snow, updated_at = NOW()`,
+            [latitude, longitude, yesterdayStr, yesterdayData.weather || null, yesterdayData.temperature, yesterdayData.humidity, yesterdayData.precipitation, yesterdayData.snow]
+          );
+          console.log(`昨日(${yesterdayStr})の天気実績データをVisual Crossing APIで保存しました`);
+        }
+      } catch (err) {
+        console.error('昨日の天気実績データ取得エラー:', err);
+      }
     }
   } catch (err) {
     console.error('未来天気データ更新エラー:', err);
   }
 }
 
-// 昨日の実績データを取得（Tomorrow.io API）
+// 昨日の実績データを取得（Tomorrow.io API）- 未使用（Visual Crossing APIに変更済み）
+// この関数は削除予定ですが、互換性のため残しています
 async function updateYesterdayWeatherData(latitude: number, longitude: number, date: Date): Promise<void> {
   const API_KEY = process.env.TOMORROW_IO_API_KEY || 'LaRsCCbEFOwKGaqHNtprA8Ejyw3ulHCl';
   const https = require('https');

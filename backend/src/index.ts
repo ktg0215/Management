@@ -2666,14 +2666,14 @@ async function updateFutureWeatherData(latitude: number, longitude: number): Pro
     const dateStr = targetDate.toISOString().split('T')[0];
     
     try {
-      const weatherData = await fetchFutureWeatherData(latitude, longitude, targetDate);
+      const weatherData = await fetchWeatherDataFromVisualCrossing(latitude, longitude, targetDate);
       if (weatherData.weather || weatherData.temperature !== null) {
         await pool!.query(
-          `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, updated_at)
-           VALUES ($1, $2, $3, $4, $5, NOW())
+          `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, humidity, precipitation, snow, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
            ON CONFLICT (latitude, longitude, date) 
-           DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, updated_at = NOW()`,
-          [latitude, longitude, dateStr, weatherData.weather || null, weatherData.temperature]
+           DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, humidity = EXCLUDED.humidity, precipitation = EXCLUDED.precipitation, snow = EXCLUDED.snow, updated_at = NOW()`,
+          [latitude, longitude, dateStr, weatherData.weather || null, weatherData.temperature, weatherData.humidity, weatherData.precipitation, weatherData.snow]
         );
       }
     } catch (err) {
@@ -2693,16 +2693,17 @@ async function updateFutureWeatherData(latitude: number, longitude: number): Pro
   
   if (yesterdayCheck.rows.length === 0) {
     try {
-      const yesterdayData = await fetchPastWeatherData(latitude, longitude, yesterday);
+      // Visual Crossing APIを使用して昨日のデータを取得（過去データも取得可能）
+      const yesterdayData = await fetchWeatherDataFromVisualCrossing(latitude, longitude, yesterday);
       if (yesterdayData.weather || yesterdayData.temperature !== null) {
         await pool!.query(
-          `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, updated_at)
-           VALUES ($1, $2, $3, $4, $5, NOW())
+          `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, humidity, precipitation, snow, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
            ON CONFLICT (latitude, longitude, date) 
-           DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, updated_at = NOW()`,
-          [latitude, longitude, yesterdayStr, yesterdayData.weather || null, yesterdayData.temperature]
+           DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, humidity = EXCLUDED.humidity, precipitation = EXCLUDED.precipitation, snow = EXCLUDED.snow, updated_at = NOW()`,
+          [latitude, longitude, yesterdayStr, yesterdayData.weather || null, yesterdayData.temperature, yesterdayData.humidity, yesterdayData.precipitation, yesterdayData.snow]
         );
-        console.log(`昨日(${yesterdayStr})の天気実績データを保存しました`);
+        console.log(`昨日(${yesterdayStr})の天気実績データをVisual Crossing APIで保存しました`);
       }
     } catch (err) {
       console.error('昨日の天気実績データ取得エラー:', err);
@@ -2830,10 +2831,21 @@ async function fetchPastWeatherData(latitude: number, longitude: number, date: D
   }
 }
 
-// 未来の天気データ取得（Visual Crossing API）
-async function fetchFutureWeatherData(latitude: number, longitude: number, date: Date): Promise<{ weather: string; temperature: number | null }> {
+// 天気データ取得（Visual Crossing API）- 過去・現在・未来すべてに対応
+// Visual Crossing APIは過去データも取得可能（無料プランでは過去6年間のデータが利用可能）
+// 売上予測のために湿度、降水量、降雪量も取得
+interface WeatherDataFromVisualCrossing {
+  weather: string;
+  temperature: number | null;
+  humidity: number | null;
+  precipitation: number | null;
+  snow: number | null;
+}
+
+async function fetchWeatherDataFromVisualCrossing(latitude: number, longitude: number, date: Date): Promise<WeatherDataFromVisualCrossing> {
   const API_KEY = process.env.VISUAL_CROSSING_API_KEY || '2BE5S9Y63SA2EXGEALZG7S7QM';
   const dateStr = date.toISOString().split('T')[0];
+  // Visual Crossing APIは過去・現在・未来のすべての日付に対応
   const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${latitude},${longitude}/${dateStr}?unitGroup=metric&key=${API_KEY}`;
 
   const weatherTranslation: Record<string, string> = {
@@ -2860,7 +2872,7 @@ async function fetchFutureWeatherData(latitude: number, longitude: number, date:
           try {
             if (res.statusCode !== 200) {
               console.error(`[Visual Crossing API] HTTPエラー: ${res.statusCode}, レスポンス: ${data.substring(0, 500)}`);
-              resolve({ weather: '', temperature: null });
+              resolve({ weather: '', temperature: null, humidity: null, precipitation: null, snow: null });
               return;
             }
             
@@ -2883,30 +2895,38 @@ async function fetchFutureWeatherData(latitude: number, longitude: number, date:
                 }
               }
               
-              console.log(`[Visual Crossing API] 取得データ: 天気=${weather}, 気温=${day.temp}`);
+              // 湿度、降水量、降雪量も取得（売上予測用）
+              const humidity = day.humidity !== null && day.humidity !== undefined ? Math.round(day.humidity * 100) / 100 : null; // パーセンテージ（0-100）
+              const precipitation = day.precip !== null && day.precip !== undefined ? Math.round(day.precip * 100) / 100 : (day.precipitation !== null && day.precipitation !== undefined ? Math.round(day.precipitation * 100) / 100 : null); // mm
+              const snow = day.snow !== null && day.snow !== undefined ? Math.round(day.snow * 100) / 100 : null; // cm
+              
+              console.log(`[Visual Crossing API] 取得データ: 天気=${weather}, 気温=${day.temp}°C, 湿度=${humidity}%, 降水量=${precipitation}mm, 降雪量=${snow}cm`);
               
               resolve({
                 weather,
-                temperature: day.temp !== null && day.temp !== undefined ? Math.round(day.temp) : null
+                temperature: day.temp !== null && day.temp !== undefined ? Math.round(day.temp) : null,
+                humidity,
+                precipitation,
+                snow
               });
             } else {
               console.warn(`[Visual Crossing API] 日次データが見つかりませんでした。レスポンス: ${JSON.stringify(weatherData).substring(0, 1000)}`);
-              resolve({ weather: '', temperature: null });
+              resolve({ weather: '', temperature: null, humidity: null, precipitation: null, snow: null });
             }
           } catch (err) {
             console.error('[Visual Crossing API] パースエラー:', err);
             console.error('[Visual Crossing API] レスポンスデータ:', data.substring(0, 1000));
-            resolve({ weather: '', temperature: null });
+            resolve({ weather: '', temperature: null, humidity: null, precipitation: null, snow: null });
           }
         });
       }).on('error', (err) => {
-        console.error('未来天気データ取得エラー:', err);
-        resolve({ weather: '', temperature: null });
+        console.error('[Visual Crossing API] ネットワークエラー:', err);
+        resolve({ weather: '', temperature: null, humidity: null, precipitation: null, snow: null });
       });
     });
   } catch (err) {
-    console.error('未来天気データ取得エラー:', err);
-    return { weather: '', temperature: null };
+    console.error('[Visual Crossing API] エラー:', err);
+    return { weather: '', temperature: null, humidity: null, precipitation: null, snow: null };
   }
 }
 
