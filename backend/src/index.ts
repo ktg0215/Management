@@ -2414,8 +2414,13 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
               weather = weatherData.weather;
               temperature = weatherData.temperature;
               console.log(`[天気データ取得] 結果: ${dayOfMonth}日 - 天気: ${weather}, 気温: ${temperature}°C`);
+              
+              // レート制限を回避するために、リクエスト間に100msの遅延を追加
+              await new Promise(resolve => setTimeout(resolve, 100));
             } catch (err) {
               console.error(`天気データ取得エラー (${dayOfMonth}日):`, err);
+              // エラー時も遅延を追加
+              await new Promise(resolve => setTimeout(resolve, 100));
             }
           } else {
             console.log(`[天気データ取得] 店舗ID ${storeId} に緯度経度が設定されていません`);
@@ -2805,6 +2810,11 @@ async function fetchPastWeatherData(latitude: number, longitude: number, date: D
               try {
                 const errorData = JSON.parse(data);
                 console.error(`[fetchPastWeatherData] エラーデータ:`, JSON.stringify(errorData, null, 2));
+                
+                // 429エラー（レート制限）の場合は、リトライしない（レート制限に達しているため）
+                if (res.statusCode === 429) {
+                  console.warn(`[fetchPastWeatherData] レート制限に達しました。データベースにキャッシュがない場合は、後で再試行してください。`);
+                }
               } catch (parseErr) {
                 console.error(`[fetchPastWeatherData] エラーレスポンスのパースに失敗:`, parseErr);
               }
