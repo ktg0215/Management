@@ -2750,6 +2750,8 @@ async function updateFutureWeatherData(latitude: number, longitude: number): Pro
 
 // 過去の天気データ取得（Tomorrow.io API）
 async function fetchPastWeatherData(latitude: number, longitude: number, date: Date): Promise<{ weather: string; temperature: number | null }> {
+  console.log(`[fetchPastWeatherData] 関数開始: 緯度=${latitude}, 経度=${longitude}, 日付=${date.toISOString()}`);
+  
   const API_KEY = process.env.TOMORROW_IO_API_KEY || 'LaRsCCbEFOwKGaqHNtprA8Ejyw3ulHCl';
   const url = 'https://api.tomorrow.io/v4/timelines';
   
@@ -2767,6 +2769,8 @@ async function fetchPastWeatherData(latitude: number, longitude: number, date: D
     endTime: endTime.toISOString()
   };
 
+  console.log(`[fetchPastWeatherData] APIリクエスト送信: ${JSON.stringify(payload)}`);
+
   try {
     return new Promise((resolve) => {
       const postData = JSON.stringify(payload);
@@ -2782,7 +2786,10 @@ async function fetchPastWeatherData(latitude: number, longitude: number, date: D
         }
       };
 
+      console.log(`[fetchPastWeatherData] HTTPSリクエストオプション: ${JSON.stringify(options)}`);
+
       const req = https.request(options, (res) => {
+        console.log(`[fetchPastWeatherData] HTTPレスポンス受信: ステータスコード=${res.statusCode}`);
         let data = '';
         
         res.on('data', (chunk) => {
@@ -2790,15 +2797,16 @@ async function fetchPastWeatherData(latitude: number, longitude: number, date: D
         });
         
         res.on('end', () => {
+          console.log(`[fetchPastWeatherData] レスポンスデータ受信完了: 長さ=${data.length}`);
           try {
             if (res.statusCode !== 200) {
-              console.error(`[Tomorrow.io API] HTTPエラー: ${res.statusCode}, レスポンス: ${data.substring(0, 500)}`);
+              console.error(`[fetchPastWeatherData] HTTPエラー: ${res.statusCode}, レスポンス: ${data.substring(0, 500)}`);
               resolve({ weather: '', temperature: null });
               return;
             }
             
             const weatherData = JSON.parse(data);
-            console.log(`[Tomorrow.io API] レスポンス構造:`, JSON.stringify({
+            console.log(`[fetchPastWeatherData] レスポンス構造:`, JSON.stringify({
               hasData: !!weatherData.data,
               hasTimelines: !!weatherData.data?.timelines,
               timelinesLength: weatherData.data?.timelines?.length || 0,
@@ -2814,31 +2822,33 @@ async function fetchPastWeatherData(latitude: number, longitude: number, date: D
               const weatherCode = values.weatherCodeMax;
               const weather = WEATHER_CODE_TRANSLATIONS[weatherCode] || '不明';
               
-              console.log(`[Tomorrow.io API] 取得データ: 天気コード=${weatherCode}, 天気=${weather}, 気温=${temp}`);
+              console.log(`[fetchPastWeatherData] 取得データ: 天気コード=${weatherCode}, 天気=${weather}, 気温=${temp}`);
               
               resolve({
                 weather,
                 temperature: temp !== null && temp !== undefined ? Math.round(temp) : null
               });
             } else {
-              console.warn(`[Tomorrow.io API] インターバルが見つかりませんでした。レスポンス: ${JSON.stringify(weatherData).substring(0, 1000)}`);
+              console.warn(`[fetchPastWeatherData] インターバルが見つかりませんでした。レスポンス: ${JSON.stringify(weatherData).substring(0, 1000)}`);
               resolve({ weather: '', temperature: null });
             }
           } catch (err) {
-            console.error('[Tomorrow.io API] パースエラー:', err);
-            console.error('[Tomorrow.io API] レスポンスデータ:', data.substring(0, 1000));
+            console.error('[fetchPastWeatherData] パースエラー:', err);
+            console.error('[fetchPastWeatherData] レスポンスデータ:', data.substring(0, 1000));
             resolve({ weather: '', temperature: null });
           }
         });
       });
 
       req.on('error', (err) => {
-        console.error('過去天気データ取得エラー:', err);
+        console.error('[fetchPastWeatherData] ネットワークエラー:', err);
         resolve({ weather: '', temperature: null });
       });
 
+      console.log(`[fetchPastWeatherData] リクエスト送信中...`);
       req.write(postData);
       req.end();
+      console.log(`[fetchPastWeatherData] リクエスト送信完了`);
     });
   } catch (err) {
     console.error('過去天気データ取得エラー:', err);
