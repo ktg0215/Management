@@ -2316,11 +2316,11 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
       console.log(`[天気データ取得] 最終的な店舗ID: ${storeId}, 緯度: ${latitude}, 経度: ${longitude}`);
       
       // 月の全日の天気データを一括取得（パフォーマンス改善）
-      const year = parseInt(String(row.year));
-      const month = parseInt(String(row.month));
-      const daysInMonth = new Date(year, month, 0).getDate();
-      const monthStartDate = `${year}-${String(month).padStart(2, '0')}-01`;
-      const monthEndDate = `${year}-${String(month).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+      const dataYear = parseInt(String(row.year));
+      const dataMonth = parseInt(String(row.month));
+      const daysInMonth = new Date(dataYear, dataMonth, 0).getDate();
+      const monthStartDate = `${dataYear}-${String(dataMonth).padStart(2, '0')}-01`;
+      const monthEndDate = `${dataYear}-${String(dataMonth).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
       
       let weatherCache: Map<string, { weather: string; temperature: number | null }> = new Map();
       
