@@ -2482,9 +2482,9 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
             event: eventName
           };
           
-          // デバッグ: 最初の3日分の天気データをログ出力
-          if (dayOfMonth <= 3) {
-            console.log(`[天気データ取得] 日付 ${dayOfMonth} (${dateKey}): 天気=${weather}, 気温=${temperature}, イベント=${eventName}`);
+          // デバッグ: 最初の5日分の天気データをログ出力
+          if (dayOfMonth <= 5) {
+            console.log(`[天気データ取得] 日付 ${dayOfMonth} (${dateKey}): 天気="${weather}", 気温=${temperature}, イベント=${eventName}, dayData.weather=${dayData.weather || 'undefined'}`);
           }
         }
       }
