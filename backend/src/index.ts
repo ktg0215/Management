@@ -2337,10 +2337,24 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
           console.log(`[天気データ取得] 一括取得結果: ${weatherResult.rows.length}件`);
           
           for (const weatherRow of weatherResult.rows) {
-            weatherCache.set(weatherRow.date, {
+            // dateはDateオブジェクトまたは文字列の可能性があるため、文字列に変換
+            const dateKey = weatherRow.date instanceof Date 
+              ? weatherRow.date.toISOString().split('T')[0]
+              : String(weatherRow.date).split('T')[0];
+            weatherCache.set(dateKey, {
               weather: weatherRow.weather || '',
               temperature: weatherRow.temperature !== null ? Math.round(weatherRow.temperature) : null
             });
+          }
+          
+          console.log(`[天気データ取得] キャッシュマップのサイズ: ${weatherCache.size}`);
+          if (weatherCache.size > 0) {
+            const sampleKeys = Array.from(weatherCache.keys()).slice(0, 3);
+            console.log(`[天気データ取得] キャッシュサンプル:`, sampleKeys.map(key => ({
+              date: key,
+              weather: weatherCache.get(key)?.weather,
+              temperature: weatherCache.get(key)?.temperature
+            })));
           }
         } catch (err) {
           console.error(`[天気データ取得] 一括取得エラー:`, err);
@@ -2446,6 +2460,12 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
             if (cachedWeather) {
               weather = cachedWeather.weather;
               temperature = cachedWeather.temperature;
+            } else {
+              // デバッグ: キャッシュにない場合
+              if (dayOfMonth <= 3) {
+                console.log(`[天気データ取得] キャッシュにない日付: ${dateKey}, dayOfMonth: ${dayOfMonth}`);
+                console.log(`[天気データ取得] キャッシュキー一覧:`, Array.from(weatherCache.keys()).slice(0, 10));
+              }
             }
           }
           
@@ -2455,6 +2475,11 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
             temperature,
             event: eventName
           };
+          
+          // デバッグ: 最初の3日分の天気データをログ出力
+          if (dayOfMonth <= 3) {
+            console.log(`[天気データ取得] 日付 ${dayOfMonth} (${dateKey}): 天気=${weather}, 気温=${temperature}, イベント=${eventName}`);
+          }
         }
       }
       

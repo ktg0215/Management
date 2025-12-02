@@ -18,6 +18,23 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
       
       const response = await salesApi.getSales(year, month, storeId);
       
+      // 天気データの確認
+      const firstKeyValue = response.data?.daily_data ? (() => {
+        const keys = Object.keys(response.data.daily_data);
+        if (keys.length > 0) {
+          const firstValue = response.data.daily_data[keys[0]];
+          return {
+            key: keys[0],
+            weather: firstValue?.weather,
+            temperature: firstValue?.temperature,
+            event: firstValue?.event,
+            hasWeather: !!firstValue?.weather,
+            hasTemperature: firstValue?.temperature !== null && firstValue?.temperature !== undefined
+          };
+        }
+        return null;
+      })() : null;
+      
       console.log(`[useSalesData] API response for ${year}/${month}:`, JSON.stringify({
         success: response.success,
         hasData: !!response.data,
@@ -25,13 +42,7 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
         dailyDataType: typeof response.data?.daily_data,
         dailyDataKeys: response.data?.daily_data ? Object.keys(response.data.daily_data).length : 0,
         sampleKeys: response.data?.daily_data ? Object.keys(response.data.daily_data).slice(0, 5) : [],
-        firstKeyValue: response.data?.daily_data ? (() => {
-          const keys = Object.keys(response.data.daily_data);
-          return keys.length > 0 ? {
-            key: keys[0],
-            value: response.data.daily_data[keys[0]]
-          } : null;
-        })() : null
+        firstKeyValue
       }, null, 2));
       
       if (response.success && response.data) {
@@ -114,7 +125,11 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
           transformedDailyData[dateKey] = {
             ...dayData,
             date: dateKey,
-            dayOfWeek: getDayOfWeek(year, month, day)
+            dayOfWeek: getDayOfWeek(year, month, day),
+            // 天気データを明示的に保持（APIから取得したデータをそのまま使用）
+            weather: dayData.weather,
+            temperature: dayData.temperature,
+            event: dayData.event
           };
           processedCount++;
         }
@@ -128,13 +143,22 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
           return createEmptyMonthlyData(year, month);
         }
         
+        // 天気データの確認
+        const sampleEntry = Object.keys(transformedDailyData).length > 0 
+          ? transformedDailyData[Object.keys(transformedDailyData)[0]] 
+          : null;
+        
         console.log(`[useSalesData] transformedDailyData:`, JSON.stringify({
           keysCount: Object.keys(transformedDailyData).length,
           sampleKeys: Object.keys(transformedDailyData).slice(0, 5),
           skippedCount,
-          firstEntry: Object.keys(transformedDailyData).length > 0 ? {
+          firstEntry: sampleEntry ? {
             key: Object.keys(transformedDailyData)[0],
-            value: transformedDailyData[Object.keys(transformedDailyData)[0]]
+            weather: sampleEntry.weather,
+            temperature: sampleEntry.temperature,
+            event: sampleEntry.event,
+            hasWeather: !!sampleEntry.weather,
+            hasTemperature: sampleEntry.temperature !== null && sampleEntry.temperature !== undefined
           } : null
         }, null, 2));
 

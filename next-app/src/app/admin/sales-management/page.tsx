@@ -405,7 +405,7 @@ const SalesManagementPage = () => {
                         <p className="text-gray-600">データを読み込み中...</p>
                       </div>
                     </div>
-                  ) : monthlyData && monthlyData.dailyData ? (
+                  ) : monthlyData && monthlyData.dailyData && Object.keys(monthlyData.dailyData).length > 0 ? (
                     <SimpleSalesTable
                       dailyData={transformedDailyData}
                       hasData={hasData}
