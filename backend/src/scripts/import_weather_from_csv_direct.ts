@@ -1,9 +1,8 @@
-// CSVファイルから天気データをインポートするスクリプト
+// CSVデータを直接埋め込んでインポートするスクリプト
 // 店舗ID 1（富山二口店）の天気データをインポート
 
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
-import * as fs from 'fs';
 import * as path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -12,22 +11,14 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL?.trim() || '',
 });
 
-// CSVファイルのパス（サーバー上のパス、または環境変数から取得）
-const CSV_FILE_PATH = process.env.CSV_FILE_PATH || path.join(__dirname, '../../weather_data_toyama.csv');
-
 // 店舗ID 1（富山二口店）の緯度経度
 const STORE_ID = 1;
 const DEFAULT_LATITUDE = 36.66995390;
 const DEFAULT_LONGITUDE = 137.20684780;
 
-interface WeatherRow {
-  date: string;
-  temperature: number | null;
-  humidity: number | null;
-  precipitation: number | null;
-  snow: number | null;
-  weather: string;
-}
+// CSVデータ（実際のファイルから読み込む）
+// このスクリプトは、CSVファイルがサーバー上に存在することを前提としています
+const CSV_FILE_PATH = path.join(__dirname, '../../weather_data_toyama.csv');
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
@@ -74,15 +65,18 @@ async function importWeatherDataFromCSV() {
     console.log('CSVファイルから天気データをインポート開始...');
     console.log(`ファイルパス: ${CSV_FILE_PATH}`);
     
+    const fs = require('fs');
+    
     // ファイルの存在確認
     if (!fs.existsSync(CSV_FILE_PATH)) {
       console.error(`ファイルが見つかりません: ${CSV_FILE_PATH}`);
+      console.log('CSVファイルをサーバーにアップロードしてください。');
       process.exit(1);
     }
     
     // CSVファイルを読み込む
     const fileContent = fs.readFileSync(CSV_FILE_PATH, 'utf-8');
-    const lines = fileContent.split('\n').filter(line => line.trim() !== '');
+    const lines = fileContent.split('\n').filter((line: string) => line.trim() !== '');
     
     if (lines.length < 2) {
       console.error('CSVファイルにデータがありません');
@@ -93,11 +87,6 @@ async function importWeatherDataFromCSV() {
     const dataLines = lines.slice(1);
     
     console.log(`読み込んだデータ行数: ${dataLines.length}`);
-    
-    let importedCount = 0;
-    let updatedCount = 0;
-    let skippedCount = 0;
-    let errorCount = 0;
     
     // 店舗の緯度経度を取得
     const storeResult = await pool.query(
@@ -114,7 +103,12 @@ async function importWeatherDataFromCSV() {
     const latitude = store.latitude || DEFAULT_LATITUDE;
     const longitude = store.longitude || DEFAULT_LONGITUDE;
     
-    console.log(`店舗ID ${STORE_ID} の緯度: ${latitude}, 経度: ${longitude}`);
+    console.log(`店舗ID ${STORE_ID} の緯度: ${latitude}, 経度: ${longitude}\n`);
+    
+    let importedCount = 0;
+    let updatedCount = 0;
+    let skippedCount = 0;
+    let errorCount = 0;
     
     // 各行を処理
     for (let i = 0; i < dataLines.length; i++) {
@@ -152,9 +146,8 @@ async function importWeatherDataFromCSV() {
         const precipitation = precipitationStr && precipitationStr !== '' ? parseFloat(precipitationStr) : null;
         const snow = snowStr && snowStr !== '' ? parseFloat(snowStr) : null;
         
-        // 天気データをクリーンアップ（文字化けしている可能性があるため）
+        // 天気データをクリーンアップ
         let weather = weatherStr || '';
-        // 文字化けを修正する必要がある場合はここで処理
         
         // 既存データを確認
         const existingResult = await pool.query(
@@ -175,14 +168,14 @@ async function importWeatherDataFromCSV() {
         } else {
           // 新規データを挿入
           await pool.query(
-            `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, humidity, precipitation, snow, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+            `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, humidity, precipitation, snow, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`,
             [latitude, longitude, dateKey, weather || null, temperature, humidity, precipitation, snow]
           );
           importedCount++;
         }
         
-        if ((importedCount + updatedCount) % 50 === 0) {
+        if ((importedCount + updatedCount) % 100 === 0) {
           console.log(`  進捗: ${importedCount + updatedCount}件処理しました`);
         }
       } catch (err) {
