@@ -2503,6 +2503,16 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
         }
       }
       
+      // デバッグ: enrichedDailyDataのサンプルをログ出力
+      const sampleKeys = Object.keys(enrichedDailyData).slice(0, 3);
+      console.log(`[天気データ取得] enrichedDailyData サンプル:`, sampleKeys.map(key => ({
+        key,
+        hasWeather: enrichedDailyData[key]?.weather !== undefined,
+        weather: enrichedDailyData[key]?.weather,
+        hasTemperature: enrichedDailyData[key]?.temperature !== undefined,
+        temperature: enrichedDailyData[key]?.temperature
+      })));
+      
       res.json({
         success: true,
         data: {
