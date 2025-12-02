@@ -65,6 +65,27 @@ async function checkWeatherData202505() {
       console.log(`  ${row.date}: weather="${row.weather}", temperature=${row.temperature}°C`);
     });
     
+    // 欠けている日付を確認
+    const dates = result.rows.map(row => {
+      const date = row.date instanceof Date ? row.date : new Date(row.date);
+      return date.toISOString().split('T')[0];
+    });
+    
+    console.log('\n欠けている日付:');
+    let missingCount = 0;
+    for (let day = 1; day <= 31; day++) {
+      const dateStr = `2025-05-${String(day).padStart(2, '0')}`;
+      if (!dates.includes(dateStr)) {
+        console.log(`  ${dateStr}`);
+        missingCount++;
+      }
+    }
+    if (missingCount === 0) {
+      console.log('  なし（全31日分のデータが存在します）');
+    } else {
+      console.log(`\n合計 ${missingCount} 日分のデータが欠けています。`);
+    }
+    
   } catch (error) {
     console.error('エラー:', error);
   } finally {
