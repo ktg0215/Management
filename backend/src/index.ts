@@ -2338,9 +2338,15 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
           
           for (const weatherRow of weatherResult.rows) {
             // dateはDateオブジェクトまたは文字列の可能性があるため、文字列に変換
-            const dateKey = weatherRow.date instanceof Date 
-              ? weatherRow.date.toISOString().split('T')[0]
-              : String(weatherRow.date).split('T')[0];
+            let dateKey: string;
+            if (weatherRow.date instanceof Date) {
+              dateKey = weatherRow.date.toISOString().split('T')[0];
+            } else {
+              // PostgreSQLのdate型は文字列として返される可能性がある
+              const dateStr = String(weatherRow.date);
+              dateKey = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+            }
+            
             weatherCache.set(dateKey, {
               weather: weatherRow.weather || '',
               temperature: weatherRow.temperature !== null ? Math.round(weatherRow.temperature) : null

@@ -35,10 +35,13 @@ const SalesManagementPage = () => {
   } = useBusinessTypeFields(businessTypeId);
 
   // Use React Query for data fetching
-  const { data: monthlyData, isLoading, isFetching, error, refetch } = useSalesData(selectedStoreId, currentYear, currentMonth);
+  const { data: monthlyData, isLoading, isFetching, error, refetch, isPending } = useSalesData(selectedStoreId, currentYear, currentMonth);
   
-  // Combine isLoading and isFetching to show loading state during any fetch
-  const isDataLoading = isLoading || isFetching;
+  // Combine isLoading, isFetching, and isPending to show loading state during any fetch
+  // isPending: クエリがまだ実行されていない状態（enabledがfalseの場合も含む）
+  // isLoading: 初回ロード中
+  // isFetching: データ取得中（リフェッチも含む）
+  const isDataLoading = isLoading || isFetching || (isPending && !!selectedStoreId);
 
   // Debug logging (using JSON.stringify for better visibility)
   const renderState = {

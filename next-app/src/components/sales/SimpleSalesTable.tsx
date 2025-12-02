@@ -174,30 +174,48 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
   };
 
   // 天気アイコンを取得
-  const getWeatherIcon = (weather: string) => {
-    if (!weather) return null;
+  const getWeatherIcon = (weather: string | undefined) => {
+    if (!weather || weather.trim() === '') return null;
     
     const weatherLower = weather.toLowerCase();
     const iconClass = "w-4 h-4 inline-block";
     
-    if (weatherLower.includes('晴れ')) {
-      if (weatherLower.includes('時々曇り') || weatherLower.includes('のち')) {
+    // デバッグ: 天気文字列をログ出力
+    if (weatherLower !== '曇り' && weatherLower !== 'cloudy') {
+      console.log(`[getWeatherIcon] 天気文字列: "${weather}" (lowercase: "${weatherLower}")`);
+    }
+    
+    // 「晴れ」を含む場合（「晴れ時々曇り」なども含む）
+    if (weatherLower.includes('晴れ') || weatherLower.includes('clear')) {
+      // 「時々曇り」や「のち」が含まれる場合は曇りアイコン
+      if (weatherLower.includes('時々曇り') || weatherLower.includes('のち') || weatherLower.includes('partially cloudy')) {
         return <Cloud className={iconClass} style={{ color: '#60a5fa' }} />;
       }
+      // 純粋な「晴れ」の場合は太陽アイコン
       return <Sun className={iconClass} style={{ color: '#fbbf24' }} />;
-    } else if (weatherLower.includes('雨')) {
-      if (weatherLower.includes('にわか')) {
+    } 
+    // 「雨」を含む場合
+    else if (weatherLower.includes('雨') || weatherLower.includes('rain')) {
+      if (weatherLower.includes('にわか') || weatherLower.includes('shower')) {
         return <CloudDrizzle className={iconClass} style={{ color: '#3b82f6' }} />;
       }
       return <CloudRain className={iconClass} style={{ color: '#2563eb' }} />;
-    } else if (weatherLower.includes('雪')) {
+    } 
+    // 「雪」を含む場合
+    else if (weatherLower.includes('雪') || weatherLower.includes('snow')) {
       return <CloudSnow className={iconClass} style={{ color: '#93c5fd' }} />;
-    } else if (weatherLower.includes('雷')) {
+    } 
+    // 「雷」を含む場合
+    else if (weatherLower.includes('雷') || weatherLower.includes('thunder')) {
       return <CloudLightning className={iconClass} style={{ color: '#7c3aed' }} />;
-    } else if (weatherLower.includes('曇り')) {
+    } 
+    // 「曇り」を含む場合（最後にチェック）
+    else if (weatherLower.includes('曇り') || weatherLower.includes('cloudy') || weatherLower.includes('overcast')) {
       return <Cloud className={iconClass} style={{ color: '#9ca3af' }} />;
     }
     
+    // デフォルト: 不明な天気の場合は曇りアイコンを表示
+    console.warn(`[getWeatherIcon] 未対応の天気文字列: "${weather}"`);
     return <Cloud className={iconClass} style={{ color: '#9ca3af' }} />;
   };
 

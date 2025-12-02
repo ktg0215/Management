@@ -183,6 +183,8 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: true,
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes for active queries
+    // 初回ロード時もisLoadingをtrueにするため、placeholderDataを設定しない
+    placeholderData: undefined,
   });
 
   // Debug logging with detailed information (using JSON.stringify for better visibility)
