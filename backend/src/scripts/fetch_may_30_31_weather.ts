@@ -44,12 +44,17 @@ function translateWeather(condition: string): string {
 async function fetchWeatherDataFromVisualCrossing(
   latitude: number,
   longitude: number,
-  date: Date
+  date: Date,
+  retryCount: number = 0
 ): Promise<{ weather: string; temperature: number | null; humidity: number | null; precipitation: number | null; snow: number | null }> {
   const dateStr = date.toISOString().split('T')[0];
   const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${latitude},${longitude}/${dateStr}?unitGroup=metric&key=${API_KEY}`;
 
-  console.log(`[Visual Crossing API] リクエスト: ${url}`);
+  if (retryCount === 0) {
+    console.log(`[Visual Crossing API] リクエスト: ${url}`);
+  } else {
+    console.log(`[Visual Crossing API] リトライ ${retryCount}回目: ${url}`);
+  }
 
   return new Promise((resolve) => {
     https.get(url, (res) => {
@@ -57,13 +62,23 @@ async function fetchWeatherDataFromVisualCrossing(
       res.on('data', (chunk) => {
         data += chunk;
       });
-      res.on('end', () => {
+      res.on('end', async () => {
         try {
           if (res.statusCode !== 200) {
-            console.error(`[Visual Crossing API] HTTPエラー: ${res.statusCode}, 日付: ${dateStr}`);
             if (res.statusCode === 429) {
-              console.error('レート制限に達しました。しばらく待ってから再試行してください。');
+              // レート制限エラーの場合、エクスポネンシャルバックオフでリトライ
+              if (retryCount < 3) {
+                const waitTime = Math.pow(2, retryCount) * 5; // 5秒、10秒、20秒
+                console.error(`[Visual Crossing API] レート制限エラー (${res.statusCode})。${waitTime}秒待機してリトライします...`);
+                await new Promise(r => setTimeout(r, waitTime * 1000));
+                const result = await fetchWeatherDataFromVisualCrossing(latitude, longitude, date, retryCount + 1);
+                resolve(result);
+                return;
+              } else {
+                console.error(`[Visual Crossing API] レート制限エラーが続いています。最大リトライ回数に達しました。`);
+              }
             } else {
+              console.error(`[Visual Crossing API] HTTPエラー: ${res.statusCode}, 日付: ${dateStr}`);
               console.error(`レスポンス: ${data.substring(0, 200)}`);
             }
             resolve({ weather: '', temperature: null, humidity: null, precipitation: null, snow: null });
@@ -125,6 +140,8 @@ async function fetchMay30And31Weather() {
       new Date(2025, 4, 30), // 5月30日（月は0から始まるため4 = 5月）
       new Date(2025, 4, 31), // 5月31日
     ];
+    
+    console.log(`取得対象日付: ${dates.map(d => d.toISOString().split('T')[0]).join(', ')}\n`);
     
     let fetchedCount = 0;
     let updatedCount = 0;
