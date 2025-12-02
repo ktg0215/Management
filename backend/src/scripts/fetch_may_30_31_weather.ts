@@ -136,9 +136,10 @@ async function fetchMay30And31Weather() {
     
     console.log(`店舗ID ${STORE_ID} の緯度: ${latitude}, 経度: ${longitude}\n`);
     
+    // 5月30日と31日を取得（月は0から始まるため4 = 5月）
     const dates = [
-      new Date(2025, 4, 30), // 5月30日（月は0から始まるため4 = 5月）
-      new Date(2025, 4, 31), // 5月31日
+      new Date('2025-05-30T00:00:00+09:00'), // 5月30日（JST）
+      new Date('2025-05-31T00:00:00+09:00'), // 5月31日（JST）
     ];
     
     console.log(`取得対象日付: ${dates.map(d => d.toISOString().split('T')[0]).join(', ')}\n`);
