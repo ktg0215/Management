@@ -88,18 +88,31 @@ async function importWeatherDataFromExcel() {
   console.log('Excelファイルから天気データをインポート開始...');
   
   // ファイルパスを検索
+  const fs = require('fs');
   let EXCEL_FILE_PATH = '';
-  for (const possiblePath of EXCEL_FILE_PATHS) {
-    const fs = require('fs');
-    if (fs.existsSync(possiblePath)) {
-      EXCEL_FILE_PATH = possiblePath;
-      break;
+  
+  // まずプロジェクトルート（backendの親ディレクトリ）を確認
+  const projectRoot = path.resolve(__dirname, '../..');
+  const rootPath = path.join(projectRoot, 'weather_data_toyama_copy.xlsx');
+  
+  if (fs.existsSync(rootPath)) {
+    EXCEL_FILE_PATH = rootPath;
+  } else {
+    // 他のパスを試す
+    for (const possiblePath of EXCEL_FILE_PATHS) {
+      if (fs.existsSync(possiblePath)) {
+        EXCEL_FILE_PATH = possiblePath;
+        break;
+      }
     }
   }
   
   if (!EXCEL_FILE_PATH) {
     console.error('Excelファイルが見つかりません。試したパス:');
+    console.error(`  - ${rootPath}`);
     EXCEL_FILE_PATHS.forEach(p => console.error(`  - ${p}`));
+    console.error(`プロジェクトルート: ${projectRoot}`);
+    console.error(`process.cwd(): ${process.cwd()}`);
     await pool.end();
     return;
   }
@@ -156,11 +169,15 @@ async function importWeatherDataFromExcel() {
     let emptyWeatherCount = 0;
 
     // 各行を処理
+    console.log(`データ行の処理開始: ${startRow}行目から${worksheet.rowCount}行目まで`);
     for (let rowNum = startRow; rowNum <= worksheet.rowCount; rowNum++) {
       const row = worksheet.getRow(rowNum);
       
-      // 空行をスキップ
+      // 空行をスキップ（ただし、最後の数行は確認する）
       if (!row.getCell(1).value) {
+        if (rowNum > worksheet.rowCount - 5) {
+          console.log(`警告: 行${rowNum}が空です（最後の5行以内）`);
+        }
         continue;
       }
       
@@ -176,7 +193,13 @@ async function importWeatherDataFromExcel() {
         
         const date = dateValue ? parseDate(dateValue) : null;
         if (!date || isNaN(date.getTime())) {
-          console.warn(`スキップ: 無効な日付形式 '${dateValue}' (行${rowNum}, 型: ${typeof dateValue})`);
+          // 最後の数行の場合は詳細ログを出力
+          if (rowNum > worksheet.rowCount - 5) {
+            console.warn(`スキップ: 無効な日付形式 '${dateValue}' (行${rowNum}, 型: ${typeof dateValue})`);
+            console.warn(`  セル1の値: ${JSON.stringify(row.getCell(1).value)}`);
+            console.warn(`  セル2の値: ${JSON.stringify(row.getCell(2).value)}`);
+            console.warn(`  セル6の値: ${JSON.stringify(row.getCell(6).value)}`);
+          }
           skippedCount++;
           continue;
         }
