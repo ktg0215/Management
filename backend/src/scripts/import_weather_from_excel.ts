@@ -13,7 +13,13 @@ const pool = new Pool({
 });
 
 // Excelファイルのパス（プロジェクトルートからの相対パス）
-const EXCEL_FILE_PATH = path.join(__dirname, '../../weather_data_toyama copy.xlsx');
+// サーバー上ではスペースがアンダースコアに置き換えられている可能性があるため、両方を試す
+const EXCEL_FILE_PATHS = [
+  path.join(__dirname, '../../weather_data_toyama_copy.xlsx'),
+  path.join(__dirname, '../../weather_data_toyama copy.xlsx'),
+  path.join(process.cwd(), 'weather_data_toyama_copy.xlsx'),
+  path.join(process.cwd(), 'weather_data_toyama copy.xlsx'),
+];
 
 // 店舗ID 1（富山二口店）の緯度経度
 const STORE_ID = 1;
@@ -79,6 +85,24 @@ function parseDate(dateValue: ExcelJS.CellValue): Date | null {
 
 async function importWeatherDataFromExcel() {
   console.log('Excelファイルから天気データをインポート開始...');
+  
+  // ファイルパスを検索
+  let EXCEL_FILE_PATH = '';
+  for (const possiblePath of EXCEL_FILE_PATHS) {
+    const fs = require('fs');
+    if (fs.existsSync(possiblePath)) {
+      EXCEL_FILE_PATH = possiblePath;
+      break;
+    }
+  }
+  
+  if (!EXCEL_FILE_PATH) {
+    console.error('Excelファイルが見つかりません。試したパス:');
+    EXCEL_FILE_PATHS.forEach(p => console.error(`  - ${p}`));
+    await pool.end();
+    return;
+  }
+  
   console.log(`ファイルパス: ${EXCEL_FILE_PATH}`);
 
   try {
