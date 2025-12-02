@@ -169,7 +169,8 @@ async function importWeatherDataFromExcel() {
     let emptyWeatherCount = 0;
 
     // 各行を処理
-    console.log(`データ行の処理開始: ${startRow}行目から${worksheet.rowCount}行目まで`);
+    const totalDataRows = worksheet.rowCount - startRow + 1;
+    console.log(`データ行の処理開始: ${startRow}行目から${worksheet.rowCount}行目まで（${totalDataRows}行）`);
     for (let rowNum = startRow; rowNum <= worksheet.rowCount; rowNum++) {
       const row = worksheet.getRow(rowNum);
       
@@ -241,6 +242,11 @@ async function importWeatherDataFromExcel() {
         );
         
         updatedCount++; // ON CONFLICT DO UPDATE なので、更新としてカウント
+        
+        // 最後の10件は詳細ログを出力
+        if (rowNum > worksheet.rowCount - 10) {
+          console.log(`  [行${rowNum}] ${formattedDate}: weather="${weather}", temperature=${temperature}°C`);
+        }
         
         if ((importedCount + updatedCount) % 100 === 0) {
           console.log(`進捗: ${importedCount + updatedCount}件のデータを処理しました...`);
