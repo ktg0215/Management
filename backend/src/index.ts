@@ -2393,9 +2393,9 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
                 continue;
               }
               // 年月から日付オブジェクトを作成
-              const year = parseInt(String(row.year));
-              const month = parseInt(String(row.month));
-              if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+              const dataYear = parseInt(String(row.year));
+              const dataMonth = parseInt(String(row.month));
+              if (isNaN(dataYear) || isNaN(dataMonth) || dataMonth < 1 || dataMonth > 12) {
                 console.error(`[天気データ取得] 無効な年月: year=${row.year}, month=${row.month}`);
                 enrichedDailyData[dayOfMonth] = {
                   ...dayData,
@@ -2405,9 +2405,9 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
                 };
                 continue;
               }
-              date = new Date(year, month - 1, dayOfMonth);
+              date = new Date(dataYear, dataMonth - 1, dayOfMonth);
               if (isNaN(date.getTime())) {
-                console.error(`[天気データ取得] 無効な日付オブジェクト: ${year}-${month}-${dayOfMonth}`);
+                console.error(`[天気データ取得] 無効な日付オブジェクト: ${dataYear}-${dataMonth}-${dayOfMonth}`);
                 enrichedDailyData[dayOfMonth] = {
                   ...dayData,
                   weather: '',
