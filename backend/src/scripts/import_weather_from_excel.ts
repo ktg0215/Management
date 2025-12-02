@@ -15,10 +15,11 @@ const pool = new Pool({
 // Excelファイルのパス（プロジェクトルートからの相対パス）
 // サーバー上ではスペースがアンダースコアに置き換えられている可能性があるため、両方を試す
 const EXCEL_FILE_PATHS = [
-  path.join(__dirname, '../../weather_data_toyama_copy.xlsx'),
+  path.join(process.cwd(), 'weather_data_toyama_copy.xlsx'), // プロジェクトルート
+  path.join(__dirname, '../../weather_data_toyama_copy.xlsx'), // backend/src/scripts/ から見た相対パス
+  path.join(__dirname, '../../../weather_data_toyama_copy.xlsx'), // 念のため
+  path.join(process.cwd(), 'weather_data_toyama copy.xlsx'), // スペース版
   path.join(__dirname, '../../weather_data_toyama copy.xlsx'),
-  path.join(process.cwd(), 'weather_data_toyama_copy.xlsx'),
-  path.join(process.cwd(), 'weather_data_toyama copy.xlsx'),
 ];
 
 // 店舗ID 1（富山二口店）の緯度経度
