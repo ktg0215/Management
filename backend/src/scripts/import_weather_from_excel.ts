@@ -30,19 +30,23 @@ interface WeatherRow {
 }
 
 // 日付文字列をパースする関数 (YYYY/MM/DD形式に対応)
-function parseDate(dateStr: string | number | Date): Date | null {
-  if (dateStr instanceof Date) {
-    return dateStr;
+function parseDate(dateValue: ExcelJS.CellValue): Date | null {
+  if (dateValue === null || dateValue === undefined) {
+    return null;
   }
   
-  if (typeof dateStr === 'number') {
+  if (dateValue instanceof Date) {
+    return dateValue;
+  }
+  
+  if (typeof dateValue === 'number') {
     // Excelのシリアル日付番号の場合
     const excelEpoch = new Date(1899, 11, 30); // Excelのエポック（1900年1月0日）
-    const date = new Date(excelEpoch.getTime() + dateStr * 24 * 60 * 60 * 1000);
+    const date = new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
     return date;
   }
   
-  const str = String(dateStr);
+  const str = String(dateValue);
   const parts = str.split('/');
   if (parts.length === 3) {
     const year = parseInt(parts[0]);
@@ -145,9 +149,9 @@ async function importWeatherDataFromExcel() {
         const snowValue = row.getCell(5).value; // 5列目: 雪
         const weatherValue = row.getCell(6).value; // 6列目: 天気
         
-        const date = parseDate(dateValue);
+        const date = dateValue ? parseDate(dateValue) : null;
         if (!date || isNaN(date.getTime())) {
-          console.warn(`スキップ: 無効な日付形式 '${dateValue}' (行${rowNum})`);
+          console.warn(`スキップ: 無効な日付形式 '${dateValue}' (行${rowNum}, 型: ${typeof dateValue})`);
           skippedCount++;
           continue;
         }
