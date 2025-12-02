@@ -180,17 +180,22 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
     const weatherLower = weather.toLowerCase();
     const iconClass = "w-4 h-4 inline-block";
     
-    // デバッグ: 天気文字列をログ出力
-    if (weatherLower !== '曇り' && weatherLower !== 'cloudy') {
-      console.log(`[getWeatherIcon] 天気文字列: "${weather}" (lowercase: "${weatherLower}")`);
+    // デバッグ: すべての天気文字列をログ出力
+    console.log(`[getWeatherIcon] 天気文字列: "${weather}" (lowercase: "${weatherLower}")`);
+    
+    // 「晴れ時々曇り」や「晴れのち曇り」の場合、太陽と曇りのアイコンを2つ並べて表示
+    if ((weatherLower.includes('晴れ') && (weatherLower.includes('時々曇り') || weatherLower.includes('のち'))) || 
+        weatherLower.includes('partially cloudy')) {
+      return (
+        <div className="flex items-center gap-0.5">
+          <Sun className={iconClass} style={{ color: '#fbbf24' }} />
+          <Cloud className={iconClass} style={{ color: '#60a5fa' }} />
+        </div>
+      );
     }
     
-    // 「晴れ」を含む場合（「晴れ時々曇り」なども含む）
+    // 「晴れ」を含む場合（「晴れ時々曇り」などは上で処理済み）
     if (weatherLower.includes('晴れ') || weatherLower.includes('clear')) {
-      // 「時々曇り」や「のち」が含まれる場合は曇りアイコン
-      if (weatherLower.includes('時々曇り') || weatherLower.includes('のち') || weatherLower.includes('partially cloudy')) {
-        return <Cloud className={iconClass} style={{ color: '#60a5fa' }} />;
-      }
       // 純粋な「晴れ」の場合は太陽アイコン
       return <Sun className={iconClass} style={{ color: '#fbbf24' }} />;
     } 
