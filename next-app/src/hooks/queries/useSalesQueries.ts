@@ -127,10 +127,25 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
             date: dateKey,
             dayOfWeek: getDayOfWeek(year, month, day),
             // 天気データを明示的に保持（APIから取得したデータをそのまま使用）
-            weather: dayData.weather,
-            temperature: dayData.temperature,
-            event: dayData.event
+            // dayDataに既に含まれている場合はそのまま、含まれていない場合はundefined
+            weather: dayData.weather !== undefined ? dayData.weather : undefined,
+            temperature: dayData.temperature !== undefined ? dayData.temperature : undefined,
+            event: dayData.event !== undefined ? dayData.event : undefined
           };
+          
+          // デバッグ: 最初の3日分の天気データをログ出力
+          if (processedCount < 3) {
+            console.log(`[useSalesData] Day ${dayStr} (${dateKey}):`, {
+              hasWeather: dayData.weather !== undefined,
+              weather: dayData.weather,
+              hasTemperature: dayData.temperature !== undefined,
+              temperature: dayData.temperature,
+              hasEvent: dayData.event !== undefined,
+              event: dayData.event,
+              dayDataKeys: Object.keys(dayData)
+            });
+          }
+          
           processedCount++;
         }
         
