@@ -2353,11 +2353,18 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
             // 天気データの文字化けを修正（Shift-JISからUTF-8への変換を試みる）
             let weather = weatherRow.weather || '';
             // 文字化けのパターンを検出して修正
-            if (weather.includes('���') || weather.includes('�')) {
-              // 文字化けしている可能性があるため、データベースから再取得を試みる
-              // または、Visual Crossing APIから再取得する
-              console.warn(`[天気データ取得] 文字化けを検出: ${dateKey}, weather="${weather}"`);
-              // 一旦空文字列にして、後で再取得する
+            // 文字化けのパターン: 不正な文字（�）や空文字列、または非常に短い文字列
+            const isCorrupted = weather && (
+              weather.includes('�') || 
+              weather.includes('���') ||
+              weather.length < 2 || // 通常の天気文字列は2文字以上
+              /^[\x00-\x1F\x7F-\x9F]+$/.test(weather) // 制御文字のみ
+            );
+            
+            if (isCorrupted) {
+              console.warn(`[天気データ取得] 文字化けを検出: ${dateKey}, weather="${weather}" (length=${weather.length})`);
+              // 文字化けしている場合は空文字列にして、フロントエンドでデフォルトアイコンが表示されるようにする
+              // または、気温データがあれば、気温から推測できる天気を設定する（将来的な改善）
               weather = '';
             }
             
@@ -2504,14 +2511,19 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
       }
       
       // デバッグ: enrichedDailyDataのサンプルをログ出力
-      const sampleKeys = Object.keys(enrichedDailyData).slice(0, 3);
-      console.log(`[天気データ取得] enrichedDailyData サンプル:`, sampleKeys.map(key => ({
-        key,
-        hasWeather: enrichedDailyData[key]?.weather !== undefined,
-        weather: enrichedDailyData[key]?.weather,
-        hasTemperature: enrichedDailyData[key]?.temperature !== undefined,
-        temperature: enrichedDailyData[key]?.temperature
-      })));
+      const sampleKeys = Object.keys(enrichedDailyData).slice(0, 5);
+      if (sampleKeys.length > 0) {
+        console.log(`[天気データ取得] enrichedDailyData サンプル (${sampleKeys.length}件):`, sampleKeys.map(key => ({
+          key,
+          hasWeather: enrichedDailyData[key]?.weather !== undefined,
+          weather: enrichedDailyData[key]?.weather,
+          weatherLength: enrichedDailyData[key]?.weather?.length || 0,
+          hasTemperature: enrichedDailyData[key]?.temperature !== undefined,
+          temperature: enrichedDailyData[key]?.temperature
+        })));
+      } else {
+        console.log(`[天気データ取得] enrichedDailyData は空です`);
+      }
       
       res.json({
         success: true,
