@@ -176,10 +176,17 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
   // 天気アイコンを取得
   const getWeatherIcon = (weather: string | undefined) => {
     // デバッグ: 関数が呼ばれたことを確認
-    console.log(`[getWeatherIcon] 関数呼び出し: weather="${weather}", type=${typeof weather}`);
+    console.log(`[getWeatherIcon] 関数呼び出し: weather="${weather}", type=${typeof weather}, length=${weather?.length || 0}`);
     
-    if (!weather || weather.trim() === '') {
-      console.log(`[getWeatherIcon] 天気データが空のためnullを返します`);
+    // undefinedまたはnullの場合はnullを返す
+    if (weather === undefined || weather === null) {
+      console.log(`[getWeatherIcon] 天気データがundefined/nullのためnullを返します`);
+      return null;
+    }
+    
+    // 空文字列の場合はnullを返す
+    if (weather.trim() === '') {
+      console.log(`[getWeatherIcon] 天気データが空文字列のためnullを返します`);
       return null;
     }
     

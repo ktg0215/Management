@@ -122,27 +122,35 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
             continue;
           }
           
+          // 天気データを明示的に保持（APIから取得したデータをそのまま使用）
+          // dayDataに既に含まれている場合はそのまま、含まれていない場合はundefined
+          // 空文字列も有効な値として扱う
+          const weather = dayData.weather !== undefined ? dayData.weather : undefined;
+          const temperature = dayData.temperature !== undefined ? dayData.temperature : undefined;
+          const event = dayData.event !== undefined ? dayData.event : undefined;
+          
           transformedDailyData[dateKey] = {
             ...dayData,
             date: dateKey,
             dayOfWeek: getDayOfWeek(year, month, day),
-            // 天気データを明示的に保持（APIから取得したデータをそのまま使用）
-            // dayDataに既に含まれている場合はそのまま、含まれていない場合はundefined
-            weather: dayData.weather !== undefined ? dayData.weather : undefined,
-            temperature: dayData.temperature !== undefined ? dayData.temperature : undefined,
-            event: dayData.event !== undefined ? dayData.event : undefined
+            weather,
+            temperature,
+            event
           };
           
           // デバッグ: 最初の3日分の天気データをログ出力
           if (processedCount < 3) {
             console.log(`[useSalesData] Day ${dayStr} (${dateKey}):`, {
-              hasWeather: dayData.weather !== undefined,
-              weather: dayData.weather,
-              hasTemperature: dayData.temperature !== undefined,
-              temperature: dayData.temperature,
-              hasEvent: dayData.event !== undefined,
-              event: dayData.event,
-              dayDataKeys: Object.keys(dayData)
+              hasWeather: weather !== undefined,
+              weather: weather,
+              weatherType: typeof weather,
+              hasTemperature: temperature !== undefined,
+              temperature: temperature,
+              hasEvent: event !== undefined,
+              event: event,
+              dayDataKeys: Object.keys(dayData),
+              dayDataWeather: dayData.weather,
+              dayDataTemperature: dayData.temperature
             });
           }
           
