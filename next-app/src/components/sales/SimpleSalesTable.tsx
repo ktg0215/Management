@@ -461,7 +461,11 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
                 <td className={dayOfWeekCellClass}>{data?.dayOfWeek || ''}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>
                   <div className="flex items-center justify-center">
-                    {getWeatherIcon(data?.weather || '')}
+                    {(() => {
+                      const weather = data?.weather || '';
+                      console.log(`[SimpleSalesTable] Rendering weather icon for ${date}: weather="${weather}", type=${typeof weather}`);
+                      return getWeatherIcon(weather);
+                    })()}
                   </div>
                 </td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>
