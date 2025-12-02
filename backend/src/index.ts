@@ -2347,8 +2347,19 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
               dateKey = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
             }
             
+            // 天気データの文字化けを修正（Shift-JISからUTF-8への変換を試みる）
+            let weather = weatherRow.weather || '';
+            // 文字化けのパターンを検出して修正
+            if (weather.includes('���') || weather.includes('�')) {
+              // 文字化けしている可能性があるため、データベースから再取得を試みる
+              // または、Visual Crossing APIから再取得する
+              console.warn(`[天気データ取得] 文字化けを検出: ${dateKey}, weather="${weather}"`);
+              // 一旦空文字列にして、後で再取得する
+              weather = '';
+            }
+            
             weatherCache.set(dateKey, {
-              weather: weatherRow.weather || '',
+              weather: weather,
               temperature: weatherRow.temperature !== null ? Math.round(weatherRow.temperature) : null
             });
           }

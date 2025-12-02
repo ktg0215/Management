@@ -175,7 +175,13 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
 
   // 天気アイコンを取得
   const getWeatherIcon = (weather: string | undefined) => {
-    if (!weather || weather.trim() === '') return null;
+    // デバッグ: 関数が呼ばれたことを確認
+    console.log(`[getWeatherIcon] 関数呼び出し: weather="${weather}", type=${typeof weather}`);
+    
+    if (!weather || weather.trim() === '') {
+      console.log(`[getWeatherIcon] 天気データが空のためnullを返します`);
+      return null;
+    }
     
     const weatherLower = weather.toLowerCase();
     const iconClass = "w-4 h-4 inline-block";
@@ -183,9 +189,17 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
     // デバッグ: すべての天気文字列をログ出力
     console.log(`[getWeatherIcon] 天気文字列: "${weather}" (lowercase: "${weatherLower}")`);
     
+    // 文字化けの検出（Shift-JISの文字化けパターン）
+    if (weather.includes('���') || weather.includes('�') || !/^[\u0000-\u007F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBF]+$/.test(weather)) {
+      console.warn(`[getWeatherIcon] 文字化けを検出: "${weather}"`);
+      // 文字化けしている場合は、曇りアイコンを表示
+      return <Cloud className={iconClass} style={{ color: '#9ca3af' }} />;
+    }
+    
     // 「晴れ時々曇り」や「晴れのち曇り」の場合、太陽と曇りのアイコンを2つ並べて表示
     if ((weatherLower.includes('晴れ') && (weatherLower.includes('時々曇り') || weatherLower.includes('のち'))) || 
         weatherLower.includes('partially cloudy')) {
+      console.log(`[getWeatherIcon] 晴れ時々曇りを検出`);
       return (
         <div className="flex items-center gap-0.5">
           <Sun className={iconClass} style={{ color: '#fbbf24' }} />
@@ -196,11 +210,13 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
     
     // 「晴れ」を含む場合（「晴れ時々曇り」などは上で処理済み）
     if (weatherLower.includes('晴れ') || weatherLower.includes('clear')) {
+      console.log(`[getWeatherIcon] 晴れを検出`);
       // 純粋な「晴れ」の場合は太陽アイコン
       return <Sun className={iconClass} style={{ color: '#fbbf24' }} />;
     } 
     // 「雨」を含む場合
     else if (weatherLower.includes('雨') || weatherLower.includes('rain')) {
+      console.log(`[getWeatherIcon] 雨を検出`);
       if (weatherLower.includes('にわか') || weatherLower.includes('shower')) {
         return <CloudDrizzle className={iconClass} style={{ color: '#3b82f6' }} />;
       }
@@ -208,14 +224,17 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
     } 
     // 「雪」を含む場合
     else if (weatherLower.includes('雪') || weatherLower.includes('snow')) {
+      console.log(`[getWeatherIcon] 雪を検出`);
       return <CloudSnow className={iconClass} style={{ color: '#93c5fd' }} />;
     } 
     // 「雷」を含む場合
     else if (weatherLower.includes('雷') || weatherLower.includes('thunder')) {
+      console.log(`[getWeatherIcon] 雷を検出`);
       return <CloudLightning className={iconClass} style={{ color: '#7c3aed' }} />;
     } 
     // 「曇り」を含む場合（最後にチェック）
     else if (weatherLower.includes('曇り') || weatherLower.includes('cloudy') || weatherLower.includes('overcast')) {
+      console.log(`[getWeatherIcon] 曇りを検出`);
       return <Cloud className={iconClass} style={{ color: '#9ca3af' }} />;
     }
     
