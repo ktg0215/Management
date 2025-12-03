@@ -47,7 +47,11 @@ async function fetchWeatherDataFromVisualCrossing(
   date: Date,
   retryCount: number = 0
 ): Promise<{ weather: string; temperature: number | null; humidity: number | null; precipitation: number | null; snow: number | null }> {
-  const dateStr = date.toISOString().split('T')[0];
+  // UTC変換によるずれを防ぐため、ローカル時間で日付文字列を作成
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
   const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${latitude},${longitude}/${dateStr}?unitGroup=metric&key=${API_KEY}`;
 
   if (retryCount === 0) {
@@ -158,7 +162,7 @@ async function fetchMay30And31Weather() {
       
       try {
         console.log(`[${i + 1}/${dates.length}] ${dateStr}: 天気データを取得中...`);
-        const weatherData = await fetchWeatherDataFromVisualCrossing(latitude, longitude, date);
+        const weatherData = await fetchWeatherDataFromVisualCrossing(latitude, longitude, date, 0);
         
         if (weatherData.weather || weatherData.temperature !== null) {
           await pool.query(
