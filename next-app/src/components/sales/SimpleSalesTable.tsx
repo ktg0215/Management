@@ -204,7 +204,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
     }
     
     // 「晴れ時々曇り」や「晴れのち曇り」の場合、太陽と曇りのアイコンを2つ並べて表示
-    // より柔軟な判定: 「晴れ」と「時々」または「のち」と「曇り」を含む場合
+    // より柔軟な判定: 「晴れ」と「時々」または「のち」と「曇」を含む場合
     const hasHare = weatherLower.includes('晴れ');
     const hasTokidoki = weatherLower.includes('時々');
     const hasNochi = weatherLower.includes('のち');
@@ -213,6 +213,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
     
     console.log(`[getWeatherIcon] 判定チェック: weather="${weather}", hasHare=${hasHare}, hasTokidoki=${hasTokidoki}, hasNochi=${hasNochi}, hasKumori=${hasKumori}, isPartiallyCloudy=${isPartiallyCloudy}`);
     
+    // 「晴れ時々曇り」や「晴れのち曇り」を最初にチェック（他の条件より優先）
     if (isPartiallyCloudy ||
         (hasHare && (hasTokidoki || hasNochi) && hasKumori)) {
       console.log(`[getWeatherIcon] 晴れ時々曇りを検出: "${weather}"`);
