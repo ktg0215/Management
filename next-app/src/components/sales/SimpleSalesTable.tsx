@@ -215,9 +215,9 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
         (hasHare && (hasTokidoki || hasNochi) && hasKumori)) {
       console.log(`[getWeatherIcon] 晴れ時々曇りを検出: "${weather}"`);
       return (
-        <div className="flex items-center justify-center gap-1">
-          <Sun className={iconClass} style={{ color: '#fbbf24' }} />
-          <Cloud className={iconClass} style={{ color: '#60a5fa' }} />
+        <div className="flex items-center justify-center gap-2 flex-nowrap">
+          <Sun className={`${iconClass} flex-shrink-0`} style={{ color: '#fbbf24' }} />
+          <Cloud className={`${iconClass} flex-shrink-0`} style={{ color: '#60a5fa' }} />
         </div>
       );
     }
