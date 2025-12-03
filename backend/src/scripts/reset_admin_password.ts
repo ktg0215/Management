@@ -21,7 +21,7 @@ async function resetAdminPassword() {
     
     // パスワードを更新
     const result = await pool.query(
-      'UPDATE employees SET password = $1 WHERE email = $2',
+      'UPDATE employees SET password_hash = $1 WHERE email = $2',
       [hashedPassword, email]
     );
     
