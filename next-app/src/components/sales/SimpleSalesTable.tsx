@@ -196,22 +196,19 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
     // デバッグ: すべての天気文字列をログ出力
     console.log(`[getWeatherIcon] 天気文字列: "${weather}" (lowercase: "${weatherLower}")`);
     
-    // 文字化けの検出（Shift-JISの文字化けパターン）
-    if (weather.includes('���') || weather.includes('�') || !/^[\u0000-\u007F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBF]+$/.test(weather)) {
-      console.warn(`[getWeatherIcon] 文字化けを検出: "${weather}"`);
-      // 文字化けしている場合は、曇りアイコンを表示
-      return <Cloud className={iconClass} style={{ color: '#9ca3af' }} />;
-    }
-    
     // 「晴れ時々曇り」や「晴れのち曇り」の場合、太陽と曇りのアイコンを2つ並べて表示
     // より柔軟な判定: 「晴れ」と「時々」または「のち」と「曇」を含む場合
-    const hasHare = weatherLower.includes('晴れ');
-    const hasTokidoki = weatherLower.includes('時々');
-    const hasNochi = weatherLower.includes('のち');
-    const hasKumori = weatherLower.includes('曇');
+    // 注意: toLowerCase()は日本語には影響しないが、念のため元の文字列もチェック
+    const hasHare = weather.includes('晴れ') || weatherLower.includes('晴れ');
+    const hasTokidoki = weather.includes('時々') || weatherLower.includes('時々');
+    const hasNochi = weather.includes('のち') || weatherLower.includes('のち');
+    const hasKumori = weather.includes('曇') || weatherLower.includes('曇');
     const isPartiallyCloudy = weatherLower.includes('partially cloudy');
     
-    console.log(`[getWeatherIcon] 判定チェック: weather="${weather}", hasHare=${hasHare}, hasTokidoki=${hasTokidoki}, hasNochi=${hasNochi}, hasKumori=${hasKumori}, isPartiallyCloudy=${isPartiallyCloudy}`);
+    // デバッグ: 文字列の詳細を確認
+    console.log(`[getWeatherIcon] 判定チェック: weather="${weather}", weather.length=${weather.length}, weatherLower="${weatherLower}", weatherLower.length=${weatherLower.length}`);
+    console.log(`[getWeatherIcon] 文字コード: ${Array.from(weather).map((char, i) => `${i}:${char.charCodeAt(0)}`).join(', ')}`);
+    console.log(`[getWeatherIcon] hasHare=${hasHare}, hasTokidoki=${hasTokidoki}, hasNochi=${hasNochi}, hasKumori=${hasKumori}, isPartiallyCloudy=${isPartiallyCloudy}`);
     
     // 「晴れ時々曇り」や「晴れのち曇り」を最初にチェック（他の条件より優先）
     if (isPartiallyCloudy ||
