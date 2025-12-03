@@ -68,7 +68,11 @@ async function checkWeatherData202505() {
     // 欠けている日付を確認
     const dates = result.rows.map(row => {
       const date = row.date instanceof Date ? row.date : new Date(row.date);
-      return date.toISOString().split('T')[0];
+      // UTC変換によるずれを防ぐため、ローカル時間で日付文字列を作成
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     });
     
     console.log('\n欠けている日付:');
@@ -85,6 +89,9 @@ async function checkWeatherData202505() {
     } else {
       console.log(`\n合計 ${missingCount} 日分のデータが欠けています。`);
     }
+    
+    console.log('\n存在する日付のサンプル（最後の5件）:');
+    dates.slice(-5).forEach(d => console.log(`  ${d}`));
     
   } catch (error) {
     console.error('エラー:', error);
