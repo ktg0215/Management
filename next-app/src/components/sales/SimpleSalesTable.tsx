@@ -78,6 +78,8 @@ interface SimpleDailySalesData {
   weather?: string;
   temperature?: number | null;
   event?: string;
+  // 予測フラグ
+  is_predicted?: boolean;
 }
 
 interface SimpleSalesTableProps {
@@ -158,19 +160,31 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
     return `${baseClass} ${isEvenRow ? 'bg-white' : 'bg-gray-50'}`;
   };
 
-  const formatValue = (value: any) => {
+  const formatValue = (value: any, isPredicted: boolean = false) => {
     if (value === undefined || value === null || value === '') return '-';
-    return typeof value === 'number' ? formatNumber(value) : String(value);
+    const formatted = typeof value === 'number' ? formatNumber(value) : String(value);
+    if (isPredicted) {
+      return <span className="text-blue-600 font-medium">{formatted}</span>;
+    }
+    return formatted;
   };
 
-  const formatPercent = (value: any) => {
+  const formatPercent = (value: any, isPredicted: boolean = false) => {
     if (value === undefined || value === null || value === '') return '-';
-    return typeof value === 'number' ? `${value.toFixed(1)}%` : String(value);
+    const formatted = typeof value === 'number' ? `${value.toFixed(1)}%` : String(value);
+    if (isPredicted) {
+      return <span className="text-blue-600 font-medium">{formatted}</span>;
+    }
+    return formatted;
   };
 
-  const formatDecimal = (value: any) => {
+  const formatDecimal = (value: any, isPredicted: boolean = false) => {
     if (value === undefined || value === null || value === '') return '-';
-    return typeof value === 'number' ? value.toFixed(1) : String(value);
+    const formatted = typeof value === 'number' ? value.toFixed(1) : String(value);
+    if (isPredicted) {
+      return <span className="text-blue-600 font-medium">{formatted}</span>;
+    }
+    return formatted;
   };
 
   // 天気アイコンを取得
@@ -484,6 +498,10 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
           </thead>
           <tbody className="divide-y divide-gray-100 text-gray-900">
             {memoizedCellData.map(({ date, data, day, index, dateCellClass, dayOfWeekCellClass, actionCellClass }) => {
+              // デバッグ: 最初の3日分のis_predictedフラグをログ出力
+              if (index < 3 && data) {
+                console.log(`[SimpleSalesTable] Row ${index} (${date}): is_predicted=${data.is_predicted}, netSales=${data.netSales}, edwNetSales=${data.edwNetSales}, ohbNetSales=${data.ohbNetSales}`);
+              }
               // Debug logging for weather data
               if (index < 3) {
                 console.log(`[SimpleSalesTable] Row ${index} (${date}):`, {
@@ -520,12 +538,12 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.edwYearOverYear)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.ohbYearOverYear)}</td>
                 {/* 店舗売上 */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.netSales)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.netSalesCumulative)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.edwNetSales)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.edwNetSalesCumulative)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbNetSales)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbNetSalesCumulative)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.netSales, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.netSalesCumulative, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.edwNetSales, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.edwNetSalesCumulative, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbNetSales, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbNetSalesCumulative, data?.is_predicted)}</td>
                 {/* 客数・組数 */}
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.totalGroups)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.totalCustomers)}</td>
@@ -542,8 +560,8 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.laborCost)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.laborCostRate)}</td>
                 {/* EDW営業明細 */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchSales)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.dinnerSales)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchSales, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.dinnerSales, data?.is_predicted)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchCustomers)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.dinnerCustomers)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchGroups)}</td>
@@ -552,7 +570,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchUnitPrice)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.dinnerUnitPrice)}</td>
                 {/* OHB */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbSales)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbSales, data?.is_predicted)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbCustomers)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbGroups)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbCustomerUnitPrice)}</td>

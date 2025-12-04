@@ -224,6 +224,8 @@ const SalesManagementPage = () => {
       transformed[date] = {
         date: data.date || date,
         dayOfWeek: data.dayOfWeek || '',
+        // 予測フラグ
+        is_predicted: data.is_predicted || false,
         // 売上・目標関連
         salesTarget: data.salesTarget,
         targetCumulative: data.targetCumulative,

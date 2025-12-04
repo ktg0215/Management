@@ -13,6 +13,7 @@ import path from 'path';
 import fs from 'fs';
 import https from 'https';
 import { fetchJMAWeatherForecast, fetchJMAWeatherForDate } from './utils/jmaWeatherApi';
+import * as cron from 'node-cron';
 
 // 環境変数の読み込み
 dotenv.config();
@@ -2284,13 +2285,13 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
       let longitude = store.longitude;
       const address = store.address;
       
-      // 売上管理ページが開かれた際に、過去2日のデータを再取得（予報データを実際の天気データで更新）
+      // 売上管理ページが開かれた際に、過去2日のデータを再取得し、未来1週間の天気予報を取得
       if (latitude && longitude) {
         try {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           
-          // 過去2日（昨日と一昨日）のデータを再取得
+          // 過去2日（昨日と一昨日）のデータを再取得（予報データを実際の天気データで更新）
           for (let i = 1; i <= 2; i++) {
             const pastDate = new Date(today);
             pastDate.setDate(pastDate.getDate() - i);
@@ -2330,8 +2331,38 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
               console.log(`[天気データ更新] ${pastDateStr} のデータを更新しました`);
             }
           }
+          
+          // 未来1週間（今日から7日後まで）の天気予報を取得
+          console.log('[天気データ更新] 未来1週間の天気予報を取得中...');
+          try {
+            const TOYAMA_AREA_CODE = '160000'; // 富山県の地域コード
+            const forecastList = await fetchJMAWeatherForecast(TOYAMA_AREA_CODE);
+            
+            for (const forecast of forecastList) {
+              const forecastDate = new Date(forecast.date);
+              const todayStr = today.toISOString().split('T')[0];
+              const forecastDateStr = forecast.date;
+              
+              // 今日から7日後までのデータのみを保存
+              const daysDiff = Math.floor((forecastDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+              if (daysDiff >= 0 && daysDiff <= 7) {
+                // データベースに保存
+                await pool!.query(
+                  `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, humidity, precipitation, snow, updated_at)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+                   ON CONFLICT (latitude, longitude, date) 
+                   DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, humidity = EXCLUDED.humidity, precipitation = EXCLUDED.precipitation, snow = EXCLUDED.snow, updated_at = NOW()`,
+                  [latitude, longitude, forecastDateStr, forecast.weather || null, forecast.temperature, forecast.humidity, forecast.precipitation, forecast.snow]
+                );
+                console.log(`[天気データ更新] 未来予報 ${forecastDateStr} のデータを保存しました`);
+              }
+            }
+          } catch (forecastErr) {
+            console.error('[天気データ更新] 未来1週間の天気予報取得エラー:', forecastErr);
+            // エラーが発生しても処理を続行
+          }
         } catch (updateErr) {
-          console.error('[天気データ更新] 過去2日のデータ更新エラー:', updateErr);
+          console.error('[天気データ更新] 天気データ更新エラー:', updateErr);
           // エラーが発生しても処理を続行
         }
       }
@@ -2465,7 +2496,8 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
                     ...dayData,
                     weather: '',
                     temperature: null,
-                    event: ''
+                    event: '',
+                    is_predicted: dayData.is_predicted || false
                   };
                 }
                 continue;
@@ -2481,7 +2513,8 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
                   ...dayData,
                   weather: '',
                   temperature: null,
-                  event: ''
+                  event: '',
+                  is_predicted: dayData.is_predicted || false
                 };
                 continue;
               }
@@ -2494,7 +2527,8 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
                   ...dayData,
                   weather: '',
                   temperature: null,
-                  event: ''
+                  event: '',
+                  is_predicted: dayData.is_predicted || false
                 };
                 continue;
               }
@@ -2505,7 +2539,8 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
                   ...dayData,
                   weather: '',
                   temperature: null,
-                  event: ''
+                  event: '',
+                  is_predicted: dayData.is_predicted || false
                 };
                 continue;
               }
@@ -2521,7 +2556,8 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
                 ...dayData,
                 weather: '',
                 temperature: null,
-                event: ''
+                event: '',
+                is_predicted: dayData.is_predicted || false
               };
             }
             continue;
@@ -2577,12 +2613,13 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
             ...dayData,
             weather,
             temperature,
-            event: eventName
+            event: eventName,
+            is_predicted: dayData.is_predicted || false  // 予測フラグを保持
           };
           
           // デバッグ: 最初の5日分の天気データをログ出力
           if (dayOfMonth <= 5) {
-            console.log(`[天気データ取得] 日付 ${dayOfMonth} (${dateKey}): 天気="${weather}", 気温=${temperature}, イベント=${eventName}, dayData.weather=${dayData.weather || 'undefined'}`);
+            console.log(`[天気データ取得] 日付 ${dayOfMonth} (${dateKey}): 天気="${weather}", 気温=${temperature}, イベント=${eventName}, is_predicted=${dayData.is_predicted || false}, dayData.weather=${dayData.weather || 'undefined'}`);
           }
         }
       }
@@ -3415,6 +3452,335 @@ app.post('/api/sales', requireDatabase, authenticateToken, async (req: Request, 
   }
 });
 
+// CSVテンプレート生成API
+app.get('/api/sales/csv-template', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { storeId, businessTypeId } = req.query;
+
+  if (!storeId) {
+    res.status(400).json({ success: false, error: 'storeIdは必須です' });
+    return;
+  }
+
+  try {
+    // 業態別フィールド設定を取得（インメモリストレージから）
+    let fields: any[] = [];
+    
+    if (businessTypeId) {
+      // グローバルスコープのbusinessTypeFieldsStorageから取得
+      fields = businessTypeFieldsStorage[String(businessTypeId)] || [];
+      
+      // フィールド設定がない場合は、デフォルトフィールドを使用
+      if (fields.length === 0) {
+        // デフォルトのフィールド設定（基本的な項目）
+        fields = [
+          { id: 'field_netSales', key: 'netSales', label: '店舗純売上', category: 'sales', type: 'currency', isVisible: true, isCalculated: false },
+          { id: 'field_edwNetSales', key: 'edwNetSales', label: 'EDW純売上', category: 'sales', type: 'currency', isVisible: true, isCalculated: false },
+          { id: 'field_ohbNetSales', key: 'ohbNetSales', label: 'OHB純売上', category: 'sales', type: 'currency', isVisible: true, isCalculated: false },
+          { id: 'field_totalGroups', key: 'totalGroups', label: '組数（計）', category: 'customer', type: 'count', isVisible: true, isCalculated: false },
+          { id: 'field_totalCustomers', key: 'totalCustomers', label: '客数（計）', category: 'customer', type: 'count', isVisible: true, isCalculated: false },
+          { id: 'field_lunchSales', key: 'lunchSales', label: 'L：売上', category: 'sales', type: 'currency', isVisible: true, isCalculated: false },
+          { id: 'field_dinnerSales', key: 'dinnerSales', label: 'D：売上', category: 'sales', type: 'currency', isVisible: true, isCalculated: false },
+          { id: 'field_laborCost', key: 'laborCost', label: '人件費額', category: 'labor', type: 'currency', isVisible: true, isCalculated: false },
+        ];
+      }
+    }
+
+    // 表示可能な項目のみをフィルタリング（天気・気温は除外）
+    const visibleFields = fields.filter(f => 
+      f.isVisible && 
+      !f.isCalculated && 
+      f.key !== 'weather' && 
+      f.key !== 'temperature' &&
+      f.label !== '天気' &&
+      f.label !== '気温'
+    );
+
+    // CSVヘッダーを生成（日付、天気、気温は固定項目なのでCSVには含めない）
+    const headers = ['日付', ...visibleFields.map((f: any) => f.label || f.key)];
+
+    // サンプルデータ行（日付のみ）
+    const sampleDate = new Date();
+    const sampleDateStr = `${sampleDate.getFullYear()}-${String(sampleDate.getMonth() + 1).padStart(2, '0')}-${String(sampleDate.getDate()).padStart(2, '0')}`;
+    const sampleRow = [sampleDateStr, ...visibleFields.map(() => '')];
+
+    // CSVコンテンツを生成
+    const csvRows = [headers, sampleRow];
+    const csvContent = csvRows.map(row => 
+      row.map(cell => {
+        const str = String(cell || '');
+        // カンマ、改行、ダブルクォートを含む場合はエスケープ
+        if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }).join(',')
+    ).join('\r\n');
+
+    // BOM付きUTF-8でエンコード
+    const BOM = '\uFEFF';
+    const csvWithBom = BOM + csvContent;
+
+    // レスポンスを返す
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="売上データテンプレート_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.csv"`);
+    res.send(csvWithBom);
+  } catch (err) {
+    console.error('CSVテンプレート生成エラー:', err);
+    res.status(500).json({ success: false, error: 'CSVテンプレートの生成に失敗しました' });
+  }
+});
+
+// CSVインポートAPI
+app.post('/api/sales/csv-import', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { storeId, csvData, fieldMapping, newFields, overwriteExisting } = req.body;
+  const user = (req as any).user;
+
+  if (!storeId || !csvData) {
+    res.status(400).json({ success: false, error: 'storeIdとcsvDataは必須です' });
+    return;
+  }
+
+  try {
+    // CSVデータをパース
+    let processedData: Record<string, Record<string, any>>;
+    try {
+      processedData = JSON.parse(csvData);
+    } catch (e) {
+      res.status(400).json({ success: false, error: 'CSVデータのパースに失敗しました' });
+      return;
+    }
+
+    // 店舗情報を取得してbusinessTypeIdを取得
+    const storeResult = await pool!.query(
+      'SELECT business_type_id FROM stores WHERE id = $1',
+      [storeId]
+    );
+    if (storeResult.rows.length === 0) {
+      res.status(404).json({ success: false, error: '店舗が見つかりません' });
+      return;
+    }
+    const businessTypeId = storeResult.rows[0].business_type_id;
+
+    // 新しい項目を追加
+    if (newFields && Array.isArray(newFields) && newFields.length > 0) {
+      // 業態別フィールド設定を取得
+      let fields: any[] = [];
+      const fieldsResult = await pool!.query(
+        'SELECT fields FROM business_type_fields WHERE business_type_id = $1',
+        [businessTypeId]
+      );
+      if (fieldsResult.rows.length > 0 && fieldsResult.rows[0].fields) {
+        fields = fieldsResult.rows[0].fields;
+      }
+
+      // インメモリストレージからも取得を試みる
+      const businessTypeFieldsStorage: Record<string, any[]> = {};
+      if (fields.length === 0) {
+        fields = businessTypeFieldsStorage[String(businessTypeId)] || [];
+      }
+
+      // 新しい項目を追加
+      newFields.forEach((newField: any) => {
+        const existingField = fields.find((f: any) => f.key === newField.fieldKey);
+        if (!existingField) {
+          fields.push({
+            id: `field_${newField.fieldKey}`,
+            key: newField.fieldKey,
+            label: newField.fieldLabel,
+            category: 'other',
+            type: newField.fieldType || 'number',
+            fieldSource: 'dailyOnly',
+            isVisible: true,
+            isVisibleInDailySales: true,
+            isVisibleInMonthlySales: false,
+            isEditable: true,
+            isCalculated: false,
+            aggregationMethod: 'sum',
+            order: fields.length + 1
+          });
+        }
+      });
+
+      // フィールド設定を保存（DBに保存する場合はここで更新）
+      // 現時点ではインメモリストレージに保存
+      businessTypeFieldsStorage[String(businessTypeId)] = fields;
+    }
+
+    // 日付ごとにデータをグループ化して年月ごとに処理
+    const monthlyDataMap: Record<string, Record<string, any>> = {};
+    
+    for (const dayOfMonth in processedData) {
+      const dayData = processedData[dayOfMonth];
+      if (!dayData.date) continue;
+
+      const date = new Date(dayData.date);
+      if (isNaN(date.getTime())) continue;
+
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const monthKey = `${year}-${month}`;
+
+      if (!monthlyDataMap[monthKey]) {
+        monthlyDataMap[monthKey] = {};
+      }
+
+      monthlyDataMap[monthKey][dayOfMonth] = dayData;
+    }
+
+    // 店舗情報を取得（緯度・経度を取得するため）
+    const storeInfoResult = await pool!.query(
+      'SELECT latitude, longitude, address FROM stores WHERE id = $1',
+      [storeId]
+    );
+    if (storeInfoResult.rows.length === 0) {
+      res.status(404).json({ success: false, error: '店舗が見つかりません' });
+      return;
+    }
+    const storeInfo = storeInfoResult.rows[0];
+    let latitude = storeInfo.latitude;
+    let longitude = storeInfo.longitude;
+    const address = storeInfo.address;
+
+    // 緯度・経度が取得できない場合は、住所から取得を試みる
+    if ((!latitude || !longitude) && address) {
+      try {
+        const geocodeResult = await geocodeAddress(address);
+        if (geocodeResult) {
+          latitude = geocodeResult.latitude;
+          longitude = geocodeResult.longitude;
+          // 店舗の緯度・経度を更新
+          await pool!.query(
+            'UPDATE stores SET latitude = $1, longitude = $2 WHERE id = $3',
+            [latitude, longitude, storeId]
+          );
+        }
+      } catch (geocodeErr) {
+        console.error('住所のジオコーディングエラー:', geocodeErr);
+      }
+    }
+
+    let processedCount = 0;
+
+    // 各年月のデータを保存
+    for (const monthKey in monthlyDataMap) {
+      const [year, month] = monthKey.split('-').map(Number);
+      const dailyData = monthlyDataMap[monthKey];
+
+      // 新しい日付の天気データを自動取得
+      if (latitude && longitude) {
+        for (const dayOfMonth in dailyData) {
+          const dayData = dailyData[dayOfMonth];
+          if (!dayData.date) continue;
+
+          const date = new Date(dayData.date);
+          if (isNaN(date.getTime())) continue;
+
+          const dateStr = date.toISOString().split('T')[0];
+
+          // 天気データが既に存在するか確認
+          try {
+            const weatherCheckResult = await pool!.query(
+              `SELECT id FROM weather_data 
+               WHERE latitude = $1 AND longitude = $2 AND date = $3`,
+              [latitude, longitude, dateStr]
+            );
+
+            // 天気データが存在しない場合は取得
+            if (weatherCheckResult.rows.length === 0) {
+              console.log(`[CSVインポート] 新しい日付の天気データを取得中: ${dateStr}`);
+              const weatherData = await fetchWeatherDataFromVisualCrossing(latitude, longitude, date);
+              
+              if (weatherData.weather || weatherData.temperature !== null) {
+                await pool!.query(
+                  `INSERT INTO weather_data (latitude, longitude, date, weather, temperature, humidity, precipitation, snow, updated_at)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+                   ON CONFLICT (latitude, longitude, date)
+                   DO UPDATE SET weather = EXCLUDED.weather, temperature = EXCLUDED.temperature, humidity = EXCLUDED.humidity, precipitation = EXCLUDED.precipitation, snow = EXCLUDED.snow, updated_at = NOW()`,
+                  [latitude, longitude, dateStr, weatherData.weather || null, weatherData.temperature, weatherData.humidity, weatherData.precipitation, weatherData.snow]
+                );
+                console.log(`[CSVインポート] 天気データを保存しました: ${dateStr}, 天気=${weatherData.weather}, 気温=${weatherData.temperature}`);
+              }
+            }
+          } catch (weatherErr) {
+            console.error(`[CSVインポート] 天気データ取得エラー (${dateStr}):`, weatherErr);
+            // 天気データの取得に失敗しても、メイン処理は続行
+          }
+        }
+      }
+
+      // 既存データを確認
+      const existingResult = await pool!.query(
+        'SELECT id FROM sales_data WHERE year = $1 AND month = $2 AND store_id = $3',
+        [year, month, storeId]
+      );
+
+      if (existingResult.rows.length > 0) {
+        // 更新
+        if (overwriteExisting) {
+          await pool!.query(
+            'UPDATE sales_data SET daily_data = $1, updated_at = NOW(), updated_by = $2 WHERE id = $3',
+            [JSON.stringify(dailyData), user.id, existingResult.rows[0].id]
+          );
+        } else {
+          // マージ（既存データに新しいデータを追加）
+          const existingDataResult = await pool!.query(
+            'SELECT daily_data FROM sales_data WHERE id = $1',
+            [existingResult.rows[0].id]
+          );
+          const existingDailyData = existingDataResult.rows[0].daily_data || {};
+          const mergedData = { ...existingDailyData, ...dailyData };
+          await pool!.query(
+            'UPDATE sales_data SET daily_data = $1, updated_at = NOW(), updated_by = $2 WHERE id = $3',
+            [JSON.stringify(mergedData), user.id, existingResult.rows[0].id]
+          );
+        }
+      } else {
+        // 新規作成
+        await pool!.query(
+          'INSERT INTO sales_data (store_id, year, month, daily_data, created_by, updated_by) VALUES ($1, $2, $3, $4, $5, $6)',
+          [storeId, year, month, JSON.stringify(dailyData), user.id, user.id]
+        );
+      }
+
+      // 月次売上管理テーブルにも自動反映
+      try {
+        const monthlyExistingResult = await pool!.query(
+          'SELECT id FROM monthly_sales WHERE store_id = $1 AND year = $2 AND month = $3',
+          [storeId, year, month]
+        );
+
+        if (monthlyExistingResult.rows.length > 0) {
+          await pool!.query(
+            `UPDATE monthly_sales
+             SET daily_data = $1, updated_at = NOW()
+             WHERE store_id = $2 AND year = $3 AND month = $4`,
+            [JSON.stringify(dailyData), storeId, year, month]
+          );
+        } else {
+          await pool!.query(
+            `INSERT INTO monthly_sales (store_id, year, month, daily_data, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+            [storeId, year, month, JSON.stringify(dailyData)]
+          );
+        }
+      } catch (syncErr) {
+        console.error('⚠️ 月次売上管理テーブルへの反映でエラー（メイン処理は成功）:', syncErr);
+      }
+
+      processedCount += Object.keys(dailyData).length;
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'データのインポートが完了しました',
+      processedCount 
+    });
+  } catch (err) {
+    console.error('CSVインポートエラー:', err);
+    res.status(500).json({ success: false, error: 'CSVデータのインポートに失敗しました' });
+  }
+});
+
 // 月間累計データ取得API（月次売上管理用）
 app.get('/api/sales/monthly-summary', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { year, month, storeId } = req.query;
@@ -3986,6 +4352,347 @@ if (pool) {
 } else {
   console.log('⚠️  WebSocketサーバーはデータベース接続なしでは起動できません');
 }
+
+// 売上予測APIエンドポイント
+const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://python-predictor:8000';
+
+app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { storeId, predictDays, startDate } = req.body;
+  const user = (req as any).user;
+
+  if (!storeId) {
+    res.status(400).json({ success: false, error: 'storeIdは必須です' });
+    return;
+  }
+
+  try {
+    const predictDaysNum = predictDays || 7;
+    const startDateStr = startDate || new Date().toISOString().split('T')[0];
+
+    // Python予測サービスを呼び出し
+    const response = await fetch(`${PREDICTOR_SERVICE_URL}/predict`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        store_id: parseInt(storeId),
+        predict_days: predictDaysNum,
+        start_date: startDateStr,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`予測サービスエラー: ${response.status} ${errorText}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || '予測に失敗しました');
+    }
+
+    // 予測結果をデータベースに保存
+    const predictions = result.predictions || [];
+    const salesFields = result.sales_fields || []; // 売上項目の情報
+    const monthlyDataMap: Record<string, Record<string, any>> = {};
+
+    for (const pred of predictions) {
+      const predDate = new Date(pred.date);
+      const year = predDate.getFullYear();
+      const month = predDate.getMonth() + 1;
+      const dayOfMonth = predDate.getDate();
+      const monthKey = `${year}-${month}`;
+
+      if (!monthlyDataMap[monthKey]) {
+        monthlyDataMap[monthKey] = {};
+      }
+
+      // 既存データを取得
+      const existingResult = await pool!.query(
+        'SELECT daily_data FROM sales_data WHERE store_id = $1 AND year = $2 AND month = $3',
+        [storeId, year, month]
+      );
+
+      let dailyData: Record<string, any> = {};
+      if (existingResult.rows.length > 0 && existingResult.rows[0].daily_data) {
+        dailyData = existingResult.rows[0].daily_data;
+      }
+
+      // 予測値を追加/更新
+      const dayKey = String(dayOfMonth);
+      if (!dailyData[dayKey]) {
+        dailyData[dayKey] = {};
+      }
+
+      // 動的にすべての売上項目を保存
+      for (const salesField of salesFields) {
+        const fieldKey = salesField.key;
+        if (pred[fieldKey] !== undefined) {
+          dailyData[dayKey][fieldKey] = pred[fieldKey];
+        }
+      }
+
+      // 後方互換性のため、既存のキーも保持
+      if (pred.edw_sales !== undefined) {
+        dailyData[dayKey].edwNetSales = pred.edw_sales;
+      }
+      if (pred.ohb_sales !== undefined) {
+        dailyData[dayKey].ohbNetSales = pred.ohb_sales;
+      }
+
+      dailyData[dayKey].is_predicted = true;
+      dailyData[dayKey].predicted_at = new Date().toISOString();
+      dailyData[dayKey].date = pred.date;
+
+      monthlyDataMap[monthKey] = dailyData;
+    }
+
+    // 各月のデータを保存
+    for (const monthKey in monthlyDataMap) {
+      const [year, month] = monthKey.split('-').map(Number);
+      const dailyData = monthlyDataMap[monthKey];
+
+      const existingResult = await pool!.query(
+        'SELECT id FROM sales_data WHERE store_id = $1 AND year = $2 AND month = $3',
+        [storeId, year, month]
+      );
+
+      if (existingResult.rows.length > 0) {
+        await pool!.query(
+          'UPDATE sales_data SET daily_data = $1, updated_at = NOW(), updated_by = $2 WHERE id = $3',
+          [JSON.stringify(dailyData), user.id, existingResult.rows[0].id]
+        );
+      } else {
+        await pool!.query(
+          'INSERT INTO sales_data (store_id, year, month, daily_data, created_by, updated_by) VALUES ($1, $2, $3, $4, $5, $6)',
+          [storeId, year, month, JSON.stringify(dailyData), user.id, user.id]
+        );
+      }
+    }
+
+    res.json({
+      success: true,
+      message: '予測が正常に完了しました',
+      predictions: result.predictions,
+      metrics: result.metrics,
+    });
+  } catch (err: any) {
+    console.error('売上予測エラー:', err);
+    res.status(500).json({ success: false, error: err.message || '売上予測に失敗しました' });
+  }
+});
+
+app.get('/api/sales/predictions', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { storeId, startDate, endDate } = req.query;
+
+  if (!storeId) {
+    res.status(400).json({ success: false, error: 'storeIdは必須です' });
+    return;
+  }
+
+  try {
+    const startDateStr = (startDate as string) || new Date().toISOString().split('T')[0];
+    const endDateStr = (endDate as string) || new Date().toISOString().split('T')[0];
+
+    const startDateObj = new Date(startDateStr);
+    const endDateObj = new Date(endDateStr);
+    const startYear = startDateObj.getFullYear();
+    const startMonth = startDateObj.getMonth() + 1;
+    const endYear = endDateObj.getFullYear();
+    const endMonth = endDateObj.getMonth() + 1;
+
+    const predictions: any[] = [];
+    let currentYear = startYear;
+    let currentMonth = startMonth;
+
+    while (
+      currentYear < endYear ||
+      (currentYear === endYear && currentMonth <= endMonth)
+    ) {
+      const result = await pool!.query(
+        `SELECT daily_data FROM sales_data
+         WHERE store_id = $1 AND year = $2 AND month = $3`,
+        [storeId, currentYear, currentMonth]
+      );
+
+      if (result.rows.length > 0 && result.rows[0].daily_data) {
+        const dailyData = result.rows[0].daily_data;
+        for (const dayOfMonth in dailyData) {
+          const dayData = dailyData[dayOfMonth] as any;
+            if (dayData.is_predicted) {
+              const dateStr = dayData.date || `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(dayOfMonth).padStart(2, '0')}`;
+              const dateObj = new Date(dateStr);
+              if (dateObj >= startDateObj && dateObj <= endDateObj) {
+                const pred: any = {
+                  date: dateStr,
+                  is_predicted: true,
+                  predicted_at: dayData.predicted_at,
+                };
+                
+                // すべての売上項目を含める（動的）
+                for (const key in dayData) {
+                  if (key !== 'is_predicted' && key !== 'predicted_at' && key !== 'date' && 
+                      (typeof dayData[key] === 'number' || (key.includes('Sales') || key.includes('売上')))) {
+                    pred[key] = dayData[key];
+                  }
+                }
+                
+                // 後方互換性のため
+                pred.edw_sales = dayData.edwNetSales || 0;
+                pred.ohb_sales = dayData.ohbNetSales || 0;
+                
+                predictions.push(pred);
+              }
+            }
+        }
+      }
+
+      currentMonth++;
+      if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear++;
+      }
+    }
+
+    predictions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    res.json({
+      success: true,
+      predictions,
+    });
+  } catch (err: any) {
+    console.error('予測結果取得エラー:', err);
+    res.status(500).json({ success: false, error: '予測結果の取得に失敗しました' });
+  }
+});
+
+// 毎日午前0時に予測を実行（すべての店舗に対して）
+cron.schedule('0 0 * * *', async () => {
+  console.log('[Cron] 売上予測の定期実行を開始');
+  
+  try {
+    // すべての店舗を取得
+    const storesResult = await pool!.query('SELECT id FROM stores');
+    const stores = storesResult.rows;
+    
+    const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://python-predictor:8000';
+    
+    for (const store of stores) {
+      try {
+        console.log(`[Cron] 店舗ID ${store.id} の予測を実行中...`);
+        
+        const response = await fetch(`${PREDICTOR_SERVICE_URL}/predict`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            store_id: store.id,
+            predict_days: 7,
+            start_date: new Date().toISOString().split('T')[0],
+          }),
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            console.log(`[Cron] 店舗ID ${store.id} の予測が完了しました`);
+            
+            // 予測結果をデータベースに保存
+            const predictions = result.predictions || [];
+            const salesFields = result.sales_fields || [];
+            const monthlyDataMap: Record<string, Record<string, any>> = {};
+            
+            for (const pred of predictions) {
+              const predDate = new Date(pred.date);
+              const year = predDate.getFullYear();
+              const month = predDate.getMonth() + 1;
+              const dayOfMonth = predDate.getDate();
+              const monthKey = `${year}-${month}`;
+              
+              if (!monthlyDataMap[monthKey]) {
+                monthlyDataMap[monthKey] = {};
+              }
+              
+              const existingResult = await pool!.query(
+                'SELECT daily_data FROM sales_data WHERE store_id = $1 AND year = $2 AND month = $3',
+                [store.id, year, month]
+              );
+              
+              let dailyData: Record<string, any> = {};
+              if (existingResult.rows.length > 0 && existingResult.rows[0].daily_data) {
+                dailyData = existingResult.rows[0].daily_data;
+              }
+              
+              const dayKey = String(dayOfMonth);
+              if (!dailyData[dayKey]) {
+                dailyData[dayKey] = {};
+              }
+              
+              // 動的にすべての売上項目を保存
+              for (const salesField of salesFields) {
+                const fieldKey = salesField.key;
+                if (pred[fieldKey] !== undefined) {
+                  dailyData[dayKey][fieldKey] = pred[fieldKey];
+                }
+              }
+              
+              // 後方互換性のため
+              if (pred.edw_sales !== undefined) {
+                dailyData[dayKey].edwNetSales = pred.edw_sales;
+              }
+              if (pred.ohb_sales !== undefined) {
+                dailyData[dayKey].ohbNetSales = pred.ohb_sales;
+              }
+              
+              dailyData[dayKey].is_predicted = true;
+              dailyData[dayKey].predicted_at = new Date().toISOString();
+              dailyData[dayKey].date = pred.date;
+              
+              monthlyDataMap[monthKey] = dailyData;
+            }
+            
+            // 各月のデータを保存
+            for (const monthKey in monthlyDataMap) {
+              const [year, month] = monthKey.split('-').map(Number);
+              const dailyData = monthlyDataMap[monthKey];
+              
+              const existingResult = await pool!.query(
+                'SELECT id FROM sales_data WHERE store_id = $1 AND year = $2 AND month = $3',
+                [store.id, year, month]
+              );
+              
+              if (existingResult.rows.length > 0) {
+                await pool!.query(
+                  'UPDATE sales_data SET daily_data = $1, updated_at = NOW() WHERE id = $2',
+                  [JSON.stringify(dailyData), existingResult.rows[0].id]
+                );
+              } else {
+                await pool!.query(
+                  'INSERT INTO sales_data (store_id, year, month, daily_data) VALUES ($1, $2, $3, $4)',
+                  [store.id, year, month, JSON.stringify(dailyData)]
+                );
+              }
+            }
+          } else {
+            console.error(`[Cron] 店舗ID ${store.id} の予測に失敗: ${result.message || 'Unknown error'}`);
+          }
+        } else {
+          const errorText = await response.text();
+          console.error(`[Cron] 店舗ID ${store.id} の予測サービスエラー: ${response.status} ${errorText}`);
+        }
+      } catch (err: any) {
+        console.error(`[Cron] 店舗ID ${store.id} の予測エラー:`, err);
+      }
+    }
+    
+    console.log('[Cron] 売上予測の定期実行が完了しました');
+  } catch (err: any) {
+    console.error('[Cron] 売上予測の定期実行でエラー:', err);
+  }
+});
 
 // サーバーの起動
 server.listen(port, () => {

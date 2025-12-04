@@ -135,7 +135,8 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
             dayOfWeek: getDayOfWeek(year, month, day),
             weather,
             temperature,
-            event
+            event,
+            is_predicted: dayData.is_predicted || false  // 予測フラグを保持
           };
           
           // デバッグ: 最初の3日分の天気データをログ出力
@@ -148,9 +149,13 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
               temperature: temperature,
               hasEvent: event !== undefined,
               event: event,
+              is_predicted: dayData.is_predicted,
               dayDataKeys: Object.keys(dayData),
               dayDataWeather: dayData.weather,
-              dayDataTemperature: dayData.temperature
+              dayDataTemperature: dayData.temperature,
+              netSales: dayData.netSales,
+              edwNetSales: dayData.edwNetSales,
+              ohbNetSales: dayData.ohbNetSales
             });
           }
           

@@ -1,5 +1,5 @@
 import React, { useMemo, memo } from 'react';
-import { RefreshCw, TrendingUp, Settings, FileText, Download } from 'lucide-react';
+import { RefreshCw, TrendingUp, Settings, FileText, Download, Upload, BarChart3 } from 'lucide-react';
 import { Store } from '@/types/store';
 import { formatStoreName } from '@/utils/storeDisplay';
 import { PageHelpButton } from '@/components/common/PageHelpButton';
@@ -188,6 +188,13 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
                 CSV出力
               </button>
             )}
+            <Link
+              href="/admin/sales-management/csv-import"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              CSV読み込み
+            </Link>
             <button
               onClick={onDataReload}
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
@@ -202,6 +209,13 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
             >
               <Settings className="w-4 h-4 mr-2" />
               表示項目設定
+            </Link>
+            <Link
+              href="/admin/sales-prediction"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              売上予測
             </Link>
           </div>
         </div>
