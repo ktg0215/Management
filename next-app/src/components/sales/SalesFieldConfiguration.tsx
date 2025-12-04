@@ -209,7 +209,7 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
                   .map((field, index) => (
                     <div
                       key={field.id}
-                      className={`p-3 ${!field.isVisible ? 'bg-gray-50' : 'bg-white'}`}
+                      className={`p-3 ${!field.isVisible ? 'bg-gray-50' : 'bg-white'} border-b border-gray-100`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         {/* 左側: ドラッグハンドルと項目情報 */}
