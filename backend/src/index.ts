@@ -2633,7 +2633,11 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
           weather: enrichedDailyData[key]?.weather,
           weatherLength: enrichedDailyData[key]?.weather?.length || 0,
           hasTemperature: enrichedDailyData[key]?.temperature !== undefined,
-          temperature: enrichedDailyData[key]?.temperature
+          temperature: enrichedDailyData[key]?.temperature,
+          is_predicted: enrichedDailyData[key]?.is_predicted,
+          netSales: enrichedDailyData[key]?.netSales,
+          edwNetSales: enrichedDailyData[key]?.edwNetSales,
+          ohbNetSales: enrichedDailyData[key]?.ohbNetSales
         })));
       } else {
         console.log(`[天気データ取得] enrichedDailyData は空です`);

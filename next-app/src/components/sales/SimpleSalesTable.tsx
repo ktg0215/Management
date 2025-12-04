@@ -499,17 +499,18 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
           <tbody className="divide-y divide-gray-100 text-gray-900">
             {memoizedCellData.map(({ date, data, day, index, dateCellClass, dayOfWeekCellClass, actionCellClass }) => {
               // デバッグ: 最初の3日分のis_predictedフラグをログ出力
-              if (index < 3 && data) {
-                console.log(`[SimpleSalesTable] Row ${index} (${date}): is_predicted=${data.is_predicted}, netSales=${data.netSales}, edwNetSales=${data.edwNetSales}, ohbNetSales=${data.ohbNetSales}`);
-              }
-              // Debug logging for weather data
               if (index < 3) {
                 console.log(`[SimpleSalesTable] Row ${index} (${date}):`, {
+                  is_predicted: data?.is_predicted,
+                  netSales: data?.netSales,
+                  edwNetSales: data?.edwNetSales,
+                  ohbNetSales: data?.ohbNetSales,
                   weather: data?.weather,
                   temperature: data?.temperature,
                   event: data?.event,
                   hasWeather: !!data?.weather,
-                  hasTemperature: data?.temperature !== null && data?.temperature !== undefined
+                  hasTemperature: data?.temperature !== null && data?.temperature !== undefined,
+                  allKeys: data ? Object.keys(data) : []
                 });
               }
               return (
