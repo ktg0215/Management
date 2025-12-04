@@ -315,7 +315,8 @@ const usePaymentData = (storeId: string | null) => {
 
   const getPaymentAmount = useCallback((companyId: string, month: string = selectedMonth) => {
     const payment = payments.find(p => p.companyId === companyId && p.month === month);
-    return payment?.amount || 0;
+    const amount = payment?.amount || 0;
+    return isNaN(amount) ? 0 : Math.round(amount);
   }, [payments, selectedMonth]);
 
   // 表示対象の企業のみを対象とした計算
@@ -329,10 +330,11 @@ const usePaymentData = (storeId: string | null) => {
   }, [companies]);
 
   const monthlyTotal = useMemo(() => {
-    return visibleCompanies.reduce((sum, company) => {
+    const total = visibleCompanies.reduce((sum, company) => {
       const amount = getPaymentAmount(company.id);
-      return sum + amount;
+      return sum + (isNaN(amount) ? 0 : amount);
     }, 0);
+    return isNaN(total) ? 0 : total;
   }, [visibleCompanies, getPaymentAmount]);
 
   const categoryTotals = useMemo(() => {
@@ -340,7 +342,8 @@ const usePaymentData = (storeId: string | null) => {
 
     visibleCompanies.forEach(company => {
       const amount = getPaymentAmount(company.id);
-      totals[company.category] = (totals[company.category] || 0) + amount;
+      const safeAmount = isNaN(amount) ? 0 : amount;
+      totals[company.category] = (totals[company.category] || 0) + safeAmount;
     });
 
     return totals;

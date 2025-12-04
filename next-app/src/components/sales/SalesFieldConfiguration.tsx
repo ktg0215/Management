@@ -203,13 +203,14 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
             </button>
 
             {isExpanded && (
-              <div className="divide-y divide-gray-200">
+              <div className="p-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {categoryFields
                   .sort((a, b) => a.order - b.order)
                   .map((field, index) => (
                     <div
                       key={field.id}
-                      className={`p-3 ${!field.isVisible ? 'bg-gray-50' : 'bg-white'} border-b border-gray-100`}
+                      className={`p-3 rounded-lg border ${!field.isVisible ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200'}`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         {/* 左側: ドラッグハンドルと項目情報 */}
@@ -322,6 +323,7 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
                       </div>
                     </div>
                   ))}
+                </div>
               </div>
             )}
           </div>
