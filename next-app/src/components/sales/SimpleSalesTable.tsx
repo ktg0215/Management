@@ -215,15 +215,21 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
         (hasHare && (hasTokidoki || hasNochi) && hasKumori)) {
       console.log(`[getWeatherIcon] 晴れ時々曇りを検出: "${weather}"`);
       return (
-        <div className="flex items-center justify-center gap-2 flex-nowrap">
-          <Sun className={`${iconClass} flex-shrink-0`} style={{ color: '#fbbf24' }} />
-          <Cloud className={`${iconClass} flex-shrink-0`} style={{ color: '#60a5fa' }} />
+        <div className="flex items-center justify-center gap-1 flex-nowrap" style={{ minWidth: '40px' }}>
+          <Sun className="w-4 h-4 flex-shrink-0" style={{ color: '#fbbf24', display: 'inline-block' }} />
+          <Cloud className="w-4 h-4 flex-shrink-0" style={{ color: '#60a5fa', display: 'inline-block' }} />
         </div>
       );
     }
     
+    // 「快晴」を含む場合（最も明るい太陽アイコン）
+    if (weather.includes('快晴') || weatherLower.includes('快晴')) {
+      console.log(`[getWeatherIcon] 快晴を検出: "${weather}"`);
+      return <Sun className={iconClass} style={{ color: '#fbbf24', filter: 'brightness(1.2)' }} />;
+    }
+    
     // 「晴れ」を含む場合（「晴れ時々曇り」などは上で処理済み）
-    if (weatherLower.includes('晴れ') || weatherLower.includes('clear')) {
+    if (weatherLower.includes('晴れ') || weatherLower.includes('clear') || weather === '晴') {
       console.log(`[getWeatherIcon] 晴れを検出: "${weather}"`);
       // 純粋な「晴れ」の場合は太陽アイコン
       return <Sun className={iconClass} style={{ color: '#fbbf24' }} />;

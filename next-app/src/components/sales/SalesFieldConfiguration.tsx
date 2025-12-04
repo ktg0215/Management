@@ -209,19 +209,20 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
                   .map((field, index) => (
                     <div
                       key={field.id}
-                      className={`p-4 ${!field.isVisible ? 'bg-gray-50' : 'bg-white'}`}
+                      className={`p-3 ${!field.isVisible ? 'bg-gray-50' : 'bg-white'}`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        {/* 左側: ドラッグハンドルと項目情報 */}
+                        <div className="flex items-start space-x-2 flex-1 min-w-0">
                           {/* Drag handle */}
-                          <div className="flex flex-col space-y-1">
+                          <div className="flex flex-col space-y-0.5 pt-0.5">
                             <button
                               onClick={() => moveField(field.id, 'up')}
                               disabled={index === 0}
                               className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
                               title="上に移動"
                             >
-                              <ChevronUp className="h-4 w-4" />
+                              <ChevronUp className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={() => moveField(field.id, 'down')}
@@ -229,38 +230,45 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
                               className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
                               title="下に移動"
                             >
-                              <ChevronDown className="h-4 w-4" />
+                              <ChevronDown className="h-3.5 w-3.5" />
                             </button>
                           </div>
 
-                          <GripVertical className="h-5 w-5 text-gray-400" />
+                          <GripVertical className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
 
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2">
-                              <span className={`font-medium ${!field.isVisible ? 'text-gray-400' : 'text-gray-900'}`}>
+                          {/* 項目情報を2行に分割 */}
+                          <div className="flex-1 min-w-0">
+                            {/* 1行目: 項目名とバッジ */}
+                            <div className="flex items-center flex-wrap gap-1.5 mb-1">
+                              <span className={`font-medium text-sm ${!field.isVisible ? 'text-gray-400' : 'text-gray-900'}`}>
                                 {field.label}
                               </span>
                               {field.unit && (
-                                <span className="text-sm text-gray-500">({field.unit})</span>
+                                <span className="text-xs text-gray-500">({field.unit})</span>
                               )}
                               {field.isCalculated && (
-                                <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">
+                                <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full whitespace-nowrap">
                                   自動計算
                                 </span>
                               )}
                             </div>
-                            <div className="text-sm text-gray-500 mt-1">
-                              キー: <code className="bg-gray-100 px-1 rounded">{field.key}</code>
-                              {' '}| タイプ: {field.type}
+                            {/* 2行目: キーとタイプ */}
+                            <div className="text-xs text-gray-500 flex items-center gap-2 flex-wrap">
+                              <span>
+                                キー: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{field.key}</code>
+                              </span>
+                              <span className="text-gray-300">|</span>
+                              <span>タイプ: {field.type}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center space-x-2">
+                        {/* 右側: アクションボタン */}
+                        <div className="flex items-center space-x-1.5 flex-shrink-0">
                           {/* Visibility toggle */}
                           <button
                             onClick={() => toggleFieldVisibility(field.id)}
-                            className={`p-2 rounded-lg transition-colors ${
+                            className={`p-1.5 rounded-lg transition-colors ${
                               field.isVisible
                                 ? 'bg-green-100 text-green-700 hover:bg-green-200'
                                 : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
@@ -268,9 +276,9 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
                             title={field.isVisible ? '表示中' : '非表示'}
                           >
                             {field.isVisible ? (
-                              <Eye className="h-5 w-5" />
+                              <Eye className="h-4 w-4" />
                             ) : (
-                              <EyeOff className="h-5 w-5" />
+                              <EyeOff className="h-4 w-4" />
                             )}
                           </button>
 
@@ -278,7 +286,7 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
                           <button
                             onClick={() => toggleFieldEditable(field.id)}
                             disabled={field.isCalculated}
-                            className={`p-2 rounded-lg transition-colors ${
+                            className={`p-1.5 rounded-lg transition-colors ${
                               field.isCalculated
                                 ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
                                 : field.isEditable
@@ -294,9 +302,9 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
                             }
                           >
                             {field.isEditable ? (
-                              <Unlock className="h-5 w-5" />
+                              <Unlock className="h-4 w-4" />
                             ) : (
-                              <Lock className="h-5 w-5" />
+                              <Lock className="h-4 w-4" />
                             )}
                           </button>
 
@@ -304,10 +312,10 @@ export const SalesFieldConfiguration: React.FC<SalesFieldConfigurationProps> = (
                           {field.id.startsWith('custom-') && (
                             <button
                               onClick={() => handleDeleteField(field.id)}
-                              className="p-2 rounded-lg transition-colors bg-red-100 text-red-600 hover:bg-red-200"
+                              className="p-1.5 rounded-lg transition-colors bg-red-100 text-red-600 hover:bg-red-200"
                               title="項目を削除"
                             >
-                              <Trash2 className="h-5 w-5" />
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           )}
                         </div>

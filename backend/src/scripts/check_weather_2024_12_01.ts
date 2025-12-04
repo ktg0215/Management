@@ -48,9 +48,10 @@ async function checkWeather() {
     
     // 文字コードを確認
     if (row.weather) {
-      const codes = Array.from(row.weather).map(char => char.charCodeAt(0));
+      const weatherStr = String(row.weather);
+      const codes = Array.from(weatherStr).map((char) => char.charCodeAt(0));
       console.log(`  文字コード: [${codes.join(', ')}]`);
-      console.log(`  文字列の各文字: [${Array.from(row.weather).map(char => `'${char}'(${char.charCodeAt(0)})`).join(', ')}]`);
+      console.log(`  文字列の各文字: [${Array.from(weatherStr).map((char) => `'${char}'(${char.charCodeAt(0)})`).join(', ')}]`);
     }
     
   } catch (error) {

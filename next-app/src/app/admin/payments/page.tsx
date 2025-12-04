@@ -405,7 +405,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
             </span>
           </div>
           <div className="text-sm font-semibold text-gray-900">
-            ¥{categoryTotal.toLocaleString()}
+            ¥{Math.round(categoryTotal).toLocaleString()}
           </div>
         </div>
       </div>
@@ -450,17 +450,18 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
 
   useEffect(() => {
     if (company.paymentType === 'regular' && company.regularAmount && currentAmount === 0) {
-      onAmountChange(company.regularAmount);
-      setInputAmount(company.regularAmount.toString());
+      const roundedAmount = Math.round(company.regularAmount);
+      onAmountChange(roundedAmount);
+      setInputAmount(roundedAmount.toString());
     }
   }, [company, currentAmount, onAmountChange]);
 
   useEffect(() => {
-    setInputAmount(currentAmount.toString());
+    setInputAmount(Math.round(currentAmount).toString());
   }, [currentAmount]);
 
   const handleAmountSubmit = () => {
-    const amount = parseFloat(inputAmount) || 0;
+    const amount = Math.round(parseFloat(inputAmount) || 0);
     onAmountChange(amount);
     setIsEditing(false);
   };
@@ -488,7 +489,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
         return (
           <div className="flex items-center space-x-1 text-xs text-green-600">
             <RotateCcw className="w-3 h-3" />
-            <span>定期 ¥{company.regularAmount?.toLocaleString() || '0'}</span>
+            <span>定期 ¥{company.regularAmount ? Math.round(company.regularAmount).toLocaleString() : '0'}</span>
           </div>
         );
       case 'irregular':
@@ -575,7 +576,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
               onClick={() => setIsEditing(true)}
               className="w-20 px-2 py-1 bg-gray-50 border border-gray-200 rounded text-right cursor-pointer hover:bg-gray-100 transition-colors text-sm"
             >
-              {currentAmount.toLocaleString()}
+              {Math.round(currentAmount).toLocaleString()}
             </div>
           )}
         </div>
@@ -803,7 +804,7 @@ function PaymentManagement() {
                   <div className="bg-blue-50 border border-blue-200 px-4 py-2 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-blue-700 font-medium">月次支払総額</span>
-                      <span className="text-lg font-bold text-blue-900">¥{isHydrated ? monthlyTotal.toLocaleString() : '0'}</span>
+                      <span className="text-lg font-bold text-blue-900">¥{isHydrated ? Math.round(monthlyTotal).toLocaleString() : '0'}</span>
                     </div>
                   </div>
                 </div>

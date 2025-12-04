@@ -99,6 +99,14 @@ const SalesManagementPage = () => {
     }
   }, [user, stores, selectedStoreId, setSelectedStoreId]);
 
+  // storeIdが設定されたときに自動的にデータを読み込む
+  useEffect(() => {
+    if (selectedStoreId && !isDataLoading && (!monthlyData || !monthlyData.dailyData || Object.keys(monthlyData.dailyData).length === 0)) {
+      console.log('[SalesManagementPage] Auto-refetching data for storeId:', selectedStoreId);
+      refetch();
+    }
+  }, [selectedStoreId, isDataLoading, monthlyData, refetch]);
+
   // Prefetch adjacent months when store or date changes
   useEffect(() => {
     if (selectedStoreId) {
