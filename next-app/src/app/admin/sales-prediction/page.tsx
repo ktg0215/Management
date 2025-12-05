@@ -319,7 +319,7 @@ export default function SalesPredictionPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">MAE (平均絶対誤差):</span>
-                    <span className="text-sm font-medium">{metrics.edw?.mae?.toLocaleString() || 'N/A'}円</span>
+                    <span className="text-sm font-medium">{(metrics.edw?.mae != null && metrics.edw.mae !== undefined) ? Number(metrics.edw.mae).toLocaleString() : 'N/A'}円</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">R² (決定係数):</span>
@@ -338,7 +338,7 @@ export default function SalesPredictionPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">MAE (平均絶対誤差):</span>
-                    <span className="text-sm font-medium">{metrics.ohb?.mae?.toLocaleString() || 'N/A'}円</span>
+                    <span className="text-sm font-medium">{(metrics.ohb?.mae != null && metrics.ohb.mae !== undefined) ? Number(metrics.ohb.mae).toLocaleString() : 'N/A'}円</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">R² (決定係数):</span>
@@ -415,13 +415,13 @@ export default function SalesPredictionPage() {
                         })}
                       </td>
                       <td className="py-2 px-3 text-right text-gray-900">
-                        {pred.edw_sales != null ? pred.edw_sales.toLocaleString() : '0'}円
+                        {(pred.edw_sales != null && pred.edw_sales !== undefined) ? Number(pred.edw_sales).toLocaleString() : '0'}円
                       </td>
                       <td className="py-2 px-3 text-right text-gray-900">
-                        {pred.ohb_sales != null ? pred.ohb_sales.toLocaleString() : '0'}円
+                        {(pred.ohb_sales != null && pred.ohb_sales !== undefined) ? Number(pred.ohb_sales).toLocaleString() : '0'}円
                       </td>
                       <td className="py-2 px-3 text-right font-medium text-gray-900">
-                        {((pred.edw_sales || 0) + (pred.ohb_sales || 0)).toLocaleString()}円
+                        {((pred.edw_sales ?? 0) + (pred.ohb_sales ?? 0)).toLocaleString()}円
                       </td>
                     </tr>
                   ))}
