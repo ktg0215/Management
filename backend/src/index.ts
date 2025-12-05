@@ -4888,10 +4888,10 @@ const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://local
                 dailyData = existingResult.rows[0].daily_data;
               }
               
-              const dateStr = pred.date.split('T')[0];
+              const dateStr = pred.date ? pred.date.split('T')[0] : '';
               let dayKey: string;
               
-              if (dailyData[dateStr]) {
+              if (dateStr && dailyData[dateStr]) {
                 dayKey = dateStr;
               } else {
                 dayKey = String(dayOfMonth);
@@ -4902,8 +4902,8 @@ const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://local
               }
               
               for (const salesField of salesFields) {
-                const fieldKey = salesField.key;
-                if (pred[fieldKey] !== undefined) {
+                const fieldKey = salesField?.key;
+                if (fieldKey && pred[fieldKey] !== undefined) {
                   dailyData[dayKey][fieldKey] = pred[fieldKey];
                 }
               }
