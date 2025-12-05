@@ -4395,7 +4395,7 @@ if (pool) {
 const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://localhost:8000';
 
 app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
-  const { storeId, predictDays, startDate } = req.body;
+  const { storeId, predictDays, startDate, retrain } = req.body;
   const user = (req as any).user;
 
   if (!storeId) {
@@ -4405,6 +4405,7 @@ app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: R
 
   try {
     const predictDaysNum = predictDays || 7;
+    const shouldRetrain = retrain === true; // 再学習フラグ
     const startDateStr = startDate || new Date().toISOString().split('T')[0];
 
     // Python予測サービスを呼び出し
@@ -4417,6 +4418,7 @@ app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: R
         store_id: parseInt(storeId),
         predict_days: predictDaysNum,
         start_date: startDateStr,
+        retrain: shouldRetrain, // 再学習フラグを渡す
       }),
     });
 

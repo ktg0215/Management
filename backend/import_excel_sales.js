@@ -175,12 +175,31 @@ function formatDate(date) {
 async function importExcelData() {
   console.log('=== Excelデータインポート開始 ===\n');
 
-  // Excelファイルを読み込む
-  const filePath = path.join(__dirname, '..', '計数管理表2024【EDW富山】.xlsx');
-  console.log('ファイル読み込み:', filePath);
-
   // ファイル存在確認
   const fs = require('fs');
+  
+  // Excelファイルを読み込む（複数のパスを試す）
+  const possiblePaths = [
+    path.join(__dirname, '..', '..', '計数管理表2024【EDW富山】.xlsx'), // ~/Management/計数管理表2024【EDW富山】.xlsx
+    path.join(__dirname, '..', '計数管理表2024【EDW富山】.xlsx'), // ~/Management/backend/計数管理表2024【EDW富山】.xlsx
+  ];
+  
+  let filePath = '';
+  for (const possiblePath of possiblePaths) {
+    if (fs.existsSync(possiblePath)) {
+      filePath = possiblePath;
+      break;
+    }
+  }
+  
+  if (!filePath) {
+    console.error('❌ エラー: Excelファイルが見つかりません');
+    console.error('   試したパス:', possiblePaths);
+    process.exit(1);
+  }
+  
+  console.log('ファイル読み込み:', filePath);
+
   if (!fs.existsSync(filePath)) {
     console.error('❌ エラー: Excelファイルが見つかりません:', filePath);
     console.error('   ファイルパスを確認してください');

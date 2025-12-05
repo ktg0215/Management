@@ -85,7 +85,8 @@ def align_features(train_X: pd.DataFrame, future_X: pd.DataFrame) -> pd.DataFram
 def run_sales_prediction(
     store_id: int,
     predict_days: int = 7,
-    start_date: Optional[date] = None
+    start_date: Optional[date] = None,
+    retrain: bool = False
 ) -> Dict:
     """
     売上予測を実行（動的に売上項目を検出）
@@ -186,6 +187,16 @@ def run_sales_prediction(
     if train_data.empty:
         raise ValueError(f"Insufficient training data for store {store_id}. Need at least some historical sales data.")
     
+    # データ量を確認（月数で判定）
+    train_data['year_month'] = train_data['date'].apply(lambda d: f"{d.year}-{d.month:02d}")
+    unique_months = train_data['year_month'].nunique()
+    train_data = train_data.drop(columns=['year_month'])
+    
+    # データが2か月未満の場合は移動平均線のみで予測（fallback）
+    use_fallback = unique_months < 2
+    if use_fallback:
+        print(f"[予測] 店舗ID {store_id} のデータが2か月未満（{unique_months}か月）のため、移動平均線のみで予測します")
+    
     # 特徴量作成（売上項目を指定）
     train_df = make_features(train_data, include_target=True, sales_fields=sales_field_keys)
     future_df = make_features(future_data, include_target=False, sales_fields=sales_field_keys)
@@ -197,20 +208,6 @@ def run_sales_prediction(
     target_columns = [col for col in sales_field_keys if col in train_df.columns]
     if not target_columns:
         raise ValueError(f"No valid sales columns found in training data: {sales_field_keys}")
-    
-    # One-hotエンコーディング（予測対象カラムを除外）
-    drop_columns = target_columns + ['date']
-    train_X = pd.get_dummies(train_df.drop(columns=drop_columns), drop_first=True)
-    future_X = pd.get_dummies(future_df.drop(columns=['date']), drop_first=True)
-    
-    # 曜日を数値で追加
-    if 'weekday' in train_df.columns:
-        train_X['weekday'] = train_df['weekday'].astype(int)
-    if 'weekday' in future_df.columns:
-        future_X['weekday'] = future_df['weekday'].astype(int)
-    
-    # 特徴量整列
-    future_X = align_features(train_X, future_X)
     
     # 各売上項目ごとにモデルを学習・予測
     predictions_list = []
@@ -227,45 +224,92 @@ def run_sales_prediction(
             print(f"[予測] 売上項目 {sales_key} のデータが不足しているためスキップ")
             continue
         
-        # モデルを読み込み（存在する場合）または学習
-        model = load_model(store_id, sales_key)
-        model_loaded = model is not None
-        
-        if model is None:
-            # モデルが存在しない場合は学習
-            print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを学習中...")
-            model = LGBMRegressor(random_state=42, verbose=-1)
-            model.fit(train_X, y_target)
-            # モデルを保存
-            save_model(store_id, sales_key, model)
-        else:
-            print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを使用（再学習なし）")
-        
-        # 予測
-        predictions = model.predict(future_X)
-        
-        # 予測結果を保存
-        for i, pred_date in enumerate(future_df['date']):
-            if i < len(predictions_list):
-                predictions_list[i][sales_key] = int(max(0, predictions[i]))
-            else:
-                predictions_list.append({
-                    'date': pred_date.isoformat(),
-                    sales_key: int(max(0, predictions[i])),
-                })
-        
-        # 評価
-        y_pred_train = model.predict(train_X)
-        
-        metrics_dict[sales_key] = {
-            "mae": float(mean_absolute_error(y_target, y_pred_train)),
-            "r2": float(r2_score(y_target, y_pred_train)),
-            "mape": float(mean_absolute_percentage_error(y_target, y_pred_train)),
-            "feature_importance": {
-                col: float(importance) 
-                for col, importance in zip(train_X.columns, model.feature_importances_)
+        if use_fallback:
+            # Fallback: 移動平均線のみで予測
+            # 7日移動平均を計算
+            ma7 = y_target.rolling(7).mean().iloc[-1] if len(y_target) >= 7 else y_target.mean()
+            if pd.isna(ma7) or ma7 <= 0:
+                ma7 = y_target.mean() if len(y_target) > 0 else 0
+            
+            print(f"[予測] 売上項目 {sales_key} の移動平均（7日）: {ma7:.0f}")
+            
+            # 予測期間の各日に対して移動平均を適用
+            for i, pred_date in enumerate(future_df['date']):
+                if i < len(predictions_list):
+                    predictions_list[i][sales_key] = int(max(0, ma7))
+                else:
+                    predictions_list.append({
+                        'date': pred_date.isoformat(),
+                        sales_key: int(max(0, ma7)),
+                    })
+            
+            # 評価指標（移動平均の場合は簡易的な指標）
+            metrics_dict[sales_key] = {
+                "mae": float(abs(y_target.mean() - ma7)) if len(y_target) > 0 else 0.0,
+                "r2": 0.0,  # 移動平均の場合はR2は0
+                "mape": 0.0,  # 移動平均の場合はMAPEは0
+                "feature_importance": {},
+                "method": "moving_average"
             }
-        }
+        else:
+            # 通常の予測: LightGBMモデルを使用
+            # One-hotエンコーディング（予測対象カラムを除外）
+            drop_columns = target_columns + ['date']
+            train_X = pd.get_dummies(train_df.drop(columns=drop_columns), drop_first=True)
+            future_X = pd.get_dummies(future_df.drop(columns=['date']), drop_first=True)
+            
+            # 曜日を数値で追加
+            if 'weekday' in train_df.columns:
+                train_X['weekday'] = train_df['weekday'].astype(int)
+            if 'weekday' in future_df.columns:
+                future_X['weekday'] = future_df['weekday'].astype(int)
+            
+            # 特徴量整列
+            future_X = align_features(train_X, future_X)
+            
+            # モデルを読み込み（存在する場合）または学習
+            model = load_model(store_id, sales_key)
+            model_loaded = model is not None
+            
+            # 再学習が必要な場合、またはモデルが存在しない場合は学習
+            if retrain or model is None:
+                if retrain and model is not None:
+                    print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを再学習中...")
+                else:
+                    print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを学習中...")
+                model = LGBMRegressor(random_state=42, verbose=-1)
+                model.fit(train_X, y_target)
+                # モデルを保存
+                save_model(store_id, sales_key, model)
+            else:
+                print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを使用（再学習なし）")
+            
+            # 予測
+            predictions = model.predict(future_X)
+            
+            # 予測結果を保存
+            for i, pred_date in enumerate(future_df['date']):
+                if i < len(predictions_list):
+                    predictions_list[i][sales_key] = int(max(0, predictions[i]))
+                else:
+                    predictions_list.append({
+                        'date': pred_date.isoformat(),
+                        sales_key: int(max(0, predictions[i])),
+                    })
+            
+            # 評価
+            y_pred_train = model.predict(train_X)
+            
+            metrics_dict[sales_key] = {
+                "mae": float(mean_absolute_error(y_target, y_pred_train)),
+                "r2": float(r2_score(y_target, y_pred_train)),
+                "mape": float(mean_absolute_percentage_error(y_target, y_pred_train)),
+                "feature_importance": {
+                    col: float(importance) 
+                    for col, importance in zip(train_X.columns, model.feature_importances_)
+                },
+                "method": "lightgbm"
+            }
     
     if not predictions_list:
         raise ValueError("No predictions generated")

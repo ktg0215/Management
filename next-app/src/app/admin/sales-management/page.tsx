@@ -68,6 +68,62 @@ const SalesManagementPage = () => {
     setIsHydrated(true);
   }, []);
 
+  // 毎週月曜日に最初にページが読み込まれたとき、予測モデルを再学習
+  useEffect(() => {
+    if (!isHydrated || !selectedStoreId) return;
+    
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=日曜日, 1=月曜日, ..., 6=土曜日
+    
+    // 月曜日（dayOfWeek === 1）の場合のみ実行
+    if (dayOfWeek !== 1) return;
+    
+    // 最後に再学習した日をlocalStorageから取得
+    const lastRetrainKey = `last_retrain_${selectedStoreId}`;
+    const lastRetrainDate = localStorage.getItem(lastRetrainKey);
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // 今日既に再学習済みの場合はスキップ
+    if (lastRetrainDate === todayStr) {
+      console.log('[SalesManagementPage] 今日は既に再学習済みです');
+      return;
+    }
+    
+    // 再学習を実行
+    console.log('[SalesManagementPage] 月曜日のため、予測モデルを再学習します');
+    const retrainModel = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        
+        const response = await fetch('/bb/api/sales/predict', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            storeId: parseInt(selectedStoreId),
+            predictDays: 7,
+            retrain: true, // 再学習フラグ
+          }),
+        });
+        
+        if (response.ok) {
+          console.log('[SalesManagementPage] 予測モデルの再学習が完了しました');
+          // 再学習日を記録
+          localStorage.setItem(lastRetrainKey, todayStr);
+        } else {
+          console.error('[SalesManagementPage] 予測モデルの再学習に失敗しました:', response.statusText);
+        }
+      } catch (error) {
+        console.error('[SalesManagementPage] 予測モデルの再学習エラー:', error);
+      }
+    };
+    
+    retrainModel();
+  }, [isHydrated, selectedStoreId]);
+
   // 店舗データを取得
   useEffect(() => {
     if (user && hasPermission('admin')) {

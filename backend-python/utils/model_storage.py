@@ -76,6 +76,16 @@ def model_exists(store_id: int, sales_key: str) -> bool:
     model_path = get_model_path(store_id, sales_key)
     return model_path.exists()
 
+def get_model_last_modified(store_id: int, sales_key: str) -> Optional[float]:
+    """モデルの最終更新日時を取得（Unixタイムスタンプ）"""
+    try:
+        model_path = get_model_path(store_id, sales_key)
+        if not model_path.exists():
+            return None
+        return model_path.stat().st_mtime
+    except Exception:
+        return None
+
 def delete_model(store_id: int, sales_key: str) -> bool:
     """モデルを削除"""
     try:

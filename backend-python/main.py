@@ -22,6 +22,7 @@ class PredictionRequest(BaseModel):
     store_id: int
     predict_days: int = 7
     start_date: Optional[str] = None
+    retrain: bool = False  # 再学習フラグ
 
 class PredictionResponse(BaseModel):
     success: bool
@@ -56,7 +57,8 @@ async def predict_sales(request: PredictionRequest):
         result = run_sales_prediction(
             store_id=request.store_id,
             predict_days=request.predict_days,
-            start_date=start_date_obj
+            start_date=start_date_obj,
+            retrain=request.retrain  # 再学習フラグを渡す
         )
         
         return PredictionResponse(
