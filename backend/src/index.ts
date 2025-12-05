@@ -4449,11 +4449,11 @@ app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: R
 
       // 予測値を追加/更新
       // 日付キーを検索（YYYY-MM-DD形式または数値形式）
-      const dateStr = pred.date.split('T')[0]; // YYYY-MM-DD形式
+      const dateStr = pred.date ? pred.date.split('T')[0] : ''; // YYYY-MM-DD形式
       let dayKey: string;
       
       // まず日付文字列キーを探す
-      if (dailyData[dateStr]) {
+      if (dateStr && dailyData[dateStr]) {
         dayKey = dateStr;
       } else {
         // 日付文字列キーが見つからない場合は数値キーを試す
@@ -4466,8 +4466,8 @@ app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: R
 
       // 動的にすべての売上項目を保存
       for (const salesField of salesFields) {
-        const fieldKey = salesField.key;
-        if (pred[fieldKey] !== undefined) {
+        const fieldKey = salesField?.key;
+        if (fieldKey && pred[fieldKey] !== undefined) {
           dailyData[dayKey][fieldKey] = pred[fieldKey];
         }
       }
@@ -4744,11 +4744,11 @@ const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://local
               }
               
               // 日付キーを検索（YYYY-MM-DD形式または数値形式）
-              const dateStr = pred.date.split('T')[0]; // YYYY-MM-DD形式
+              const dateStr = pred.date ? pred.date.split('T')[0] : ''; // YYYY-MM-DD形式
               let dayKey: string;
               
               // まず日付文字列キーを探す
-              if (dailyData[dateStr]) {
+              if (dateStr && dailyData[dateStr]) {
                 dayKey = dateStr;
               } else {
                 // 日付文字列キーが見つからない場合は数値キーを試す
@@ -4761,8 +4761,8 @@ const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://local
               
               // 動的にすべての売上項目を保存
               for (const salesField of salesFields) {
-                const fieldKey = salesField.key;
-                if (pred[fieldKey] !== undefined) {
+                const fieldKey = salesField?.key;
+                if (fieldKey && pred[fieldKey] !== undefined) {
                   dailyData[dayKey][fieldKey] = pred[fieldKey];
                 }
               }
