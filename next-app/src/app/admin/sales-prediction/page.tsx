@@ -157,8 +157,8 @@ export default function SalesPredictionPage() {
   // グラフ用データの準備
   const chartData = predictions.map(pred => ({
     date: new Date(pred.date).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }),
-    edw_sales: pred.edw_sales,
-    ohb_sales: pred.ohb_sales,
+    edw_sales: pred.edw_sales || 0,
+    ohb_sales: pred.ohb_sales || 0,
   }));
 
   // 特徴量重要度の上位5つを取得
@@ -415,13 +415,13 @@ export default function SalesPredictionPage() {
                         })}
                       </td>
                       <td className="py-2 px-3 text-right text-gray-900">
-                        {pred.edw_sales.toLocaleString()}円
+                        {pred.edw_sales != null ? pred.edw_sales.toLocaleString() : '0'}円
                       </td>
                       <td className="py-2 px-3 text-right text-gray-900">
-                        {pred.ohb_sales.toLocaleString()}円
+                        {pred.ohb_sales != null ? pred.ohb_sales.toLocaleString() : '0'}円
                       </td>
                       <td className="py-2 px-3 text-right font-medium text-gray-900">
-                        {(pred.edw_sales + pred.ohb_sales).toLocaleString()}円
+                        {((pred.edw_sales || 0) + (pred.ohb_sales || 0)).toLocaleString()}円
                       </td>
                     </tr>
                   ))}
