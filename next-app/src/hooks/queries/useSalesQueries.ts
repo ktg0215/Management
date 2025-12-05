@@ -129,6 +129,9 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
           const temperature = dayData.temperature !== undefined ? dayData.temperature : undefined;
           const event = dayData.event !== undefined ? dayData.event : undefined;
           
+          // is_predictedフラグを明示的に処理（true, 'true', 1などの場合にtrueに設定）
+          const isPredicted = dayData.is_predicted === true || dayData.is_predicted === 'true' || dayData.is_predicted === 1;
+          
           transformedDailyData[dateKey] = {
             ...dayData,
             date: dateKey,
@@ -136,7 +139,7 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
             weather,
             temperature,
             event,
-            is_predicted: dayData.is_predicted || false  // 予測フラグを保持
+            is_predicted: isPredicted  // 予測フラグを保持
           };
           
           // デバッグ: 最初の3日分の天気データをログ出力
@@ -148,6 +151,9 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
               hasTemperature: temperature !== undefined,
               temperature: temperature,
               hasEvent: event !== undefined,
+              is_predicted_raw: dayData.is_predicted,
+              is_predicted_type: typeof dayData.is_predicted,
+              is_predicted_final: isPredicted,
               event: event,
               is_predicted: dayData.is_predicted,
               dayDataKeys: Object.keys(dayData),
