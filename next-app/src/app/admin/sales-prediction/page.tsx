@@ -308,7 +308,7 @@ export default function SalesPredictionPage() {
         )}
 
         {/* 予測精度 */}
-        {metrics && (
+        {metrics && metrics.edw && metrics.ohb && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">予測精度</h2>
             
@@ -319,15 +319,15 @@ export default function SalesPredictionPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">MAE (平均絶対誤差):</span>
-                    <span className="text-sm font-medium">{metrics.edw.mae.toLocaleString()}円</span>
+                    <span className="text-sm font-medium">{metrics.edw?.mae?.toLocaleString() || 'N/A'}円</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">R² (決定係数):</span>
-                    <span className="text-sm font-medium">{(metrics.edw.r2 * 100).toFixed(2)}%</span>
+                    <span className="text-sm font-medium">{metrics.edw?.r2 ? (metrics.edw.r2 * 100).toFixed(2) : 'N/A'}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">MAPE (平均絶対パーセント誤差):</span>
-                    <span className="text-sm font-medium">{(metrics.edw.mape * 100).toFixed(2)}%</span>
+                    <span className="text-sm font-medium">{metrics.edw?.mape ? (metrics.edw.mape * 100).toFixed(2) : 'N/A'}%</span>
                   </div>
                 </div>
               </div>
@@ -338,15 +338,15 @@ export default function SalesPredictionPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">MAE (平均絶対誤差):</span>
-                    <span className="text-sm font-medium">{metrics.ohb.mae.toLocaleString()}円</span>
+                    <span className="text-sm font-medium">{metrics.ohb?.mae?.toLocaleString() || 'N/A'}円</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">R² (決定係数):</span>
-                    <span className="text-sm font-medium">{(metrics.ohb.r2 * 100).toFixed(2)}%</span>
+                    <span className="text-sm font-medium">{metrics.ohb?.r2 ? (metrics.ohb.r2 * 100).toFixed(2) : 'N/A'}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">MAPE (平均絶対パーセント誤差):</span>
-                    <span className="text-sm font-medium">{(metrics.ohb.mape * 100).toFixed(2)}%</span>
+                    <span className="text-sm font-medium">{metrics.ohb?.mape ? (metrics.ohb.mape * 100).toFixed(2) : 'N/A'}%</span>
                   </div>
                 </div>
               </div>
@@ -355,7 +355,7 @@ export default function SalesPredictionPage() {
         )}
 
         {/* 特徴量重要度 */}
-        {metrics && (
+        {metrics && metrics.edw?.feature_importance && metrics.ohb?.feature_importance && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">特徴量重要度（上位5つ）</h2>
             
