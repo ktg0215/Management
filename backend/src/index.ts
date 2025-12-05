@@ -4380,7 +4380,8 @@ if (pool) {
 }
 
 // 売上予測APIエンドポイント
-const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://python-predictor:8000';
+// Python予測サービスのURL（Dockerコンテナ内からはpython-predictor、ホストからはlocalhost）
+const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://localhost:8000';
 
 app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { storeId, predictDays, startDate } = req.body;
@@ -4692,7 +4693,8 @@ cron.schedule('0 0 * * *', async () => {
     const storesResult = await pool!.query('SELECT id FROM stores');
     const stores = storesResult.rows;
     
-    const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://python-predictor:8000';
+    // Python予測サービスのURL（Dockerコンテナ内からはpython-predictor、ホストからはlocalhost）
+const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://localhost:8000';
     
     for (const store of stores) {
       try {
@@ -4836,7 +4838,8 @@ cron.schedule('0 * * * *', async () => {
     const storesResult = await pool!.query('SELECT id FROM stores');
     const stores = storesResult.rows;
     
-    const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://python-predictor:8000';
+    // Python予測サービスのURL（Dockerコンテナ内からはpython-predictor、ホストからはlocalhost）
+const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://localhost:8000';
     
     for (const store of stores) {
       try {
