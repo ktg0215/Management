@@ -164,7 +164,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
     if (value === undefined || value === null || value === '') return '-';
     const formatted = typeof value === 'number' ? formatNumber(value) : String(value);
     if (isPredicted) {
-      return <span className="text-blue-600 font-medium">{formatted}</span>;
+      return <span className="text-blue-600 font-medium" style={{ color: '#2563eb' }}>{formatted}</span>;
     }
     return formatted;
   };
@@ -173,7 +173,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
     if (value === undefined || value === null || value === '') return '-';
     const formatted = typeof value === 'number' ? `${value.toFixed(1)}%` : String(value);
     if (isPredicted) {
-      return <span className="text-blue-600 font-medium">{formatted}</span>;
+      return <span className="text-blue-600 font-medium" style={{ color: '#2563eb' }}>{formatted}</span>;
     }
     return formatted;
   };
@@ -182,7 +182,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
     if (value === undefined || value === null || value === '') return '-';
     const formatted = typeof value === 'number' ? value.toFixed(1) : String(value);
     if (isPredicted) {
-      return <span className="text-blue-600 font-medium">{formatted}</span>;
+      return <span className="text-blue-600 font-medium" style={{ color: '#2563eb' }}>{formatted}</span>;
     }
     return formatted;
   };
