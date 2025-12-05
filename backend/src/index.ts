@@ -4443,7 +4443,7 @@ app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: R
       // 予測値を追加/更新
       // 日付キーを検索（YYYY-MM-DD形式または数値形式）
       const dateStr = pred.date.split('T')[0]; // YYYY-MM-DD形式
-      let dayKey: string | undefined = undefined;
+      let dayKey: string;
       
       // まず日付文字列キーを探す
       if (dailyData[dateStr]) {
@@ -4727,7 +4727,7 @@ cron.schedule('0 0 * * *', async () => {
               
               // 日付キーを検索（YYYY-MM-DD形式または数値形式）
               const dateStr = pred.date.split('T')[0]; // YYYY-MM-DD形式
-              let dayKey: string | undefined = undefined;
+              let dayKey: string;
               
               // まず日付文字列キーを探す
               if (dailyData[dateStr]) {
