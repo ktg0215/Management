@@ -4639,33 +4639,53 @@ app.get('/api/sales/predictions', requireDatabase, authenticateToken, async (req
 
       if (result.rows.length > 0 && result.rows[0].daily_data) {
         const dailyData = result.rows[0].daily_data;
-        for (const dayOfMonth in dailyData) {
-          const dayData = dailyData[dayOfMonth] as any;
-            if (dayData.is_predicted) {
-              const dateStr = dayData.date || `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(dayOfMonth).padStart(2, '0')}`;
-              const dateObj = new Date(dateStr);
-              if (dateObj >= startDateObj && dateObj <= endDateObj) {
-                const pred: any = {
-                  date: dateStr,
-                  is_predicted: true,
-                  predicted_at: dayData.predicted_at,
-                };
-                
-                // すべての売上項目を含める（動的）
-                for (const key in dayData) {
-                  if (key !== 'is_predicted' && key !== 'predicted_at' && key !== 'date' && 
-                      (typeof dayData[key] === 'number' || (key.includes('Sales') || key.includes('売上')))) {
-                    pred[key] = dayData[key];
-                  }
-                }
-                
-                // 後方互換性のため
-                pred.edw_sales = dayData.edwNetSales || 0;
-                pred.ohb_sales = dayData.ohbNetSales || 0;
-                
-                predictions.push(pred);
+        for (const dayKey in dailyData) {
+          const dayData = dailyData[dayKey] as any;
+          if (dayData && typeof dayData === 'object' && dayData.is_predicted) {
+            // 日付文字列キー（例："2025-12-05"）の場合はそのまま使用
+            // 数値キー（例："5"）の場合は年月と組み合わせて作成
+            let dateStr: string;
+            if (dayKey.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              // 日付文字列キーの場合
+              dateStr = dayKey;
+            } else if (dayData.date) {
+              // dayData.dateが設定されている場合
+              dateStr = dayData.date;
+            } else {
+              // 数値キーの場合、年月と組み合わせて作成
+              const dayOfMonth = parseInt(dayKey);
+              if (!isNaN(dayOfMonth) && dayOfMonth >= 1 && dayOfMonth <= 31) {
+                dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(dayOfMonth).padStart(2, '0')}`;
+              } else {
+                // 無効なキーの場合はスキップ
+                continue;
               }
             }
+            
+            const dateObj = new Date(dateStr);
+            if (dateObj >= startDateObj && dateObj <= endDateObj) {
+              const pred: any = {
+                date: dateStr,
+                is_predicted: true,
+                predicted_at: dayData.predicted_at,
+              };
+              
+              // すべての売上項目を含める（動的）
+              for (const key in dayData) {
+                if (key !== 'is_predicted' && key !== 'predicted_at' && key !== 'date' && 
+                    (typeof dayData[key] === 'number' || (key.includes('Sales') || key.includes('売上')))) {
+                  pred[key] = dayData[key];
+                }
+              }
+              
+              // 後方互換性のため、edwNetSales/ohbNetSalesをedw_sales/ohb_salesにマッピング
+              // 値が存在する場合はそれを使用、存在しない場合は0
+              pred.edw_sales = dayData.edwNetSales ?? dayData.edw_sales ?? 0;
+              pred.ohb_sales = dayData.ohbNetSales ?? dayData.ohb_sales ?? 0;
+              
+              predictions.push(pred);
+            }
+          }
         }
       }
 
