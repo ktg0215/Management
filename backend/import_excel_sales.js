@@ -277,16 +277,20 @@ async function importExcelData() {
         }
       }
 
-      // netSalesフィールドの検証
-      if (!dayData.netSales && dayData.netSales !== 0) {
-        console.warn(`⚠️  警告: ${formatDate(date)}のデータにnetSalesフィールドがありません。スキップします。`);
-        continue;
+      // netSalesフィールドの検証（netSalesが0の場合は許可）
+      // netSalesが存在しない場合は0を設定
+      if (dayData.netSales === undefined || dayData.netSales === null || dayData.netSales === '') {
+        dayData.netSales = 0;
       }
 
-      // netSalesが数値であることを確認
+      // netSalesが数値でない場合は0に変換
       if (typeof dayData.netSales !== 'number') {
-        console.warn(`⚠️  警告: ${formatDate(date)}のnetSalesが数値ではありません (${typeof dayData.netSales})。スキップします。`);
-        continue;
+        const numValue = parseFloat(dayData.netSales);
+        if (isNaN(numValue)) {
+          dayData.netSales = 0;
+        } else {
+          dayData.netSales = numValue;
+        }
       }
 
       // 空のデータは保存しない（date と dayOfWeek 以外にデータがある場合）
