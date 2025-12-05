@@ -4698,6 +4698,11 @@ app.get('/api/sales/predictions', requireDatabase, authenticateToken, async (req
 
     predictions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+    console.log(`[API /api/sales/predictions] Returning ${predictions.length} predictions`);
+    if (predictions.length > 0) {
+      console.log(`[API /api/sales/predictions] Sample prediction:`, JSON.stringify(predictions[0], null, 2));
+    }
+
     res.json({
       success: true,
       predictions,
