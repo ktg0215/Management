@@ -1356,12 +1356,18 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
     }
 
     // 従業員を取得（storeIdでフィルタ、employee_idでソート）
+    // employee_idが数値でない場合（例："test_admin_1"）にも対応するため、文字列としてソート
     const employeesResult = await pool!.query(
       `SELECT e.*, s.name as store_name 
        FROM employees e 
        JOIN stores s ON e.store_id = s.id 
        WHERE e.store_id = $1 
-       ORDER BY CAST(e.employee_id AS INTEGER)`,
+       ORDER BY 
+         CASE 
+           WHEN e.employee_id ~ '^[0-9]+$' THEN CAST(e.employee_id AS INTEGER)
+           ELSE 999999
+         END,
+         e.employee_id`,
       [storeIdInt]
     );
     const employees = toCamelCase(employeesResult.rows);
@@ -1372,7 +1378,12 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
        FROM shift_submissions ss
        JOIN employees e ON ss.employee_id = e.id
        WHERE ss.period_id = $1 AND e.store_id = $2
-       ORDER BY CAST(e.employee_id AS INTEGER)`,
+       ORDER BY 
+         CASE 
+           WHEN e.employee_id ~ '^[0-9]+$' THEN CAST(e.employee_id AS INTEGER)
+           ELSE 999999
+         END,
+         e.employee_id`,
       [periodIdInt, storeIdInt]
     );
     const submissions = toCamelCase(submissionsResult.rows).map((sub: any) => ({
