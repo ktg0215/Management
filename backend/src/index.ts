@@ -4441,7 +4441,18 @@ app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: R
       }
 
       // 予測値を追加/更新
-      const dayKey = String(dayOfMonth);
+      // 日付キーを検索（YYYY-MM-DD形式または数値形式）
+      const dateStr = pred.date.split('T')[0]; // YYYY-MM-DD形式
+      let dayKey: string | undefined = undefined;
+      
+      // まず日付文字列キーを探す
+      if (dailyData[dateStr]) {
+        dayKey = dateStr;
+      } else {
+        // 日付文字列キーが見つからない場合は数値キーを試す
+        dayKey = String(dayOfMonth);
+      }
+      
       if (!dailyData[dayKey]) {
         dailyData[dayKey] = {};
       }
@@ -4462,9 +4473,10 @@ app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: R
         dailyData[dayKey].ohbNetSales = pred.ohb_sales;
       }
 
+      // is_predictedフラグを明示的にtrueに設定
       dailyData[dayKey].is_predicted = true;
       dailyData[dayKey].predicted_at = new Date().toISOString();
-      dailyData[dayKey].date = pred.date;
+      dailyData[dayKey].date = dateStr; // 日付をYYYY-MM-DD形式で保存
 
       monthlyDataMap[monthKey] = dailyData;
     }
@@ -4713,7 +4725,18 @@ cron.schedule('0 0 * * *', async () => {
                 dailyData = existingResult.rows[0].daily_data;
               }
               
-              const dayKey = String(dayOfMonth);
+              // 日付キーを検索（YYYY-MM-DD形式または数値形式）
+              const dateStr = pred.date.split('T')[0]; // YYYY-MM-DD形式
+              let dayKey: string | undefined = undefined;
+              
+              // まず日付文字列キーを探す
+              if (dailyData[dateStr]) {
+                dayKey = dateStr;
+              } else {
+                // 日付文字列キーが見つからない場合は数値キーを試す
+                dayKey = String(dayOfMonth);
+              }
+              
               if (!dailyData[dayKey]) {
                 dailyData[dayKey] = {};
               }
@@ -4734,9 +4757,10 @@ cron.schedule('0 0 * * *', async () => {
                 dailyData[dayKey].ohbNetSales = pred.ohb_sales;
               }
               
+              // is_predictedフラグを明示的にtrueに設定
               dailyData[dayKey].is_predicted = true;
               dailyData[dayKey].predicted_at = new Date().toISOString();
-              dailyData[dayKey].date = pred.date;
+              dailyData[dayKey].date = dateStr; // 日付をYYYY-MM-DD形式で保存
               
               monthlyDataMap[monthKey] = dailyData;
             }
