@@ -7,6 +7,7 @@ from typing import Dict, List, Tuple, Optional
 from lightgbm import LGBMRegressor
 from data_loader import load_sales_data, is_holiday_jp
 from utils.sales_fields import get_sales_fields
+from utils.model_storage import save_model, load_model, model_exists
 
 def make_features(df: pd.DataFrame, include_target: bool = False, sales_fields: List[str] = None) -> pd.DataFrame:
     """
@@ -107,10 +108,13 @@ def run_sales_prediction(
     sales_fields_list = get_sales_fields(store_id)
     sales_field_keys = [sf['key'] for sf in sales_fields_list]
     
+    # 店舗純売上（netSales）を明示的に除外
+    sales_field_keys = [key for key in sales_field_keys if key.lower() not in ['netsales', 'net_sales', 'net sales']]
+    
     if not sales_field_keys:
         raise ValueError(f"No sales fields found for store {store_id}")
     
-    print(f"[予測] 店舗ID {store_id} の売上項目: {sales_field_keys}")
+    print(f"[予測] 店舗ID {store_id} の売上項目: {sales_field_keys} (店舗純売上は除外)")
     
     # データ取得
     all_data = load_sales_data(store_id)
@@ -223,9 +227,19 @@ def run_sales_prediction(
             print(f"[予測] 売上項目 {sales_key} のデータが不足しているためスキップ")
             continue
         
-        # モデル学習
-        model = LGBMRegressor(random_state=42, verbose=-1)
-        model.fit(train_X, y_target)
+        # モデルを読み込み（存在する場合）または学習
+        model = load_model(store_id, sales_key)
+        model_loaded = model is not None
+        
+        if model is None:
+            # モデルが存在しない場合は学習
+            print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを学習中...")
+            model = LGBMRegressor(random_state=42, verbose=-1)
+            model.fit(train_X, y_target)
+            # モデルを保存
+            save_model(store_id, sales_key, model)
+        else:
+            print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを使用（再学習なし）")
         
         # 予測
         predictions = model.predict(future_X)

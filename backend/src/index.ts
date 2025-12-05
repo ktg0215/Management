@@ -4673,9 +4673,19 @@ app.get('/api/sales/predictions', requireDatabase, authenticateToken, async (req
   }
 });
 
+// 日付が変わったらバックグラウンドで再予測（毎日午前0時に実行）
+// また、毎時間チェックして日付が変わった場合も実行
+let lastPredictionDate: string | null = null;
+
 // 毎日午前0時に予測を実行（すべての店舗に対して）
 cron.schedule('0 0 * * *', async () => {
-  console.log('[Cron] 売上予測の定期実行を開始');
+  const today = new Date().toISOString().split('T')[0];
+  if (lastPredictionDate === today) {
+    console.log(`[Cron] 本日（${today}）は既に予測を実行済みです`);
+    return;
+  }
+  lastPredictionDate = today;
+  console.log('[Cron] 売上予測の定期実行を開始（日付変更検知）');
   
   try {
     // すべての店舗を取得
@@ -4808,6 +4818,129 @@ cron.schedule('0 0 * * *', async () => {
     console.log('[Cron] 売上予測の定期実行が完了しました');
   } catch (err: any) {
     console.error('[Cron] 売上予測の定期実行でエラー:', err);
+  }
+});
+
+// 毎時間チェックして日付が変わった場合も予測を実行
+cron.schedule('0 * * * *', async () => {
+  const today = new Date().toISOString().split('T')[0];
+  if (lastPredictionDate === today) {
+    return; // 本日は既に予測済み
+  }
+  
+  console.log(`[Cron] 日付変更を検知（${lastPredictionDate} → ${today}）。予測を実行します`);
+  lastPredictionDate = today;
+  
+  try {
+    // すべての店舗を取得
+    const storesResult = await pool!.query('SELECT id FROM stores');
+    const stores = storesResult.rows;
+    
+    const PREDICTOR_SERVICE_URL = process.env.PREDICTOR_SERVICE_URL || 'http://python-predictor:8000';
+    
+    for (const store of stores) {
+      try {
+        console.log(`[Cron] 店舗ID ${store.id} の予測を実行中（日付変更検知）...`);
+        
+        const response = await fetch(`${PREDICTOR_SERVICE_URL}/predict`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            store_id: store.id,
+            predict_days: 7,
+            start_date: today,
+          }),
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            console.log(`[Cron] 店舗ID ${store.id} の予測が完了しました（日付変更検知）`);
+            
+            // 予測結果をデータベースに保存（上記のcronジョブと同じロジック）
+            const predictions = result.predictions || [];
+            const salesFields = result.sales_fields || [];
+            const monthlyDataMap: Record<string, Record<string, any>> = {};
+            
+            for (const pred of predictions) {
+              const predDate = new Date(pred.date);
+              const year = predDate.getFullYear();
+              const month = predDate.getMonth() + 1;
+              const dayOfMonth = predDate.getDate();
+              const monthKey = `${year}-${month}`;
+              
+              if (!monthlyDataMap[monthKey]) {
+                monthlyDataMap[monthKey] = {};
+              }
+              
+              const existingResult = await pool!.query(
+                'SELECT daily_data FROM sales_data WHERE store_id = $1 AND year = $2 AND month = $3',
+                [store.id, year, month]
+              );
+              
+              let dailyData: Record<string, any> = {};
+              if (existingResult.rows.length > 0 && existingResult.rows[0].daily_data) {
+                dailyData = existingResult.rows[0].daily_data;
+              }
+              
+              const dateStr = pred.date.split('T')[0];
+              let dayKey: string;
+              
+              if (dailyData[dateStr]) {
+                dayKey = dateStr;
+              } else {
+                dayKey = String(dayOfMonth);
+              }
+              
+              if (!dailyData[dayKey]) {
+                dailyData[dayKey] = {};
+              }
+              
+              for (const salesField of salesFields) {
+                const fieldKey = salesField.key;
+                if (pred[fieldKey] !== undefined) {
+                  dailyData[dayKey][fieldKey] = pred[fieldKey];
+                }
+              }
+              
+              dailyData[dayKey].is_predicted = true;
+              dailyData[dayKey].predicted_at = new Date().toISOString();
+              dailyData[dayKey].date = dateStr;
+              
+              monthlyDataMap[monthKey] = dailyData;
+            }
+            
+            for (const monthKey in monthlyDataMap) {
+              const [year, month] = monthKey.split('-').map(Number);
+              const dailyData = monthlyDataMap[monthKey];
+              
+              const existingResult = await pool!.query(
+                'SELECT id FROM sales_data WHERE store_id = $1 AND year = $2 AND month = $3',
+                [store.id, year, month]
+              );
+              
+              if (existingResult.rows.length > 0) {
+                await pool!.query(
+                  'UPDATE sales_data SET daily_data = $1, updated_at = NOW() WHERE id = $2',
+                  [JSON.stringify(dailyData), existingResult.rows[0].id]
+                );
+              } else {
+                await pool!.query(
+                  'INSERT INTO sales_data (store_id, year, month, daily_data) VALUES ($1, $2, $3, $4)',
+                  [store.id, year, month, JSON.stringify(dailyData)]
+                );
+              }
+            }
+          }
+        }
+      } catch (err: any) {
+        console.error(`[Cron] 店舗ID ${store.id} の予測エラー（日付変更検知）:`, err);
+      }
+    }
+  } catch (err: any) {
+    console.error('[Cron] 日付変更検知による予測実行でエラー:', err);
   }
 });
 

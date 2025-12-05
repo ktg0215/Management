@@ -121,6 +121,8 @@ services:
       - postgres_password
     ports:
       - "8000:8000"
+    volumes:
+      - python_models:/app/models
     depends_on:
       postgres:
         condition: service_healthy
@@ -231,6 +233,12 @@ volumes:
       type: none
       o: bind
       device: ${PWD}/logs/nginx
+  python_models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/data/python-models
 
 secrets:
   postgres_password:

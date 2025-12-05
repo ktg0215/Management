@@ -51,7 +51,11 @@ def get_sales_fields(store_id: int) -> List[Dict[str, str]]:
                 if ('売上' in label or category == 'sales') and key:
                     # 計算項目（isCalculated=true）は除外
                     # また、店舗純売上（netSales）はEDW売上とOHB売上の合計なので除外
-                    if not field.get('isCalculated', False) and key.lower() not in ['netsales', 'net_sales']:
+                    key_lower = key.lower()
+                    excluded_keys = ['netsales', 'net_sales', 'net sales', '店舗純売上']
+                    is_excluded = field.get('isCalculated', False) or key_lower in excluded_keys or '店舗純売上' in label
+                    
+                    if not is_excluded:
                         sales_fields.append({
                             'key': key,
                             'label': label,
@@ -80,8 +84,11 @@ def get_sales_fields(store_id: int) -> List[Dict[str, str]]:
                                 # キー名に「売上」や「Sales」が含まれるか、または大きな数値（売上の可能性）
                                 # ただし、店舗純売上（netSales）は除外
                                 key_lower = key.lower()
+                                excluded_keys = ['netsales', 'net_sales', 'net sales']
+                                is_excluded = key_lower in excluded_keys or '店舗純売上' in key
+                                
                                 if (('売上' in key or 'Sales' in key or 'sales' in key_lower) and 
-                                    key_lower not in ['netsales', 'net_sales']):
+                                    not is_excluded):
                                     # 既に追加されていない場合のみ追加
                                     if not any(sf['key'] == key for sf in sales_fields):
                                         sales_fields.append({
