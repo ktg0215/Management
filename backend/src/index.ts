@@ -4683,6 +4683,14 @@ app.get('/api/sales/predictions', requireDatabase, authenticateToken, async (req
               pred.edw_sales = dayData.edwNetSales ?? dayData.edw_sales ?? 0;
               pred.ohb_sales = dayData.ohbNetSales ?? dayData.ohb_sales ?? 0;
               
+              console.log(`[API /api/sales/predictions] Adding prediction for ${dateStr}:`, {
+                edwNetSales: dayData.edwNetSales,
+                ohbNetSales: dayData.ohbNetSales,
+                edw_sales: pred.edw_sales,
+                ohb_sales: pred.ohb_sales,
+                allKeys: Object.keys(dayData)
+              });
+              
               predictions.push(pred);
             }
           }
