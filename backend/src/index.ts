@@ -4511,11 +4511,25 @@ app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: R
       }
     }
 
+    // metricsをedw/ohb形式に変換
+    const transformedMetrics: any = {};
+    if (result.metrics) {
+      // 各売上項目のmetricsをedw/ohb形式に変換
+      for (const [salesKey, metrics] of Object.entries(result.metrics)) {
+        const keyLower = salesKey.toLowerCase();
+        if (keyLower.includes('edw') || keyLower === 'edwnetsales') {
+          transformedMetrics.edw = metrics;
+        } else if (keyLower.includes('ohb') || keyLower === 'ohbnetsales') {
+          transformedMetrics.ohb = metrics;
+        }
+      }
+    }
+
     res.json({
       success: true,
       message: '予測が正常に完了しました',
       predictions: result.predictions,
-      metrics: result.metrics,
+      metrics: transformedMetrics,
     });
   } catch (err: any) {
     console.error('売上予測エラー:', err);
