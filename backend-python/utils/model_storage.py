@@ -5,8 +5,13 @@ from pathlib import Path
 from typing import Optional
 from lightgbm import LGBMRegressor
 
-# モデル保存ディレクトリ
-MODELS_DIR = Path('/app/models')
+# モデル保存ディレクトリ（Dockerコンテナ内とホストの両方に対応）
+# 環境変数で指定されていない場合は、実行環境に応じて自動選択
+import os
+if os.path.exists('/app/models'):
+    MODELS_DIR = Path('/app/models')  # Dockerコンテナ内
+else:
+    MODELS_DIR = Path(__file__).parent.parent / 'models'  # ホスト環境
 
 def ensure_models_dir():
     """モデル保存ディレクトリが存在することを確認"""
