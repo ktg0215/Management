@@ -28,12 +28,33 @@ async function addPredictedFlag() {
     const dailyData = row.daily_data || {};
     
     console.log(`店舗ID: ${row.store_id}, 年: ${row.year}, 月: ${row.month}`);
-    console.log(`日付キー数: ${Object.keys(dailyData).length}\n`);
+    console.log(`日付キー数: ${Object.keys(dailyData).length}`);
+    console.log(`daily_dataのキー: ${Object.keys(dailyData).join(', ')}\n`);
     
     let updatedCount = 0;
     
+    // データ構造を確認
+    const firstKey = Object.keys(dailyData)[0];
+    if (firstKey) {
+      console.log(`最初のキー "${firstKey}" の内容:`, JSON.stringify(dailyData[firstKey], null, 2));
+      console.log('');
+    }
+    
     // 12月1、2、3日のデータにis_predictedフラグを追加
-    for (const dayKey of ['1', '2', '3']) {
+    // キーが日付文字列（例: "2025-12-01"）の可能性もあるため、両方を試す
+    const dayKeys = ['1', '2', '3'];
+    const dateKeys = ['2025-12-01', '2025-12-02', '2025-12-03'];
+    
+    // まず日付文字列キーを試す
+    let keysToUse = dateKeys.filter(key => dailyData[key]);
+    if (keysToUse.length === 0) {
+      // 日付文字列キーが見つからない場合は、数値キーを試す
+      keysToUse = dayKeys.filter(key => dailyData[key]);
+    }
+    
+    console.log(`使用するキー: ${keysToUse.join(', ')}\n`);
+    
+    for (const dayKey of keysToUse) {
       if (dailyData[dayKey]) {
         const dayData = dailyData[dayKey];
         
