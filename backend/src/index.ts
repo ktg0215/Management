@@ -4488,6 +4488,73 @@ app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: R
   }
 });
 
+// 予測値フラグを手動で追加するエンドポイント（一時的）
+app.post('/api/sales/add-predicted-flag', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
+  const { storeId, year, month, days } = req.body;
+  const user = (req as any).user;
+
+  if (!storeId || !year || !month) {
+    res.status(400).json({ success: false, error: 'storeId, year, monthは必須です' });
+    return;
+  }
+
+  try {
+    // データを取得
+    const result = await pool!.query(
+      'SELECT id, daily_data FROM sales_data WHERE store_id = $1 AND year = $2 AND month = $3',
+      [storeId, year, month]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ success: false, error: 'データが見つかりません' });
+      return;
+    }
+
+    const row = result.rows[0];
+    const dailyData = row.daily_data || {};
+    const daysToUpdate = days || ['1', '2', '3'];
+    let updatedCount = 0;
+
+    // 指定された日のデータにis_predictedフラグを追加
+    for (const dayKey of daysToUpdate) {
+      if (dailyData[dayKey]) {
+        const dayData = dailyData[dayKey];
+        
+        // 既にis_predictedが設定されている場合はスキップ
+        if (dayData.is_predicted === true) {
+          continue;
+        }
+        
+        // is_predictedフラグを追加
+        dailyData[dayKey] = {
+          ...dayData,
+          is_predicted: true,
+          predicted_at: new Date().toISOString(),
+        };
+        
+        updatedCount++;
+      }
+    }
+
+    if (updatedCount > 0) {
+      // データベースを更新
+      await pool!.query(
+        'UPDATE sales_data SET daily_data = $1, updated_at = NOW(), updated_by = $2 WHERE id = $3',
+        [JSON.stringify(dailyData), user.id, row.id]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: `${updatedCount}件のデータを更新しました`,
+      updatedCount,
+    });
+  } catch (err: any) {
+    console.error('予測値フラグ追加エラー:', err);
+    res.status(500).json({ success: false, error: err.message || '予測値フラグの追加に失敗しました' });
+  }
+});
+
 app.get('/api/sales/predictions', requireDatabase, authenticateToken, async (req: Request, res: Response) => {
   const { storeId, startDate, endDate } = req.query;
 
