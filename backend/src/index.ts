@@ -1315,10 +1315,26 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
       return;
     }
 
+    // storeIdを整数に変換（文字列の場合はエラー）
+    const storeIdInt = parseInt(String(storeId), 10);
+    if (isNaN(storeIdInt)) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.status(400).json({ error: `無効なstoreId: ${storeId}` });
+      return;
+    }
+
+    // periodIdを整数に変換
+    const periodIdInt = parseInt(String(periodId), 10);
+    if (isNaN(periodIdInt)) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.status(400).json({ error: `無効なperiodId: ${periodId}` });
+      return;
+    }
+
     // シフト期間を取得
     const periodResult = await pool!.query(
       'SELECT * FROM shift_periods WHERE id = $1',
-      [periodId]
+      [periodIdInt]
     );
 
     if (periodResult.rows.length === 0) {
@@ -1346,7 +1362,7 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
        JOIN stores s ON e.store_id = s.id 
        WHERE e.store_id = $1 
        ORDER BY CAST(e.employee_id AS INTEGER)`,
-      [storeId]
+      [storeIdInt]
     );
     const employees = toCamelCase(employeesResult.rows);
 
@@ -1357,7 +1373,7 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
        JOIN employees e ON ss.employee_id = e.id
        WHERE ss.period_id = $1 AND e.store_id = $2
        ORDER BY CAST(e.employee_id AS INTEGER)`,
-      [periodId, storeId]
+      [periodIdInt, storeIdInt]
     );
     const submissions = toCamelCase(submissionsResult.rows).map((sub: any) => ({
       ...sub,
@@ -1617,7 +1633,7 @@ app.get('/api/shift-export-excel', requireDatabase, authenticateToken, async (re
     const buffer = await workbook.xlsx.writeBuffer();
 
     // ファイル名を設定
-    const storeResult = await pool!.query('SELECT name FROM stores WHERE id = $1', [storeId]);
+    const storeResult = await pool!.query('SELECT name FROM stores WHERE id = $1', [storeIdInt]);
     const storeName = storeResult.rows[0]?.name || '全店舗';
     const filename = `${startDate.getFullYear()}${month.toString().padStart(2, '0')}${startDate.getDate().toString().padStart(2, '0')}.xlsx`;
 
