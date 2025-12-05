@@ -155,11 +155,13 @@ export default function SalesPredictionPage() {
   };
 
   // グラフ用データの準備
-  const chartData = predictions.map(pred => ({
-    date: new Date(pred.date).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }),
-    edw_sales: pred.edw_sales || 0,
-    ohb_sales: pred.ohb_sales || 0,
-  }));
+  const chartData = predictions
+    .filter(pred => pred && pred.date) // null/undefinedを除外
+    .map(pred => ({
+      date: new Date(pred.date).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }),
+      edw_sales: Number(pred.edw_sales ?? 0),
+      ohb_sales: Number(pred.ohb_sales ?? 0),
+    }));
 
   // 特徴量重要度の上位5つを取得
   const getTopFeatures = (importance: Record<string, number>, topN: number = 5) => {
@@ -297,8 +299,18 @@ export default function SalesPredictionPage() {
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
+                <YAxis 
+                  tickFormatter={(value) => {
+                    if (value == null || value === undefined) return '0';
+                    return Number(value).toLocaleString();
+                  }}
+                />
+                <Tooltip 
+                  formatter={(value: any) => {
+                    if (value == null || value === undefined) return '0';
+                    return Number(value).toLocaleString();
+                  }}
+                />
                 <Legend />
                 <Line type="monotone" dataKey="edw_sales" stroke="#3b82f6" name="EDW売上" strokeWidth={2} />
                 <Line type="monotone" dataKey="ohb_sales" stroke="#8b5cf6" name="OHB売上" strokeWidth={2} />
