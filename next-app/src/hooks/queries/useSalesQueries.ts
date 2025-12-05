@@ -97,29 +97,55 @@ export const useSalesData = (storeId: string | undefined, year: number, month: n
             continue;
           }
           
-          const day = parseInt(dayStr);
-          if (isNaN(day) || day < 1 || day > 31) {
-            console.warn(`[useSalesData] Invalid day key: ${dayStr} for ${year}/${month}`);
-            skippedCount++;
-            continue;
-          }
-          
-          // Validate date is within the month's range
-          const daysInMonth = getDaysInMonth(year, month);
-          if (day > daysInMonth) {
-            console.warn(`[useSalesData] Day ${day} exceeds days in month (${daysInMonth}) for ${year}/${month}`);
-            skippedCount++;
-            continue;
-          }
-          
-          const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          
           // Ensure dayData is an object
           const dayData = dailyDataRaw[dayStr];
           if (typeof dayData !== 'object' || Array.isArray(dayData)) {
             console.warn(`[useSalesData] Invalid day data type for day ${dayStr} in ${year}/${month}:`, typeof dayData);
             skippedCount++;
             continue;
+          }
+          
+          // 日付キーが日付文字列形式（YYYY-MM-DD）か数値形式かを判定
+          let dateKey: string;
+          let day: number;
+          
+          if (dayStr.includes('-')) {
+            // YYYY-MM-DD形式の場合
+            const dateMatch = dayStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (dateMatch) {
+              const [, keyYear, keyMonth, keyDay] = dateMatch;
+              // 年月が一致するか確認
+              if (parseInt(keyYear) === year && parseInt(keyMonth) === month) {
+                dateKey = dayStr;
+                day = parseInt(keyDay);
+              } else {
+                console.warn(`[useSalesData] Date key ${dayStr} does not match year/month ${year}/${month}`);
+                skippedCount++;
+                continue;
+              }
+            } else {
+              console.warn(`[useSalesData] Invalid date format: ${dayStr}`);
+              skippedCount++;
+              continue;
+            }
+          } else {
+            // 数値形式（1-31）の場合
+            day = parseInt(dayStr);
+            if (isNaN(day) || day < 1 || day > 31) {
+              console.warn(`[useSalesData] Invalid day key: ${dayStr} for ${year}/${month}`);
+              skippedCount++;
+              continue;
+            }
+            
+            // Validate date is within the month's range
+            const daysInMonth = getDaysInMonth(year, month);
+            if (day > daysInMonth) {
+              console.warn(`[useSalesData] Day ${day} exceeds days in month (${daysInMonth}) for ${year}/${month}`);
+              skippedCount++;
+              continue;
+            }
+            
+            dateKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
           }
           
           // 天気データを明示的に保持（APIから取得したデータをそのまま使用）

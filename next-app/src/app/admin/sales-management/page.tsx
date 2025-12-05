@@ -224,8 +224,8 @@ const SalesManagementPage = () => {
       transformed[date] = {
         date: data.date || date,
         dayOfWeek: data.dayOfWeek || '',
-        // 予測フラグ
-        is_predicted: data.is_predicted || false,
+        // 予測フラグ（明示的にtrueの場合のみtrue、それ以外はfalse）
+        is_predicted: data.is_predicted === true || data.is_predicted === 'true' || data.is_predicted === 1,
         // 売上・目標関連
         salesTarget: data.salesTarget,
         targetCumulative: data.targetCumulative,

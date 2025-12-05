@@ -2625,7 +2625,7 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
             }
           }
           
-          enrichedDailyData[dayOfMonth] = {
+          const enrichedDayData = {
             ...dayData,
             weather,
             temperature,
@@ -2633,9 +2633,15 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
             is_predicted: dayData.is_predicted === true || dayData.is_predicted === 'true'  // 予測フラグを保持（明示的にtrueか'true'文字列の場合のみ）
           };
           
+          // 数値キーと日付文字列キーの両方に保存（フロントエンドの互換性のため）
+          enrichedDailyData[dayOfMonth] = enrichedDayData;
+          if (dateKey && dateKey !== String(dayOfMonth)) {
+            enrichedDailyData[dateKey] = enrichedDayData;
+          }
+          
           // デバッグ: 最初の5日分の天気データをログ出力
           if (dayOfMonth <= 5) {
-            console.log(`[天気データ取得] 日付 ${dayOfMonth} (${dateKey}): 天気="${weather}", 気温=${temperature}, イベント=${eventName}, is_predicted=${dayData.is_predicted} (型: ${typeof dayData.is_predicted}), 最終値=${enrichedDailyData[dayOfMonth].is_predicted}`);
+            console.log(`[天気データ取得] 日付 ${dayOfMonth} (${dateKey}): 天気="${weather}", 気温=${temperature}, イベント=${eventName}, is_predicted=${dayData.is_predicted} (型: ${typeof dayData.is_predicted}), 最終値=${enrichedDayData.is_predicted}`);
           }
         }
       }
