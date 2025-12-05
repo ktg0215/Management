@@ -112,7 +112,7 @@ services:
       dockerfile: Dockerfile
     container_name: management-python-predictor
     environment:
-      DB_HOST: postgres
+      DB_HOST: management-db
       DB_PORT: 5432
       DB_NAME: shift_management
       DB_USER: postgres

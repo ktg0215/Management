@@ -16,13 +16,27 @@ def get_db_password():
 
 def get_db_connection():
     """PostgreSQLデータベース接続を取得"""
-    return psycopg2.connect(
-        host=os.getenv('DB_HOST', 'postgres'),
-        port=int(os.getenv('DB_PORT', 5432)),
-        database=os.getenv('DB_NAME', 'shift_management'),
-        user=os.getenv('DB_USER', 'postgres'),
-        password=get_db_password()
-    )
+    db_host = os.getenv('DB_HOST', 'postgres')
+    # management-dbが指定されている場合は、postgresも試す（Docker Composeのサービス名）
+    try:
+        return psycopg2.connect(
+            host=db_host,
+            port=int(os.getenv('DB_PORT', 5432)),
+            database=os.getenv('DB_NAME', 'shift_management'),
+            user=os.getenv('DB_USER', 'postgres'),
+            password=get_db_password()
+        )
+    except psycopg2.OperationalError:
+        # postgresで失敗した場合、management-dbを試す
+        if db_host == 'postgres':
+            return psycopg2.connect(
+                host='management-db',
+                port=int(os.getenv('DB_PORT', 5432)),
+                database=os.getenv('DB_NAME', 'shift_management'),
+                user=os.getenv('DB_USER', 'postgres'),
+                password=get_db_password()
+            )
+        raise
 
 def execute_query(query, params=None):
     """クエリを実行して結果を取得"""
