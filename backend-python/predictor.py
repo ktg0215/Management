@@ -152,7 +152,7 @@ def run_sales_prediction(
                    windspeed, gust, pressure, feelslike
             FROM weather_data
             WHERE latitude = %s AND longitude = %s
-            AND date = ANY(%s)
+            AND date = ANY(%s::date[])
         """
         date_str_list = [d.isoformat() for d in predict_dates]
         weather_results = execute_query(

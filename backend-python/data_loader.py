@@ -163,7 +163,7 @@ def load_sales_data(store_id: int, start_date: Optional[date] = None, end_date: 
                    windspeed, gust, pressure, feelslike
             FROM weather_data
             WHERE latitude = %s AND longitude = %s
-            AND date = ANY(%s)
+            AND date = ANY(%s::date[])
         """
         weather_results = execute_query(
             weather_query,
