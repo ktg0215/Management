@@ -29,13 +29,18 @@ def get_sales_fields(store_id: int) -> List[Dict[str, str]]:
     
     business_type_id = store_result[0]['business_type_id']
     
-    # business_type_fieldsテーブルからフィールド設定を取得
-    fields_query = """
-        SELECT fields
-        FROM business_type_fields
-        WHERE business_type_id = %s
-    """
-    fields_result = execute_query(fields_query, (business_type_id,))
+    # business_type_fieldsテーブルからフィールド設定を取得（テーブルが存在しない場合はスキップ）
+    fields_result = []
+    try:
+        fields_query = """
+            SELECT fields
+            FROM business_type_fields
+            WHERE business_type_id = %s
+        """
+        fields_result = execute_query(fields_query, (business_type_id,))
+    except Exception:
+        # テーブルが存在しない場合は空の結果として扱う
+        fields_result = []
     
     sales_fields = []
     
