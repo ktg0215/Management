@@ -4425,6 +4425,13 @@ app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: R
     const salesFields = result.sales_fields || []; // 売上項目の情報
     const monthlyDataMap: Record<string, Record<string, any>> = {};
 
+    console.log(`[API /api/sales/predict] Received ${predictions.length} predictions`);
+    if (predictions.length > 0) {
+      console.log(`[API /api/sales/predict] Sample prediction keys:`, Object.keys(predictions[0]));
+      console.log(`[API /api/sales/predict] Sample prediction:`, JSON.stringify(predictions[0], null, 2));
+    }
+    console.log(`[API /api/sales/predict] Sales fields:`, salesFields);
+
     for (const pred of predictions) {
       const predDate = new Date(pred.date);
       const year = predDate.getFullYear();
@@ -4469,15 +4476,28 @@ app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: R
         const fieldKey = salesField?.key;
         if (fieldKey && pred[fieldKey] !== undefined) {
           dailyData[dayKey][fieldKey] = pred[fieldKey];
+          console.log(`[API /api/sales/predict] Saved ${fieldKey} = ${pred[fieldKey]} for ${dateStr}`);
         }
       }
 
       // 後方互換性のため、既存のキーも保持
       if (pred.edw_sales !== undefined) {
         dailyData[dayKey].edwNetSales = pred.edw_sales;
+        console.log(`[API /api/sales/predict] Saved edwNetSales = ${pred.edw_sales} for ${dateStr} (from edw_sales)`);
       }
       if (pred.ohb_sales !== undefined) {
         dailyData[dayKey].ohbNetSales = pred.ohb_sales;
+        console.log(`[API /api/sales/predict] Saved ohbNetSales = ${pred.ohb_sales} for ${dateStr} (from ohb_sales)`);
+      }
+      
+      // Pythonサービスが直接edwNetSales/ohbNetSalesを返している場合も対応
+      if (pred.edwNetSales !== undefined) {
+        dailyData[dayKey].edwNetSales = pred.edwNetSales;
+        console.log(`[API /api/sales/predict] Saved edwNetSales = ${pred.edwNetSales} for ${dateStr} (direct)`);
+      }
+      if (pred.ohbNetSales !== undefined) {
+        dailyData[dayKey].ohbNetSales = pred.ohbNetSales;
+        console.log(`[API /api/sales/predict] Saved ohbNetSales = ${pred.ohbNetSales} for ${dateStr} (direct)`);
       }
 
       // is_predictedフラグを明示的にtrueに設定
