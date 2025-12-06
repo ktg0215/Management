@@ -269,18 +269,21 @@ def run_sales_prediction(
             future_X = align_features(train_X, future_X)
             
             # 再学習が必要な場合は既存のモデルを削除
-            print(f"[予測] 再学習チェック: retrain={retrain}, sales_key={sales_key}")
+            print(f"[予測] 再学習チェック: retrain={retrain} (type={type(retrain)}), sales_key={sales_key}")
             if retrain:
                 deleted = delete_model(store_id, sales_key)
                 print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} の既存モデルを削除しました（再学習のため）: deleted={deleted}")
+                # モデルを削除したので、読み込まない
+                model = None
+            else:
+                # モデルを読み込み（存在する場合）
+                model = load_model(store_id, sales_key)
             
-            # モデルを読み込み（存在する場合）または学習
-            model = load_model(store_id, sales_key)
             model_loaded = model is not None
             
             # 再学習が必要な場合、またはモデルが存在しない場合は学習
             if retrain or model is None:
-                if retrain and model_loaded:
+                if retrain:
                     print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを再学習中...")
                 else:
                     print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを学習中...")
