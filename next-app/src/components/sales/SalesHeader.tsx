@@ -59,10 +59,11 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* タイトルと店舗情報 */}
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-3">
-              <TrendingUp className="w-6 h-6 text-blue-600" />
-              <h1 className="text-xl font-semibold text-gray-900">
+          <div className="flex flex-col space-y-2">
+            {/* タイトル行 */}
+            <div className="flex items-center space-x-2">
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+              <h1 className="text-lg font-semibold text-gray-900">
                 売上管理
               </h1>
               <PageHelpButton
@@ -108,14 +109,17 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
                   </div>
                 }
               />
-              
+            </div>
+            
+            {/* 店舗選択/表示と年月選択 */}
+            <div className="flex items-center space-x-3">
               {/* 店舗選択/表示 */}
               {userRole === 'super_admin' ? (
                 // 総管理者：店舗選択ドロップボックス
                 <select
                   value={selectedStoreId || ''}
                   onChange={handleStoreChange}
-                  className="ml-3 px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">店舗を選択してください</option>
                   {stores.map(store => (
@@ -127,14 +131,12 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
               ) : (
                 // 管理者：所属店舗名表示
                 currentStoreName && (
-                  <span className="ml-3 px-3 py-2 bg-gray-100 text-sm font-medium text-gray-700 rounded-lg">
+                  <span className="px-3 py-2 bg-gray-100 text-sm font-medium text-gray-700 rounded-lg">
                     {currentStoreName}
                   </span>
                 )
               )}
-            </div>
-            
-            <div className="flex items-center space-x-3">
+              
               <select
                 value={currentYear}
                 onChange={handleYearChange}
@@ -147,14 +149,14 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
                 ))}
               </select>
 
-              <div className="grid grid-cols-2 gap-1 w-32">
+              <div className="grid grid-cols-6 gap-1">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
                   <button
                     key={m}
                     type="button"
                     onClick={() => onMonthChange(m)}
                     className={`
-                      px-2.5 py-1.5 text-xs font-medium rounded transition-all h-8
+                      w-10 h-10 text-xs font-medium rounded transition-all aspect-square flex items-center justify-center
                       ${currentMonth === m
                         ? 'bg-indigo-600 text-white shadow-sm'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -169,53 +171,53 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
           </div>
 
           {/* アクションボタン */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
             {onOpenForm && (
               <button
                 onClick={onOpenForm}
-                className="inline-flex items-center px-4 py-2 h-9 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                className="inline-flex items-center justify-center px-3 py-3 w-10 h-10 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                title="データ入力"
               >
-                <FileText className="w-4 h-4 mr-2" />
-                データ入力
+                <FileText className="w-4 h-4" />
               </button>
             )}
             {onCsvExport && (
               <button
                 onClick={onCsvExport}
-                className="inline-flex items-center px-4 py-2 h-9 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                className="inline-flex items-center justify-center px-3 py-3 w-10 h-10 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                title="CSV出力"
               >
-                <Download className="w-4 h-4 mr-2" />
-                CSV出力
+                <Download className="w-4 h-4" />
               </button>
             )}
             <Link
               href="/admin/sales-management/csv-import"
-              className="inline-flex items-center px-4 py-2 h-9 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              className="inline-flex items-center justify-center px-3 py-3 w-10 h-10 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              title="CSV読み込み"
             >
-              <Upload className="w-4 h-4 mr-2" />
-              CSV読み込み
+              <Upload className="w-4 h-4" />
             </Link>
             <button
               onClick={onDataReload}
-              className="inline-flex items-center px-4 py-2 h-9 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              className="inline-flex items-center justify-center px-3 py-3 w-10 h-10 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              title="更新"
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              更新
+              <RefreshCw className="w-4 h-4" />
             </button>
 
             <Link
               href="/admin/sales-field-settings"
-              className="inline-flex items-center px-4 py-2 h-9 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              className="inline-flex items-center justify-center px-3 py-3 w-10 h-10 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              title="表示項目設定"
             >
-              <Settings className="w-4 h-4 mr-2" />
-              表示項目設定
+              <Settings className="w-4 h-4" />
             </Link>
             <Link
               href="/admin/sales-prediction"
-              className="inline-flex items-center px-4 py-2 h-9 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              className="inline-flex items-center justify-center px-3 py-3 w-10 h-10 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              title="売上予測"
             >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              売上予測
+              <BarChart3 className="w-4 h-4" />
             </Link>
           </div>
         </div>
