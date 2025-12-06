@@ -7,7 +7,7 @@ from typing import Dict, List, Tuple, Optional
 from lightgbm import LGBMRegressor
 from data_loader import load_sales_data, is_holiday_jp
 from utils.sales_fields import get_sales_fields
-from utils.model_storage import save_model, load_model, model_exists
+from utils.model_storage import save_model, load_model, model_exists, delete_model
 
 def make_features(df: pd.DataFrame, include_target: bool = False, sales_fields: List[str] = None) -> pd.DataFrame:
     """
@@ -267,13 +267,18 @@ def run_sales_prediction(
             # 特徴量整列
             future_X = align_features(train_X, future_X)
             
+            # 再学習が必要な場合は既存のモデルを削除
+            if retrain:
+                delete_model(store_id, sales_key)
+                print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} の既存モデルを削除しました（再学習のため）")
+            
             # モデルを読み込み（存在する場合）または学習
             model = load_model(store_id, sales_key)
             model_loaded = model is not None
             
             # 再学習が必要な場合、またはモデルが存在しない場合は学習
             if retrain or model is None:
-                if retrain and model is not None:
+                if retrain and model_loaded:
                     print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを再学習中...")
                 else:
                     print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを学習中...")
