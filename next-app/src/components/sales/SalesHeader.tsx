@@ -175,49 +175,49 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
             {onOpenForm && (
               <button
                 onClick={onOpenForm}
-                className="inline-flex items-center justify-center px-3 py-3 w-10 h-10 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                title="データ入力"
+                className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
               >
-                <FileText className="w-4 h-4" />
+                <FileText className="w-4 h-4 mr-1.5" />
+                データ入力
               </button>
             )}
             {onCsvExport && (
               <button
                 onClick={onCsvExport}
-                className="inline-flex items-center justify-center px-3 py-3 w-10 h-10 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                title="CSV出力"
+                className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-4 h-4 mr-1.5" />
+                CSV出力
               </button>
             )}
             <Link
               href="/admin/sales-management/csv-import"
-              className="inline-flex items-center justify-center px-3 py-3 w-10 h-10 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-              title="CSV読み込み"
+              className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
             >
-              <Upload className="w-4 h-4" />
+              <Upload className="w-4 h-4 mr-1.5" />
+              CSV読み込み
             </Link>
             <button
               onClick={onDataReload}
-              className="inline-flex items-center justify-center px-3 py-3 w-10 h-10 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-              title="更新"
+              className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4 mr-1.5" />
+              更新
             </button>
 
             <Link
               href="/admin/sales-field-settings"
-              className="inline-flex items-center justify-center px-3 py-3 w-10 h-10 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-              title="表示項目設定"
+              className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-4 h-4 mr-1.5" />
+              設定
             </Link>
             <Link
               href="/admin/sales-prediction"
-              className="inline-flex items-center justify-center px-3 py-3 w-10 h-10 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-              title="売上予測"
+              className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
             >
-              <BarChart3 className="w-4 h-4" />
+              <BarChart3 className="w-4 h-4 mr-1.5" />
+              予測
             </Link>
           </div>
         </div>
