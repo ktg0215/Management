@@ -6,6 +6,7 @@ from typing import Optional, List, Dict
 from datetime import date
 from predictor import run_sales_prediction
 import os
+import sys
 
 app = FastAPI(title="Sales Prediction API", version="1.0.0")
 
@@ -54,7 +55,6 @@ async def predict_sales(request: PredictionRequest):
         if request.start_date:
             start_date_obj = date.fromisoformat(request.start_date)
         
-        import sys
         print(f"[main.py] predict_sales called: store_id={request.store_id}, retrain={request.retrain} (type={type(request.retrain)})", flush=True)
         print(f"[main.py] request.retrain is True: {request.retrain is True}, request.retrain == True: {request.retrain == True}, bool(request.retrain): {bool(request.retrain)}", flush=True)
         print(f"[main.py] Full request body: {request.model_dump_json()}", flush=True)

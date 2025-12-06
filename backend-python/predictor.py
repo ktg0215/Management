@@ -2,6 +2,7 @@
 from sklearn.metrics import mean_absolute_error, r2_score, mean_absolute_percentage_error
 import pandas as pd
 import numpy as np
+import sys
 from datetime import date, timedelta
 from typing import Dict, List, Tuple, Optional
 from lightgbm import LGBMRegressor
@@ -88,7 +89,6 @@ def run_sales_prediction(
     start_date: Optional[date] = None,
     retrain: bool = False
 ) -> Dict:
-    import sys
     print(f"[予測] run_sales_prediction呼び出し: store_id={store_id}, retrain={retrain} (type={type(retrain)})", flush=True)
     print(f"[予測] retrain is True: {retrain is True}, retrain == True: {retrain == True}, bool(retrain): {bool(retrain)}", flush=True)
     sys.stdout.flush()
