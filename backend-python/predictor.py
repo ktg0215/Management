@@ -88,7 +88,8 @@ def run_sales_prediction(
     start_date: Optional[date] = None,
     retrain: bool = False
 ) -> Dict:
-    print(f"[予測] run_sales_prediction呼び出し: store_id={store_id}, retrain={retrain}")
+    print(f"[予測] run_sales_prediction呼び出し: store_id={store_id}, retrain={retrain} (type={type(retrain)})")
+    print(f"[予測] retrain is True: {retrain is True}, retrain == True: {retrain == True}, bool(retrain): {bool(retrain)}")
     """
     売上予測を実行（動的に売上項目を検出）
     
