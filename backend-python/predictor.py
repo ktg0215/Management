@@ -88,6 +88,7 @@ def run_sales_prediction(
     start_date: Optional[date] = None,
     retrain: bool = False
 ) -> Dict:
+    print(f"[予測] run_sales_prediction呼び出し: store_id={store_id}, retrain={retrain}")
     """
     売上予測を実行（動的に売上項目を検出）
     
@@ -268,9 +269,10 @@ def run_sales_prediction(
             future_X = align_features(train_X, future_X)
             
             # 再学習が必要な場合は既存のモデルを削除
+            print(f"[予測] 再学習チェック: retrain={retrain}, sales_key={sales_key}")
             if retrain:
-                delete_model(store_id, sales_key)
-                print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} の既存モデルを削除しました（再学習のため）")
+                deleted = delete_model(store_id, sales_key)
+                print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} の既存モデルを削除しました（再学習のため）: deleted={deleted}")
             
             # モデルを読み込み（存在する場合）または学習
             model = load_model(store_id, sales_key)
