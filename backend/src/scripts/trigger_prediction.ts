@@ -38,8 +38,9 @@ async function triggerPrediction() {
         res.on('end', () => {
           try {
             const response = JSON.parse(data);
-            if (response.token) {
-              resolve(response.token);
+            const token = response.token || response.data?.token;
+            if (token) {
+              resolve(token);
             } else {
               reject(new Error('ログインに失敗しました: ' + JSON.stringify(response)));
             }
