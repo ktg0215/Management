@@ -54,7 +54,9 @@ async def predict_sales(request: PredictionRequest):
         if request.start_date:
             start_date_obj = date.fromisoformat(request.start_date)
         
-        print(f"[main.py] predict_sales called: store_id={request.store_id}, retrain={request.retrain}")
+        print(f"[main.py] predict_sales called: store_id={request.store_id}, retrain={request.retrain} (type={type(request.retrain)})")
+        print(f"[main.py] request.retrain is True: {request.retrain is True}, request.retrain == True: {request.retrain == True}, bool(request.retrain): {bool(request.retrain)}")
+        print(f"[main.py] Full request body: {request.model_dump_json()}")
         
         result = run_sales_prediction(
             store_id=request.store_id,
