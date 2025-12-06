@@ -132,6 +132,7 @@ export default function SalesPredictionPage() {
           storeId: parseInt(selectedStoreId),
           predictDays: predictDays,
           startDate: startDate,
+          retrain: true, // 特徴量不一致エラーを解決するため、モデルを再学習
         }),
       });
 
