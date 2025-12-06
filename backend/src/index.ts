@@ -4408,18 +4408,23 @@ app.post('/api/sales/predict', requireDatabase, authenticateToken, async (req: R
     const shouldRetrain = retrain === true; // 再学習フラグ
     const startDateStr = startDate || new Date().toISOString().split('T')[0];
 
+    console.log(`[API /api/sales/predict] Request: storeId=${storeId}, retrain=${retrain}, shouldRetrain=${shouldRetrain}`);
+
     // Python予測サービスを呼び出し
+    const requestBody = {
+      store_id: parseInt(storeId),
+      predict_days: predictDaysNum,
+      start_date: startDateStr,
+      retrain: shouldRetrain, // 再学習フラグを渡す
+    };
+    console.log(`[API /api/sales/predict] Request body:`, JSON.stringify(requestBody));
+
     const response = await fetch(`${PREDICTOR_SERVICE_URL}/predict`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        store_id: parseInt(storeId),
-        predict_days: predictDaysNum,
-        start_date: startDateStr,
-        retrain: shouldRetrain, // 再学習フラグを渡す
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
