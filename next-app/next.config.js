@@ -5,7 +5,8 @@ const nextConfig = {
   // Nginxのトレイリングスラッシュ設定と一致させる
   trailingSlash: true,
   eslint: {
-    ignoreDuringBuilds: true
+    // 本番ビルドでもESLintエラーを検出（警告として扱う）
+    ignoreDuringBuilds: false
   },
   // Docker用のスタンドアロンビルドを有効化
   output: 'standalone',

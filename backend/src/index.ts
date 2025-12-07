@@ -90,8 +90,18 @@ function toCamelCase(obj: any): any {
   return camelCaseObj;
 }
 
+// CORS設定
+const corsOptions = {
+  origin: process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
+    : ['http://localhost:3000', 'http://localhost:3002', 'http://127.0.0.1:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
 // ミドルウェアの設定
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(morgan('dev'));
 app.use(express.json());
@@ -2597,6 +2607,32 @@ app.get('/api/sales', requireDatabase, authenticateToken, async (req: Request, r
           let weather = '';
           let temperature: number | null = null;
           
+          // キャッシュから天気データを取得
+          const cachedWeather = weatherCache.get(dateKey);
+          if (cachedWeather) {
+            weather = cachedWeather.weather || '';
+            temperature = cachedWeather.temperature;
+          } else if (latitude && longitude) {
+            // キャッシュにない場合は、データベースから再取得を試みる
+            try {
+              const weatherResult = await pool!.query(
+                `SELECT weather, temperature FROM weather_data 
+                 WHERE latitude = $1 AND longitude = $2 AND date = $3`,
+                [latitude, longitude, dateKey]
+              );
+              
+              if (weatherResult.rows.length > 0) {
+                const weatherRow = weatherResult.rows[0];
+                weather = weatherRow.weather || '';
+                temperature = weatherRow.temperature !== null ? Math.round(weatherRow.temperature) : null;
+                // キャッシュに追加
+                weatherCache.set(dateKey, { weather, temperature });
+              }
+            } catch (weatherErr) {
+              console.error(`[天気データ取得] 個別取得エラー (${dateKey}):`, weatherErr);
+            }
+          }
+          
           if (latitude && longitude && dateKey) {
             // まず、正確なdateKeyで検索
             let cachedWeather = weatherCache.get(dateKey);
@@ -3435,15 +3471,37 @@ app.post('/api/sales', requireDatabase, authenticateToken, async (req: Request, 
   try {
     // 既存データがあれば更新、なければ新規作成
     const existingResult = await pool!.query(
-      'SELECT id FROM sales_data WHERE year = $1 AND month = $2 AND store_id = $3',
+      'SELECT id, daily_data FROM sales_data WHERE year = $1 AND month = $2 AND store_id = $3',
       [year, month, storeId]
     );
 
     if (existingResult.rows.length > 0) {
+      // 既存データの is_predicted フラグを保持するためにマージ
+      const existingDailyData = existingResult.rows[0].daily_data || {};
+      const mergedDailyData = { ...dailyData };
+
+      // 各日のデータについて、既存の is_predicted と predicted_at フラグを保持
+      for (const dayKey of Object.keys(existingDailyData)) {
+        const existingDay = existingDailyData[dayKey];
+        if (existingDay && typeof existingDay === 'object') {
+          // 既存データに is_predicted フラグがあり、新しいデータにも同じ日のデータがある場合
+          if (existingDay.is_predicted === true && mergedDailyData[dayKey]) {
+            // 新しいデータに is_predicted が明示的に false でない限り、既存のフラグを保持
+            if (mergedDailyData[dayKey].is_predicted !== false) {
+              mergedDailyData[dayKey] = {
+                ...mergedDailyData[dayKey],
+                is_predicted: existingDay.is_predicted,
+                predicted_at: existingDay.predicted_at || mergedDailyData[dayKey].predicted_at,
+              };
+            }
+          }
+        }
+      }
+
       // 更新
       await pool!.query(
         'UPDATE sales_data SET daily_data = $1, updated_at = NOW(), updated_by = $2 WHERE id = $3',
-        [JSON.stringify(dailyData), user.id, existingResult.rows[0].id]
+        [JSON.stringify(mergedDailyData), user.id, existingResult.rows[0].id]
       );
     } else {
       // 新規作成
@@ -3454,6 +3512,23 @@ app.post('/api/sales', requireDatabase, authenticateToken, async (req: Request, 
     }
 
     // 月次売上管理（monthly_sales）テーブルにも自動反映
+    // 既存データがある場合はマージ済みのデータを使用
+    const dataToSave = existingResult.rows.length > 0
+      ? JSON.stringify((() => {
+          const existingDailyData = existingResult.rows[0].daily_data || {};
+          const merged = { ...dailyData };
+          for (const dayKey of Object.keys(existingDailyData)) {
+            const existingDay = existingDailyData[dayKey];
+            if (existingDay && typeof existingDay === 'object' && existingDay.is_predicted === true && merged[dayKey]) {
+              if (merged[dayKey].is_predicted !== false) {
+                merged[dayKey] = { ...merged[dayKey], is_predicted: existingDay.is_predicted, predicted_at: existingDay.predicted_at || merged[dayKey].predicted_at };
+              }
+            }
+          }
+          return merged;
+        })())
+      : JSON.stringify(dailyData);
+
     try {
       const monthlyExistingResult = await pool!.query(
         'SELECT id FROM monthly_sales WHERE store_id = $1 AND year = $2 AND month = $3',
@@ -3466,14 +3541,14 @@ app.post('/api/sales', requireDatabase, authenticateToken, async (req: Request, 
           `UPDATE monthly_sales
            SET daily_data = $1, updated_at = NOW()
            WHERE store_id = $2 AND year = $3 AND month = $4`,
-          [JSON.stringify(dailyData), storeId, year, month]
+          [dataToSave, storeId, year, month]
         );
       } else {
         // 新規作成
         await pool!.query(
           `INSERT INTO monthly_sales (store_id, year, month, daily_data, created_at, updated_at)
            VALUES ($1, $2, $3, $4, NOW(), NOW())`,
-          [storeId, year, month, JSON.stringify(dailyData)]
+          [storeId, year, month, dataToSave]
         );
       }
       console.log(`✅ 月次売上管理テーブルへの自動反映完了: store_id=${storeId}, year=${year}, month=${month}`);

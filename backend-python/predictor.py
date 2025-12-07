@@ -78,10 +78,19 @@ def make_features(df: pd.DataFrame, include_target: bool = False, sales_fields: 
 
 def align_features(train_X: pd.DataFrame, future_X: pd.DataFrame) -> pd.DataFrame:
     """学習時と予測時で列を揃える"""
+    # train_Xに存在する列をすべてfuture_Xに追加（存在しない場合は0で埋める）
     for col in train_X.columns:
         if col not in future_X.columns:
             future_X[col] = 0
-    return future_X[train_X.columns]
+    
+    # train_Xに存在しない列をfuture_Xから削除
+    cols_to_keep = [col for col in train_X.columns if col in future_X.columns]
+    future_X_aligned = future_X[cols_to_keep].copy()
+    
+    # train_Xの列順序に合わせる
+    future_X_aligned = future_X_aligned.reindex(columns=train_X.columns, fill_value=0)
+    
+    return future_X_aligned
 
 def run_sales_prediction(
     store_id: int,
@@ -89,9 +98,6 @@ def run_sales_prediction(
     start_date: Optional[date] = None,
     retrain: bool = False
 ) -> Dict:
-    print(f"[予測] run_sales_prediction呼び出し: store_id={store_id}, retrain={retrain} (type={type(retrain)})", flush=True)
-    print(f"[予測] retrain is True: {retrain is True}, retrain == True: {retrain == True}, bool(retrain): {bool(retrain)}", flush=True)
-    sys.stdout.flush()
     """
     売上予測を実行（動的に売上項目を検出）
     
@@ -259,43 +265,72 @@ def run_sales_prediction(
             # 通常の予測: LightGBMモデルを使用
             # One-hotエンコーディング（予測対象カラムを除外）
             drop_columns = target_columns + ['date']
-            train_X = pd.get_dummies(train_df.drop(columns=drop_columns), drop_first=True)
-            future_X = pd.get_dummies(future_df.drop(columns=['date']), drop_first=True)
             
-            # 曜日を数値で追加
-            if 'weekday' in train_df.columns:
+            # 学習データと予測データを結合して、すべてのカテゴリ値を統一
+            # これにより、pd.get_dummiesが同じ列を生成することを保証
+            train_df_features = train_df.drop(columns=drop_columns)
+            future_df_features = future_df.drop(columns=['date'])
+            
+            # すべてのカテゴリ列を取得
+            categorical_cols = train_df_features.select_dtypes(include=['object', 'category']).columns.tolist()
+            
+            # 学習データと予測データを結合して、すべてのカテゴリ値を統一
+            combined_df = pd.concat([train_df_features, future_df_features], ignore_index=True)
+            
+            # One-hotエンコーディングを結合データに対して実行
+            combined_X = pd.get_dummies(combined_df, drop_first=True)
+            
+            # 学習データと予測データに分割
+            train_X = combined_X.iloc[:len(train_df_features)].copy()
+            future_X = combined_X.iloc[len(train_df_features):].copy()
+            
+            # 曜日を数値で追加（既にget_dummiesで処理されている場合はスキップ）
+            if 'weekday' in train_df.columns and 'weekday' not in train_X.columns:
                 train_X['weekday'] = train_df['weekday'].astype(int)
-            if 'weekday' in future_df.columns:
+            if 'weekday' in future_df.columns and 'weekday' not in future_X.columns:
                 future_X['weekday'] = future_df['weekday'].astype(int)
             
             # 特徴量整列
             future_X = align_features(train_X, future_X)
-            
+
             # 再学習が必要な場合は既存のモデルを削除
-            print(f"[予測] 再学習チェック: retrain={retrain} (type={type(retrain)}), sales_key={sales_key}")
+            model = None
+
             if retrain:
-                deleted = delete_model(store_id, sales_key)
-                print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} の既存モデルを削除しました（再学習のため）: deleted={deleted}")
-                # モデルを削除したので、読み込まない
-                model = None
+                delete_model(store_id, sales_key)
+                print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを再学習します")
             else:
-                # モデルを読み込み（存在する場合）
                 model = load_model(store_id, sales_key)
+                if model is not None:
+                    # 特徴量数が一致しない場合は削除して再学習
+                    if model.n_features_ != future_X.shape[1]:
+                        print(f"[予測] 特徴量数不一致（モデル={model.n_features_}, データ={future_X.shape[1]}）。再学習します。")
+                        delete_model(store_id, sales_key)
+                        model = None
             
             model_loaded = model is not None
             
             # 再学習が必要な場合、またはモデルが存在しない場合は学習
             if retrain or model is None:
-                if retrain:
-                    print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを再学習中...")
-                else:
-                    print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを学習中...")
+                print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを学習中...")
                 model = LGBMRegressor(random_state=42, verbose=-1)
                 model.fit(train_X, y_target)
-                # モデルを保存
                 save_model(store_id, sales_key, model)
             else:
-                print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} のモデルを使用（再学習なし）")
+                print(f"[予測] 店舗ID {store_id}, 売上項目 {sales_key} の既存モデルを使用")
+            
+            # 予測前に特徴量数を再確認
+            if model.n_features_ != future_X.shape[1]:
+                print(f"[予測] 特徴量数不一致のため再学習: モデル={model.n_features_}, データ={future_X.shape[1]}")
+                delete_model(store_id, sales_key)
+                model = LGBMRegressor(random_state=42, verbose=-1)
+                model.fit(train_X, y_target)
+                save_model(store_id, sales_key, model)
+                future_X = align_features(train_X, future_X)
+
+            # 最終確認
+            if model.n_features_ != future_X.shape[1]:
+                raise ValueError(f"特徴量数が一致しません: モデル={model.n_features_}, データ={future_X.shape[1]}")
             
             # 予測
             predictions = model.predict(future_X)

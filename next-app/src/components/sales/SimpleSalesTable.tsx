@@ -162,7 +162,8 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
 
   const formatValue = (value: any, isPredicted: boolean = false) => {
     if (value === undefined || value === null || value === '') return '-';
-    const formatted = typeof value === 'number' ? formatNumber(value) : String(value);
+    // 数値の場合は整数として表示（小数点以下を切り捨て）
+    const formatted = typeof value === 'number' ? Math.floor(value).toLocaleString() : String(value);
     if (isPredicted) {
       return <span className="text-blue-600 font-medium" style={{ color: '#2563eb' }}>{formatted}</span>;
     }
@@ -171,6 +172,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
 
   const formatPercent = (value: any, isPredicted: boolean = false) => {
     if (value === undefined || value === null || value === '') return '-';
+    // パーセンテージは小数点第1位まで表示
     const formatted = typeof value === 'number' ? `${value.toFixed(1)}%` : String(value);
     if (isPredicted) {
       return <span className="text-blue-600 font-medium" style={{ color: '#2563eb' }}>{formatted}</span>;
@@ -180,6 +182,7 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
 
   const formatDecimal = (value: any, isPredicted: boolean = false) => {
     if (value === undefined || value === null || value === '') return '-';
+    // 小数点以下を表示する必要がある場合は小数点第1位まで
     const formatted = typeof value === 'number' ? value.toFixed(1) : String(value);
     if (isPredicted) {
       return <span className="text-blue-600 font-medium" style={{ color: '#2563eb' }}>{formatted}</span>;
@@ -539,39 +542,39 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.edwYearOverYear)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.ohbYearOverYear)}</td>
                 {/* 店舗売上 */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.netSales, data?.is_predicted)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.netSalesCumulative, data?.is_predicted)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.edwNetSales, data?.is_predicted)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.edwNetSalesCumulative, data?.is_predicted)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbNetSales, data?.is_predicted)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbNetSalesCumulative, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={data?.is_predicted ? undefined : cellTextStyle}>{formatValue(data?.netSales, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={data?.is_predicted ? undefined : cellTextStyle}>{formatValue(data?.netSalesCumulative, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={data?.is_predicted ? undefined : cellTextStyle}>{formatValue(data?.edwNetSales, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={data?.is_predicted ? undefined : cellTextStyle}>{formatValue(data?.edwNetSalesCumulative, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={data?.is_predicted ? undefined : cellTextStyle}>{formatValue(data?.ohbNetSales, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={data?.is_predicted ? undefined : cellTextStyle}>{formatValue(data?.ohbNetSalesCumulative, data?.is_predicted)}</td>
                 {/* 客数・組数 */}
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.totalGroups)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.totalCustomers)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.groupUnitPrice)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.customerUnitPrice)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.groupUnitPrice || 0))}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.customerUnitPrice || 0))}</td>
                 {/* 人件費 */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.katougi)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.ishimori)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.osawa)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.washizuka)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.employeeHours)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.asHours)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.salesPerHour)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.katougi || 0))}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.ishimori || 0))}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.osawa || 0))}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.washizuka || 0))}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.employeeHours || 0))}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.asHours || 0))}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.salesPerHour || 0))}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.laborCost)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatPercent(data?.laborCostRate)}</td>
                 {/* EDW営業明細 */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchSales, data?.is_predicted)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.dinnerSales, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={data?.is_predicted ? undefined : cellTextStyle}>{formatValue(data?.lunchSales, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={data?.is_predicted ? undefined : cellTextStyle}>{formatValue(data?.dinnerSales, data?.is_predicted)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchCustomers)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.dinnerCustomers)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchGroups)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.dinnerGroups)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.edwCustomerUnitPrice)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.lunchUnitPrice)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.dinnerUnitPrice)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.lunchUnitPrice || 0))}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.dinnerUnitPrice || 0))}</td>
                 {/* OHB */}
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbSales, data?.is_predicted)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={data?.is_predicted ? undefined : cellTextStyle}>{formatValue(data?.ohbSales, data?.is_predicted)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbCustomers)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbGroups)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbCustomerUnitPrice)}</td>
@@ -583,9 +586,9 @@ const SimpleSalesTable: React.FC<SimpleSalesTableProps> = memo(({
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.totalHours)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.edwBaitHours)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatDecimal(data?.ohbBaitHours)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.edwProductivity)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.ohbProductivity)}</td>
-                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.totalProductivity)}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.edwProductivity || 0))}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.ohbProductivity || 0))}</td>
+                <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(Math.floor(data?.totalProductivity || 0))}</td>
                 {/* OHB予約 */}
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.reservationCount)}</td>
                 <td className={getCellClassName(date, data?.dayOfWeek || '', index)} style={cellTextStyle}>{formatValue(data?.plain)}</td>

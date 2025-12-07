@@ -68,33 +68,80 @@ const SalesManagementPage = () => {
     setIsHydrated(true);
   }, []);
 
-  // 毎週月曜日に最初にページが読み込まれたとき、予測モデルを再学習
+  // 予測を自動実行（店舗が選択されたとき、またはページが読み込まれたとき）
   useEffect(() => {
-    if (!isHydrated || !selectedStoreId) return;
+    // デバッグログ - 必ず実行されるように最初にログを出力
+    console.log('[SalesManagementPage] ===== 予測useEffect実行開始 =====', { 
+      selectedStoreId, 
+      hasStoreId: !!selectedStoreId,
+      selectedStoreIdType: typeof selectedStoreId,
+      selectedStoreIdLength: selectedStoreId?.length,
+      selectedStoreIdValue: selectedStoreId,
+      timestamp: new Date().toISOString()
+    });
     
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0=日曜日, 1=月曜日, ..., 6=土曜日
-    
-    // 月曜日（dayOfWeek === 1）の場合のみ実行
-    if (dayOfWeek !== 1) return;
-    
-    // 最後に再学習した日をlocalStorageから取得
-    const lastRetrainKey = `last_retrain_${selectedStoreId}`;
-    const lastRetrainDate = localStorage.getItem(lastRetrainKey);
-    const todayStr = today.toISOString().split('T')[0];
-    
-    // 今日既に再学習済みの場合はスキップ
-    if (lastRetrainDate === todayStr) {
-      console.log('[SalesManagementPage] 今日は既に再学習済みです');
+    // selectedStoreIdが空文字列または未定義の場合はスキップ
+    if (!selectedStoreId || selectedStoreId === '' || selectedStoreId === 'undefined' || selectedStoreId === 'null') {
+      console.log('[SalesManagementPage] selectedStoreIdが設定されていません。予測をスキップします', { 
+        selectedStoreId,
+        type: typeof selectedStoreId,
+        value: selectedStoreId
+      });
       return;
     }
     
-    // 再学習を実行
-    console.log('[SalesManagementPage] 月曜日のため、予測モデルを再学習します');
-    const retrainModel = async () => {
+    console.log('[SalesManagementPage] selectedStoreIdが設定されています。予測を実行します:', selectedStoreId);
+    
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=日曜日, 1=月曜日, ..., 6=土曜日
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // 最後に予測を実行した日をlocalStorageから取得
+    const lastPredictKey = `last_predict_${selectedStoreId}`;
+    const lastPredictDate = localStorage.getItem(lastPredictKey);
+    
+    console.log('[SalesManagementPage] 予測チェック:', { 
+      lastPredictDate, 
+      todayStr, 
+      dayOfWeek, 
+      shouldSkip: lastPredictDate === todayStr && dayOfWeek !== 1 
+    });
+    
+    // 今日既に予測済みの場合はスキップ（ただし、月曜日は再学習のため実行）
+    if (lastPredictDate === todayStr && dayOfWeek !== 1) {
+      console.log('[SalesManagementPage] 今日は既に予測済みです。予測をスキップします');
+      return;
+    }
+    
+    // 予測を自動実行
+    console.log('[SalesManagementPage] 予測を自動実行します', { selectedStoreId, todayStr, dayOfWeek });
+    const runPrediction = async () => {
       try {
         const token = localStorage.getItem('auth_token');
-        if (!token) return;
+        if (!token) {
+          console.log('[SalesManagementPage] トークンがありません。予測をスキップします');
+          return;
+        }
+        
+        // 月曜日の場合は再学習、それ以外は通常の予測
+        const shouldRetrain = dayOfWeek === 1;
+        const lastRetrainKey = `last_retrain_${selectedStoreId}`;
+        const lastRetrainDate = localStorage.getItem(lastRetrainKey);
+        
+        // 月曜日で今日まだ再学習していない場合のみ再学習
+        const willRetrain = shouldRetrain && lastRetrainDate !== todayStr;
+        if (willRetrain) {
+          console.log('[SalesManagementPage] 月曜日のため、予測モデルを再学習します');
+        }
+        
+        const requestBody = {
+          storeId: parseInt(selectedStoreId),
+          predictDays: 7,
+          startDate: todayStr, // 今日から1週間後まで予測
+          retrain: willRetrain,
+        };
+        
+        console.log('[SalesManagementPage] 予測APIを呼び出します:', requestBody);
         
         const response = await fetch('/bb/api/sales/predict', {
           method: 'POST',
@@ -102,27 +149,34 @@ const SalesManagementPage = () => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            storeId: parseInt(selectedStoreId),
-            predictDays: 7,
-            retrain: true, // 再学習フラグ
-          }),
+          body: JSON.stringify(requestBody),
         });
         
         if (response.ok) {
-          console.log('[SalesManagementPage] 予測モデルの再学習が完了しました');
-          // 再学習日を記録
-          localStorage.setItem(lastRetrainKey, todayStr);
+          const result = await response.json();
+          console.log('[SalesManagementPage] 予測が完了しました:', result);
+          // 予測実行日を記録
+          localStorage.setItem(lastPredictKey, todayStr);
+          if (willRetrain) {
+            localStorage.setItem(lastRetrainKey, todayStr);
+          }
+          // データを再取得して予測値を表示
+          console.log('[SalesManagementPage] データを再取得します');
+          setTimeout(() => {
+            refetch();
+          }, 1000); // 1秒待ってから再取得（予測値がDBに保存されるのを待つ）
         } else {
-          console.error('[SalesManagementPage] 予測モデルの再学習に失敗しました:', response.statusText);
+          const errorText = await response.text();
+          console.error('[SalesManagementPage] 予測に失敗しました:', response.status, errorText);
         }
       } catch (error) {
-        console.error('[SalesManagementPage] 予測モデルの再学習エラー:', error);
+        console.error('[SalesManagementPage] 予測エラー:', error);
       }
     };
     
-    retrainModel();
-  }, [isHydrated, selectedStoreId]);
+    // 予測を実行
+    runPrediction();
+  }, [selectedStoreId]); // selectedStoreIdが変更されたときに実行
 
   // 店舗データを取得
   useEffect(() => {
@@ -145,15 +199,21 @@ const SalesManagementPage = () => {
       // 管理者・総管理者の場合：所属する店舗を自動選択
       // 総管理者は後で他の店舗に変更可能
       if (user.storeId) {
-        console.log('[SalesManagementPage] Setting storeId from user:', String(user.storeId));
-        setSelectedStoreId(String(user.storeId));
+        const newStoreId = String(user.storeId);
+        console.log('[SalesManagementPage] Setting storeId from user:', newStoreId);
+        setSelectedStoreId(newStoreId);
+        // 店舗IDが設定されたことをログに記録
+        console.log('[SalesManagementPage] StoreId設定完了:', newStoreId);
       } else if (stores.length > 0) {
         // user.storeIdがない場合は、最初の店舗を選択
-        console.log('[SalesManagementPage] User has no storeId, selecting first store:', String(stores[0].id));
-        setSelectedStoreId(String(stores[0].id));
+        const newStoreId = String(stores[0].id);
+        console.log('[SalesManagementPage] User has no storeId, selecting first store:', newStoreId);
+        setSelectedStoreId(newStoreId);
+        // 店舗IDが設定されたことをログに記録
+        console.log('[SalesManagementPage] StoreId設定完了:', newStoreId);
       }
     }
-  }, [user, stores, selectedStoreId, setSelectedStoreId]);
+  }, [user, stores, selectedStoreId]);
 
   // storeIdが設定されたときに自動的にデータを読み込む
   useEffect(() => {

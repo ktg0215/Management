@@ -254,23 +254,10 @@ export default function SalesPredictionPage() {
             </div>
           </div>
 
-          <button
-            onClick={handlePredict}
-            disabled={isPredicting || !selectedStoreId}
-            className="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
-            {isPredicting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                予測実行中...
-              </>
-            ) : (
-              <>
-                <BarChart3 className="w-4 h-4 mr-2" />
-                予測を実行
-              </>
-            )}
-          </button>
+          {/* 予測は自動実行されるため、ボタンは非表示 */}
+          <div className="text-sm text-gray-600">
+            予測は自動的に実行されます。売上管理ページで予測値を確認できます。
+          </div>
         </div>
 
         {/* エラー・成功メッセージ */}

@@ -57,7 +57,7 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
   return (
     <div className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4">
           {/* タイトルと店舗情報 */}
           <div className="flex flex-col space-y-2">
             {/* タイトル行 */}
@@ -170,55 +170,63 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
             </div>
           </div>
 
-          {/* アクションボタン */}
-          <div className="flex items-center space-x-2">
-            {onOpenForm && (
-              <button
-                onClick={onOpenForm}
-                className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+          {/* アクションボタン - 2段レイアウト */}
+          <div className="flex flex-col gap-2 w-full">
+            {/* 1段目 */}
+            <div className="flex flex-wrap items-center gap-2">
+              {onOpenForm && (
+                <button
+                  onClick={onOpenForm}
+                  className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                >
+                  <FileText className="w-4 h-4 mr-1.5" />
+                  データ入力
+                </button>
+              )}
+              {onCsvExport && (
+                <button
+                  onClick={onCsvExport}
+                  className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                >
+                  <Download className="w-4 h-4 mr-1.5" />
+                  CSV出力
+                </button>
+              )}
+              <Link
+                href="/admin/sales-management/csv-import"
+                className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
               >
-                <FileText className="w-4 h-4 mr-1.5" />
-                データ入力
-              </button>
-            )}
-            {onCsvExport && (
-              <button
-                onClick={onCsvExport}
-                className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-              >
-                <Download className="w-4 h-4 mr-1.5" />
-                CSV出力
-              </button>
-            )}
-            <Link
-              href="/admin/sales-management/csv-import"
-              className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-            >
-              <Upload className="w-4 h-4 mr-1.5" />
-              CSV読み込み
-            </Link>
-            <button
-              onClick={onDataReload}
-              className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-            >
-              <RefreshCw className="w-4 h-4 mr-1.5" />
-              更新
-            </button>
+                <Upload className="w-4 h-4 mr-1.5" />
+                CSV読み込み
+              </Link>
+            </div>
 
-            <Link
-              href="/admin/sales-field-settings"
-              className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-            >
-              <Settings className="w-4 h-4 mr-1.5" />
-              設定
-            </Link>
-            <Link
-              href="/admin/sales-prediction"
-              className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-            >
-              <BarChart3 className="w-4 h-4 mr-1.5" />
-              予測
-            </Link>
+            {/* 2段目 */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={onDataReload}
+                className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+              >
+                <RefreshCw className="w-4 h-4 mr-1.5" />
+                更新
+              </button>
+
+              <Link
+                href="/admin/sales-field-settings"
+                className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+              >
+                <Settings className="w-4 h-4 mr-1.5" />
+                設定
+              </Link>
+
+              <Link
+                href="/admin/sales-prediction"
+                className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+              >
+                <BarChart3 className="w-4 h-4 mr-1.5" />
+                予測
+              </Link>
+            </div>
           </div>
         </div>
       </div>
