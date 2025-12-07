@@ -111,121 +111,113 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
               />
             </div>
             
-            {/* 店舗選択/表示と年月選択 */}
-            <div className="flex items-center space-x-3">
-              {/* 店舗選択/表示 */}
-              {userRole === 'super_admin' ? (
-                // 総管理者：店舗選択ドロップボックス
+            {/* 店舗選択/表示と年月選択 + アクションボタン */}
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              {/* 左側：店舗・年月選択 */}
+              <div className="flex items-center space-x-3 flex-wrap gap-y-2">
+                {/* 店舗選択/表示 */}
+                {userRole === 'super_admin' ? (
+                  <select
+                    value={selectedStoreId || ''}
+                    onChange={handleStoreChange}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">店舗を選択してください</option>
+                    {stores.map(store => (
+                      <option key={store.id} value={store.id}>
+                        {formatStoreName(store)}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  currentStoreName && (
+                    <span className="px-3 py-2 bg-gray-100 text-sm font-medium text-gray-700 rounded-lg">
+                      {currentStoreName}
+                    </span>
+                  )
+                )}
+
                 <select
-                  value={selectedStoreId || ''}
-                  onChange={handleStoreChange}
+                  value={currentYear}
+                  onChange={handleYearChange}
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">店舗を選択してください</option>
-                  {stores.map(store => (
-                    <option key={store.id} value={store.id}>
-                      {formatStoreName(store)}
+                  {getYearOptions.map(year => (
+                    <option key={year} value={year}>
+                      {year}年
                     </option>
                   ))}
                 </select>
-              ) : (
-                // 管理者：所属店舗名表示
-                currentStoreName && (
-                  <span className="px-3 py-2 bg-gray-100 text-sm font-medium text-gray-700 rounded-lg">
-                    {currentStoreName}
-                  </span>
-                )
-              )}
-              
-              <select
-                value={currentYear}
-                onChange={handleYearChange}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {getYearOptions.map(year => (
-                  <option key={year} value={year}>
-                    {year}年
-                  </option>
-                ))}
-              </select>
 
-              <div className="grid grid-cols-6 gap-1">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => onMonthChange(m)}
-                    className={`
-                      w-10 h-10 text-xs font-medium rounded transition-all aspect-square flex items-center justify-center
-                      ${currentMonth === m
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }
-                    `}
-                  >
-                    {m}月
-                  </button>
-                ))}
+                <div className="grid grid-cols-6 gap-1">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => onMonthChange(m)}
+                      className={`
+                        w-10 h-10 text-xs font-medium rounded transition-all aspect-square flex items-center justify-center
+                        ${currentMonth === m
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }
+                      `}
+                    >
+                      {m}月
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* アクションボタン - 2段レイアウト */}
-          <div className="flex flex-col gap-2 w-full">
-            {/* 1段目 */}
-            <div className="flex flex-wrap items-center gap-2">
-              {onOpenForm && (
-                <button
-                  onClick={onOpenForm}
+              {/* 右側：アクションボタン */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {onOpenForm && (
+                  <button
+                    onClick={onOpenForm}
+                    className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <FileText className="w-4 h-4 mr-1.5" />
+                    データ入力
+                  </button>
+                )}
+                {onCsvExport && (
+                  <button
+                    onClick={onCsvExport}
+                    className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <Download className="w-4 h-4 mr-1.5" />
+                    CSV出力
+                  </button>
+                )}
+                <Link
+                  href="/admin/sales-management/csv-import"
                   className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
                 >
-                  <FileText className="w-4 h-4 mr-1.5" />
-                  データ入力
-                </button>
-              )}
-              {onCsvExport && (
+                  <Upload className="w-4 h-4 mr-1.5" />
+                  CSV読み込み
+                </Link>
                 <button
-                  onClick={onCsvExport}
+                  onClick={onDataReload}
                   className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
                 >
-                  <Download className="w-4 h-4 mr-1.5" />
-                  CSV出力
+                  <RefreshCw className="w-4 h-4 mr-1.5" />
+                  更新
                 </button>
-              )}
-              <Link
-                href="/admin/sales-management/csv-import"
-                className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
-              >
-                <Upload className="w-4 h-4 mr-1.5" />
-                CSV読み込み
-              </Link>
-            </div>
-
-            {/* 2段目 */}
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={onDataReload}
-                className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
-              >
-                <RefreshCw className="w-4 h-4 mr-1.5" />
-                更新
-              </button>
-
-              <Link
-                href="/admin/sales-field-settings"
-                className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
-              >
-                <Settings className="w-4 h-4 mr-1.5" />
-                設定
-              </Link>
-
-              <Link
-                href="/admin/sales-prediction"
-                className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
-              >
-                <BarChart3 className="w-4 h-4 mr-1.5" />
-                予測
-              </Link>
+                <Link
+                  href="/admin/sales-field-settings"
+                  className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                >
+                  <Settings className="w-4 h-4 mr-1.5" />
+                  設定
+                </Link>
+                <Link
+                  href="/admin/sales-prediction"
+                  className="inline-flex items-center px-3 py-2 h-9 border border-blue-500 rounded-lg text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 focus:ring-2 focus:ring-blue-500"
+                >
+                  <BarChart3 className="w-4 h-4 mr-1.5" />
+                  予測
+                </Link>
+              </div>
             </div>
           </div>
         </div>
