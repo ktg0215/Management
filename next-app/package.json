@@ -36,6 +36,7 @@
     "autoprefixer": "^10.4.21",
     "critters": "^0.0.23",
     "date-fns": "^4.1.0",
+    "encoding-japanese": "^2.2.0",
     "exceljs": "^4.4.0",
     "lucide-react": "^0.525.0",
     "next": "^15.3.5",

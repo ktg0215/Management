@@ -2,8 +2,9 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, Download, FileText, AlertCircle, CheckCircle, X, ArrowLeft } from 'lucide-react';
+import { Upload, Download, FileText, AlertCircle, CheckCircle, X, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import Papa from 'papaparse';
+import Encoding from 'encoding-japanese';
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
 import { useBusinessTypeFields } from '@/hooks/useBusinessTypeFields';
@@ -88,30 +89,63 @@ export default function CsvImportPage() {
     setValidationErrors([]);
     setUploadResult(null);
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        if (results.errors.length > 0) {
-          console.error('CSVパースエラー:', results.errors);
-          alert('CSVファイルの読み込みに失敗しました。');
-          return;
-        }
+    // FileReaderでバイナリとして読み込み、エンコーディングを自動検出
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const arrayBuffer = e.target?.result as ArrayBuffer;
+      const uint8Array = new Uint8Array(arrayBuffer);
 
-        const headers = results.meta.fields || [];
-        const data = results.data as CsvRow[];
+      // encoding-japaneseでエンコーディングを検出
+      const detectedEncoding = Encoding.detect(uint8Array);
+      console.log('検出されたエンコーディング:', detectedEncoding);
 
-        setCsvHeaders(headers);
-        setCsvData(data);
-
-        // 自動マッピング
-        autoMapFields(headers, data);
-      },
-      error: (error) => {
-        console.error('CSV読み込みエラー:', error);
-        alert('CSVファイルの読み込みに失敗しました。');
+      // UTF-8またはUnicodeに変換
+      let text: string;
+      if (detectedEncoding === 'UTF8' || detectedEncoding === 'ASCII') {
+        // UTF-8の場合はそのまま文字列に変換
+        const decoder = new TextDecoder('utf-8');
+        text = decoder.decode(uint8Array);
+      } else {
+        // Shift-JIS, EUC-JP等の場合はUnicodeに変換
+        const unicodeArray = Encoding.convert(uint8Array, {
+          to: 'UNICODE',
+          from: detectedEncoding as string || 'SJIS'
+        });
+        text = Encoding.codeToString(unicodeArray);
       }
-    });
+
+      // BOMを除去
+      const cleanText = text.replace(/^\uFEFF/, '');
+
+      Papa.parse(cleanText, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          if (results.errors.length > 0) {
+            console.error('CSVパースエラー:', results.errors);
+            alert('CSVファイルの読み込みに失敗しました。');
+            return;
+          }
+
+          const headers = results.meta.fields || [];
+          const data = results.data as CsvRow[];
+
+          setCsvHeaders(headers);
+          setCsvData(data);
+
+          // 自動マッピング
+          autoMapFields(headers, data);
+        },
+        error: (error: any) => {
+          console.error('CSV読み込みエラー:', error);
+          alert('CSVファイルの読み込みに失敗しました。');
+        }
+      });
+    };
+    reader.onerror = () => {
+      alert('ファイルの読み込みに失敗しました。');
+    };
+    reader.readAsArrayBuffer(file);
   }, []);
 
   // Auto-map CSV columns to field keys
@@ -551,44 +585,83 @@ export default function CsvImportPage() {
         {csvHeaders.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">項目マッピング</h2>
-            <div className="space-y-3">
-              {csvHeaders.map(header => {
-                if (header.toLowerCase().includes('日付') || header.toLowerCase().includes('date')) {
-                  return null; // Skip date column
-                }
+            <p className="text-sm text-gray-600 mb-4">
+              CSVの列名をシステムの項目に対応付けてください。
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 bg-gray-50">CSV列名</th>
+                    <th className="py-3 px-2 w-12"></th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 bg-gray-50">システム項目</th>
+                    <th className="py-3 px-4 w-20 text-center text-sm font-medium text-gray-700 bg-gray-50">状態</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {csvHeaders.map(header => {
+                    if (header.toLowerCase().includes('日付') || header.toLowerCase().includes('date')) {
+                      return null; // Skip date column
+                    }
 
-                const mapping = fieldMappings.find(m => m.csvColumn === header);
-                const isNewField = newFields.some(f => f.csvColumn === header);
+                    const mapping = fieldMappings.find(m => m.csvColumn === header);
+                    const isNewField = newFields.some(f => f.csvColumn === header);
+                    const isMapped = !!mapping?.fieldKey;
 
-                return (
-                  <div key={header} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <span className="font-medium text-gray-900">{header}</span>
-                      {isNewField && (
-                        <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">
-                          新規項目
-                        </span>
-                      )}
-                    </div>
-                    <select
-                      value={mapping?.fieldKey || ''}
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          updateFieldMapping(header, e.target.value);
-                        }
-                      }}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">マッピングしない</option>
-                      {availableFields.map(field => (
-                        <option key={field.key} value={field.key}>
-                          {field.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                );
-              })}
+                    return (
+                      <tr key={header} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center">
+                            <span className="font-medium text-gray-900">{header}</span>
+                            {isNewField && (
+                              <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">
+                                新規
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-2 text-center">
+                          <ArrowRight className={`w-4 h-4 ${isMapped ? 'text-green-500' : 'text-gray-300'}`} />
+                        </td>
+                        <td className="py-3 px-4">
+                          <select
+                            value={mapping?.fieldKey || ''}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                updateFieldMapping(header, e.target.value);
+                              }
+                            }}
+                            className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              isMapped
+                                ? 'border-green-300 bg-green-50'
+                                : 'border-gray-300 bg-white'
+                            }`}
+                          >
+                            <option value="">マッピングしない</option>
+                            {availableFields.map(field => (
+                              <option key={field.key} value={field.key}>
+                                {field.label}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {isMapped ? (
+                            <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                              <Check className="w-3 h-3 mr-1" />
+                              設定済
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">
+                              未設定
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

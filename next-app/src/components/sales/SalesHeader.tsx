@@ -169,54 +169,60 @@ const SalesHeader: React.FC<SalesHeaderProps> = memo(({
                 </div>
               </div>
 
-              {/* 右側：アクションボタン */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {onOpenForm && (
-                  <button
-                    onClick={onOpenForm}
+              {/* 右側：アクションボタン（2行） */}
+              <div className="flex flex-col gap-2">
+                {/* 1行目: データ入力、CSV出力、CSV読み込み */}
+                <div className="flex items-center gap-2">
+                  {onOpenForm && (
+                    <button
+                      onClick={onOpenForm}
+                      className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <FileText className="w-4 h-4 mr-1.5" />
+                      データ入力
+                    </button>
+                  )}
+                  {onCsvExport && (
+                    <button
+                      onClick={onCsvExport}
+                      className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <Download className="w-4 h-4 mr-1.5" />
+                      CSV出力
+                    </button>
+                  )}
+                  <Link
+                    href="/admin/sales-management/csv-import"
                     className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
                   >
-                    <FileText className="w-4 h-4 mr-1.5" />
-                    データ入力
-                  </button>
-                )}
-                {onCsvExport && (
+                    <Upload className="w-4 h-4 mr-1.5" />
+                    CSV読み込み
+                  </Link>
+                </div>
+                {/* 2行目: 更新、設定、予測 */}
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={onCsvExport}
+                    onClick={onDataReload}
                     className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
                   >
-                    <Download className="w-4 h-4 mr-1.5" />
-                    CSV出力
+                    <RefreshCw className="w-4 h-4 mr-1.5" />
+                    更新
                   </button>
-                )}
-                <Link
-                  href="/admin/sales-management/csv-import"
-                  className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
-                >
-                  <Upload className="w-4 h-4 mr-1.5" />
-                  CSV読み込み
-                </Link>
-                <button
-                  onClick={onDataReload}
-                  className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
-                >
-                  <RefreshCw className="w-4 h-4 mr-1.5" />
-                  更新
-                </button>
-                <Link
-                  href="/admin/sales-field-settings"
-                  className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
-                >
-                  <Settings className="w-4 h-4 mr-1.5" />
-                  設定
-                </Link>
-                <Link
-                  href="/admin/sales-prediction"
-                  className="inline-flex items-center px-3 py-2 h-9 border border-blue-500 rounded-lg text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 focus:ring-2 focus:ring-blue-500"
-                >
-                  <BarChart3 className="w-4 h-4 mr-1.5" />
-                  予測
-                </Link>
+                  <Link
+                    href="/admin/sales-field-settings"
+                    className="inline-flex items-center px-3 py-2 h-9 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <Settings className="w-4 h-4 mr-1.5" />
+                    設定
+                  </Link>
+                  <Link
+                    href="/admin/sales-prediction"
+                    className="inline-flex items-center px-3 py-2 h-9 border border-blue-500 rounded-lg text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <BarChart3 className="w-4 h-4 mr-1.5" />
+                    予測
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

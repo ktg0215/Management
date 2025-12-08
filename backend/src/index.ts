@@ -3634,7 +3634,11 @@ app.get('/api/sales/csv-template', requireDatabase, authenticateToken, async (re
 
     // レスポンスを返す
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="売上データテンプレート_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.csv"`);
+    // RFC 5987 形式で日本語ファイル名をエンコード
+    const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const japaneseFilename = `売上データテンプレート_${dateStr}.csv`;
+    const encodedFilename = encodeURIComponent(japaneseFilename);
+    res.setHeader('Content-Disposition', `attachment; filename="sales_template_${dateStr}.csv"; filename*=UTF-8''${encodedFilename}`);
     res.send(csvWithBom);
   } catch (err) {
     console.error('CSVテンプレート生成エラー:', err);
@@ -3685,8 +3689,7 @@ app.post('/api/sales/csv-import', requireDatabase, authenticateToken, async (req
         fields = fieldsResult.rows[0].fields;
       }
 
-      // インメモリストレージからも取得を試みる
-      const businessTypeFieldsStorage: Record<string, any[]> = {};
+      // DBになければグローバルインメモリストレージから取得
       if (fields.length === 0) {
         fields = businessTypeFieldsStorage[String(businessTypeId)] || [];
       }
@@ -3695,6 +3698,7 @@ app.post('/api/sales/csv-import', requireDatabase, authenticateToken, async (req
       newFields.forEach((newField: any) => {
         const existingField = fields.find((f: any) => f.key === newField.fieldKey);
         if (!existingField) {
+          console.log(`[CSVインポート] 新しい項目を追加: ${newField.fieldLabel} (${newField.fieldKey})`);
           fields.push({
             id: `field_${newField.fieldKey}`,
             key: newField.fieldKey,
@@ -3713,8 +3717,18 @@ app.post('/api/sales/csv-import', requireDatabase, authenticateToken, async (req
         }
       });
 
-      // フィールド設定を保存（DBに保存する場合はここで更新）
-      // 現時点ではインメモリストレージに保存
+      // 新しい項目が追加された場合、DBとインメモリストレージの両方に保存
+      // データベースに保存（UPSERT）
+      await pool!.query(
+        `INSERT INTO business_type_fields (business_type_id, fields, updated_at)
+         VALUES ($1, $2, NOW())
+         ON CONFLICT (business_type_id)
+         DO UPDATE SET fields = $2, updated_at = NOW()`,
+        [businessTypeId, JSON.stringify(fields)]
+      );
+      console.log(`[CSVインポート] フィールド設定をDBに保存しました (業態ID: ${businessTypeId})`);
+
+      // グローバルインメモリストレージも更新
       businessTypeFieldsStorage[String(businessTypeId)] = fields;
     }
 
