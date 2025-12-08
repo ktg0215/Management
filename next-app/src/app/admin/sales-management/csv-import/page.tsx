@@ -188,7 +188,11 @@ export default function CsvImportPage() {
       const normalizedHeader = normalizeString(header);
 
       // 既存のフィールドとマッチング（スペースを除去して比較）
+      // 自動計算項目（isCalculated: true）はスキップ
       const matchedField = fieldConfigs.find(field => {
+        // 自動計算項目はマッチング対象外
+        if (field.isCalculated) return false;
+
         const normalizedLabel = normalizeString(field.label);
         const normalizedKey = normalizeString(field.key);
 
@@ -203,6 +207,16 @@ export default function CsvImportPage() {
       if (matchedField) {
         console.log(`Matched: "${header}" -> "${matchedField.label}" (${matchedField.key})`);
       } else {
+        // 自動計算項目とマッチしたかチェック（新規項目として扱わないため）
+        const calculatedMatch = fieldConfigs.find(field => {
+          if (!field.isCalculated) return false;
+          const normalizedLabel = normalizeString(field.label);
+          return normalizedLabel === normalizedHeader || normalizedHeader.includes(normalizedLabel);
+        });
+        if (calculatedMatch) {
+          console.log(`Skipped (calculated): "${header}" -> "${calculatedMatch.label}"`);
+          return; // 自動計算項目は新規項目としても追加しない
+        }
         console.log(`No match for: "${header}" (normalized: "${normalizedHeader}")`);
       }
 
