@@ -159,6 +159,11 @@ export default function CsvImportPage() {
     reader.readAsArrayBuffer(file);
   }, []);
 
+  // Normalize string for comparison (remove all whitespace)
+  const normalizeString = (str: string): string => {
+    return str.replace(/[\s\u3000]+/g, '').toLowerCase();
+  };
+
   // Auto-map CSV columns to field keys
   const autoMapFields = useCallback((headers: string[]) => {
     if (!fieldConfigs || fieldConfigs.length === 0) {
@@ -167,6 +172,7 @@ export default function CsvImportPage() {
     }
 
     console.log('autoMapFields: processing', { headers, fieldConfigsLength: fieldConfigs.length });
+    console.log('Available field labels:', fieldConfigs.map(f => f.label));
 
     const mappings: ExistingFieldMapping[] = [];
     const detectedNewFields: NewFieldConfig[] = [];
@@ -179,13 +185,26 @@ export default function CsvImportPage() {
         return; // 日付列はマッピングしない
       }
 
-      // 既存のフィールドとマッチング
-      const matchedField = fieldConfigs.find(field =>
-        field.label === header ||
-        field.key === header.toLowerCase().replace(/\s+/g, '') ||
-        header.includes(field.label) ||
-        field.label.includes(header)
-      );
+      const normalizedHeader = normalizeString(header);
+
+      // 既存のフィールドとマッチング（スペースを除去して比較）
+      const matchedField = fieldConfigs.find(field => {
+        const normalizedLabel = normalizeString(field.label);
+        const normalizedKey = normalizeString(field.key);
+
+        return (
+          normalizedLabel === normalizedHeader ||
+          normalizedKey === normalizedHeader ||
+          normalizedHeader.includes(normalizedLabel) ||
+          normalizedLabel.includes(normalizedHeader)
+        );
+      });
+
+      if (matchedField) {
+        console.log(`Matched: "${header}" -> "${matchedField.label}" (${matchedField.key})`);
+      } else {
+        console.log(`No match for: "${header}" (normalized: "${normalizedHeader}")`);
+      }
 
       if (matchedField) {
         mappings.push({
