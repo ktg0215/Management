@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, Download, AlertCircle, CheckCircle, ArrowLeft, ArrowRight, Check, Info, Plus, RefreshCw } from 'lucide-react';
+import { Upload, Download, AlertCircle, CheckCircle, ArrowLeft, ArrowRight, Check, Plus, RefreshCw, Database, Sparkles } from 'lucide-react';
 import Papa from 'papaparse';
 import Encoding from 'encoding-japanese';
 import { useAuthStore } from '@/stores/authStore';
@@ -20,10 +20,11 @@ interface CsvValidationError {
   message: string;
 }
 
-interface FieldMapping {
+interface ExistingFieldMapping {
   csvColumn: string;
   fieldKey: string;
   fieldLabel: string;
+  include: boolean; // Whether to include this existing field
 }
 
 interface NewFieldConfig {
@@ -42,7 +43,7 @@ export default function CsvImportPage() {
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvData, setCsvData] = useState<CsvRow[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
-  const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
+  const [existingFieldMappings, setExistingFieldMappings] = useState<ExistingFieldMapping[]>([]);
   const [newFields, setNewFields] = useState<NewFieldConfig[]>([]);
   const [validationErrors, setValidationErrors] = useState<CsvValidationError[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -94,7 +95,7 @@ export default function CsvImportPage() {
     setCsvFile(file);
     setCsvData([]);
     setCsvHeaders([]);
-    setFieldMappings([]);
+    setExistingFieldMappings([]);
     setNewFields([]);
     setValidationErrors([]);
     setUploadResult(null);
@@ -162,7 +163,7 @@ export default function CsvImportPage() {
   const autoMapFields = useCallback((headers: string[]) => {
     if (!fieldConfigs || fieldConfigs.length === 0) return;
 
-    const mappings: FieldMapping[] = [];
+    const mappings: ExistingFieldMapping[] = [];
     const detectedNewFields: NewFieldConfig[] = [];
 
     headers.forEach(header => {
@@ -185,7 +186,8 @@ export default function CsvImportPage() {
         mappings.push({
           csvColumn: header,
           fieldKey: matchedField.key,
-          fieldLabel: matchedField.label
+          fieldLabel: matchedField.label,
+          include: true // デフォルトで含める
         });
       } else {
         // 新しい項目として検出
@@ -200,7 +202,7 @@ export default function CsvImportPage() {
       }
     });
 
-    setFieldMappings(mappings);
+    setExistingFieldMappings(mappings);
     setNewFields(detectedNewFields);
   }, [fieldConfigs]);
 
@@ -240,8 +242,8 @@ export default function CsvImportPage() {
         });
       }
 
-      // 数値項目の検証
-      fieldMappings.forEach(mapping => {
+      // 数値項目の検証（含める項目のみ）
+      existingFieldMappings.filter(m => m.include).forEach(mapping => {
         const value = row[mapping.csvColumn];
         if (value !== undefined && value !== null && value !== '') {
           const numValue = Number(value);
@@ -257,7 +259,7 @@ export default function CsvImportPage() {
     });
 
     return errors;
-  }, [csvData, csvHeaders, fieldMappings]);
+  }, [csvData, csvHeaders, existingFieldMappings]);
 
   // Download template CSV
   const handleDownloadTemplate = useCallback(async () => {
@@ -350,8 +352,8 @@ export default function CsvImportPage() {
           dayOfWeek: ['日', '月', '火', '水', '木', '金', '土'][date.getDay()]
         };
 
-        // Map fields
-        fieldMappings.forEach(mapping => {
+        // Map existing fields (only included ones)
+        existingFieldMappings.filter(m => m.include).forEach(mapping => {
           const value = row[mapping.csvColumn];
           if (value !== undefined && value !== null && value !== '') {
             const numValue = Number(value);
@@ -387,6 +389,14 @@ export default function CsvImportPage() {
           ? `${process.env.NEXT_PUBLIC_API_URL}/api`
           : 'http://localhost:3001/api';
 
+      // Build fieldMapping from included existing fields
+      const fieldMapping = existingFieldMappings
+        .filter(m => m.include)
+        .reduce((acc, m) => {
+          acc[m.csvColumn] = m.fieldKey;
+          return acc;
+        }, {} as Record<string, string>);
+
       const response = await fetch(`${apiBase}/sales/csv-import`, {
         method: 'POST',
         headers: {
@@ -396,10 +406,7 @@ export default function CsvImportPage() {
         body: JSON.stringify({
           storeId: parseInt(selectedStoreId),
           csvData: JSON.stringify(processedData),
-          fieldMapping: fieldMappings.reduce((acc, m) => {
-            acc[m.csvColumn] = m.fieldKey;
-            return acc;
-          }, {} as Record<string, string>),
+          fieldMapping,
           newFields: newFields.filter(f => f.include),
           overwriteExisting
         }),
@@ -432,34 +439,16 @@ export default function CsvImportPage() {
     } finally {
       setIsUploading(false);
     }
-  }, [selectedStoreId, csvData, csvHeaders, fieldMappings, newFields, overwriteExisting, router]);
+  }, [selectedStoreId, csvData, csvHeaders, existingFieldMappings, newFields, overwriteExisting, router]);
 
-  // Update field mapping
-  const updateFieldMapping = useCallback((csvColumn: string, fieldKey: string) => {
-    if (!fieldKey) {
-      // Remove mapping if empty selected
-      setFieldMappings(prev => prev.filter(m => m.csvColumn !== csvColumn));
-      return;
-    }
-
-    setFieldMappings(prev => {
-      const existing = prev.find(m => m.csvColumn === csvColumn);
-      if (existing) {
-        return prev.map(m =>
-          m.csvColumn === csvColumn
-            ? { ...m, fieldKey, fieldLabel: fieldConfigs.find(f => f.key === fieldKey)?.label || csvColumn }
-            : m
-        );
-      } else {
-        const field = fieldConfigs.find(f => f.key === fieldKey);
-        return [...prev, {
-          csvColumn,
-          fieldKey,
-          fieldLabel: field?.label || csvColumn
-        }];
-      }
-    });
-  }, [fieldConfigs]);
+  // Toggle existing field inclusion
+  const toggleExistingField = useCallback((csvColumn: string) => {
+    setExistingFieldMappings(prev => prev.map(m =>
+      m.csvColumn === csvColumn
+        ? { ...m, include: !m.include }
+        : m
+    ));
+  }, []);
 
   // Toggle new field inclusion
   const toggleNewField = useCallback((csvColumn: string) => {
@@ -470,20 +459,27 @@ export default function CsvImportPage() {
     ));
   }, []);
 
-  // Available fields for mapping
-  const availableFields = useMemo(() => {
-    return fieldConfigs.filter(f => f.isVisible && !f.isCalculated);
-  }, [fieldConfigs]);
+  // Select/deselect all existing fields
+  const toggleAllExistingFields = useCallback((include: boolean) => {
+    setExistingFieldMappings(prev => prev.map(m => ({ ...m, include })));
+  }, []);
 
   // Preview data
   const previewData = useMemo(() => {
     return csvData.slice(0, previewRows);
   }, [csvData, previewRows]);
 
-  // Count of fields to be included
+  // Counts
+  const includedExistingCount = useMemo(() => {
+    return existingFieldMappings.filter(m => m.include).length;
+  }, [existingFieldMappings]);
+
   const includedNewFieldsCount = useMemo(() => {
     return newFields.filter(f => f.include).length;
   }, [newFields]);
+
+  // Check if any fields are selected for import
+  const hasFieldsToImport = includedExistingCount > 0 || includedNewFieldsCount > 0;
 
   if (!user || !hasPermission('admin')) {
     return (
@@ -530,8 +526,8 @@ export default function CsvImportPage() {
             <li>「テンプレートCSVをダウンロード」ボタンをクリックしてテンプレートをダウンロードします</li>
             <li>テンプレートにデータを入力します（日付列は必須です）</li>
             <li>「CSVファイルを選択」ボタンから入力済みのCSVファイルを選択します</li>
-            <li>項目マッピングを確認・調整します</li>
-            <li>「データをアップロード」ボタンをクリックして確認画面へ進みます</li>
+            <li>インポートする項目を選択します</li>
+            <li>「確認してアップロード」ボタンをクリックして確認画面へ進みます</li>
           </ol>
         </div>
 
@@ -628,114 +624,78 @@ export default function CsvImportPage() {
           </div>
         )}
 
-        {/* Field Mapping */}
+        {/* Date Column Info */}
         {csvHeaders.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <Check className="w-5 h-5 text-blue-600 mr-2" />
+              <span className="text-blue-800">
+                日付列: <strong>{csvHeaders.find(h => h.toLowerCase().includes('日付') || h.toLowerCase().includes('date')) || '（検出されませんでした）'}</strong>
+                （自動的に処理されます）
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Existing Fields Section */}
+        {existingFieldMappings.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">項目マッピング</h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  CSVの列をシステムの項目に対応付けます。対応付けされた項目のデータのみインポートされます。
-                </p>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <Database className="w-5 h-5 text-green-600 mr-2" />
+                <h2 className="text-lg font-semibold text-gray-900">
+                  既存項目へのインポート
+                </h2>
+                <span className="ml-3 px-2 py-1 bg-green-100 text-green-700 text-sm rounded-full">
+                  {includedExistingCount} / {existingFieldMappings.length} 選択中
+                </span>
               </div>
-              <div className="flex items-center text-sm text-gray-500">
-                <Info className="w-4 h-4 mr-1" />
-                <span>{fieldMappings.length}項目が対応付け済み</span>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => toggleAllExistingFields(true)}
+                  className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                >
+                  すべて選択
+                </button>
+                <button
+                  onClick={() => toggleAllExistingFields(false)}
+                  className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                >
+                  すべて解除
+                </button>
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 bg-gray-50">CSV列名</th>
-                    <th className="py-3 px-2 w-12"></th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 bg-gray-50">システム項目</th>
-                    <th className="py-3 px-4 w-24 text-center text-sm font-medium text-gray-700 bg-gray-50">状態</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {csvHeaders.map(header => {
-                    if (header.toLowerCase().includes('日付') || header.toLowerCase().includes('date')) {
-                      return (
-                        <tr key={header} className="border-b border-gray-100 bg-blue-50">
-                          <td className="py-3 px-4">
-                            <span className="font-medium text-gray-900">{header}</span>
-                          </td>
-                          <td className="py-3 px-2 text-center">
-                            <ArrowRight className="w-4 h-4 text-blue-500" />
-                          </td>
-                          <td className="py-3 px-4 text-blue-700">日付（自動処理）</td>
-                          <td className="py-3 px-4 text-center">
-                            <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                              必須
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    }
-
-                    const mapping = fieldMappings.find(m => m.csvColumn === header);
-                    const isNewField = newFields.some(f => f.csvColumn === header);
-                    const isMapped = !!mapping?.fieldKey;
-
-                    return (
-                      <tr key={header} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-3 px-4">
-                          <div className="flex items-center">
-                            <span className="font-medium text-gray-900">{header}</span>
-                            {isNewField && (
-                              <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">
-                                新規項目
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-3 px-2 text-center">
-                          <ArrowRight className={`w-4 h-4 ${isMapped ? 'text-green-500' : 'text-gray-300'}`} />
-                        </td>
-                        <td className="py-3 px-4">
-                          {isNewField ? (
-                            <span className="text-gray-500 italic">（既存の項目に該当なし）</span>
-                          ) : (
-                            <select
-                              value={mapping?.fieldKey || ''}
-                              onChange={(e) => updateFieldMapping(header, e.target.value)}
-                              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                isMapped
-                                  ? 'border-green-300 bg-green-50'
-                                  : 'border-gray-300 bg-white'
-                              }`}
-                            >
-                              <option value="">インポートしない</option>
-                              {availableFields.map(field => (
-                                <option key={field.key} value={field.key}>
-                                  {field.label}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          {isMapped ? (
-                            <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                              <Check className="w-3 h-3 mr-1" />
-                              対応済
-                            </span>
-                          ) : isNewField ? (
-                            <span className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
-                              新規
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">
-                              スキップ
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <p className="text-sm text-gray-600 mb-4">
+              CSVの列名と一致した既存の項目です。チェックを入れた項目のデータがインポートされます。
+            </p>
+            <div className="space-y-2">
+              {existingFieldMappings.map(mapping => (
+                <label
+                  key={mapping.csvColumn}
+                  className={`flex items-center p-3 rounded-lg cursor-pointer border transition-colors ${
+                    mapping.include
+                      ? 'bg-green-50 border-green-300'
+                      : 'bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={mapping.include}
+                    onChange={() => toggleExistingField(mapping.csvColumn)}
+                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <div className="ml-3 flex items-center flex-1">
+                    <span className="font-medium text-gray-900">{mapping.csvColumn}</span>
+                    <ArrowRight className={`w-4 h-4 mx-3 ${mapping.include ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span className={mapping.include ? 'text-green-700' : 'text-gray-500'}>
+                      {mapping.fieldLabel}
+                    </span>
+                  </div>
+                  {mapping.include && (
+                    <span className="text-sm text-green-600">インポート</span>
+                  )}
+                </label>
+              ))}
             </div>
           </div>
         )}
@@ -744,20 +704,26 @@ export default function CsvImportPage() {
         {newFields.length > 0 && (
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 mb-6">
             <div className="flex items-center mb-4">
-              <Plus className="w-5 h-5 text-purple-600 mr-2" />
-              <h3 className="text-lg font-semibold text-purple-900">
-                新規項目の検出 ({newFields.length}件)
-              </h3>
+              <Sparkles className="w-5 h-5 text-purple-600 mr-2" />
+              <h2 className="text-lg font-semibold text-purple-900">
+                新規項目の追加
+              </h2>
+              <span className="ml-3 px-2 py-1 bg-purple-100 text-purple-700 text-sm rounded-full">
+                {includedNewFieldsCount} / {newFields.length} 選択中
+              </span>
             </div>
             <p className="text-sm text-purple-800 mb-4">
-              CSVに含まれる以下の項目は、現在のシステムに存在しません。チェックを入れると新規項目として追加されます。
+              CSVに含まれる以下の列は、現在のシステムに存在しない新しい項目です。
+              チェックを入れると、新規項目としてシステムに追加されます。
             </p>
             <div className="space-y-2">
               {newFields.map(field => (
                 <label
                   key={field.csvColumn}
-                  className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                    field.include ? 'bg-purple-100 border border-purple-300' : 'bg-white border border-gray-200'
+                  className={`flex items-center p-3 rounded-lg cursor-pointer border transition-colors ${
+                    field.include
+                      ? 'bg-purple-100 border-purple-300'
+                      : 'bg-white border-gray-200'
                   }`}
                 >
                   <input
@@ -766,18 +732,21 @@ export default function CsvImportPage() {
                     onChange={() => toggleNewField(field.csvColumn)}
                     className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                   />
-                  <span className="ml-3 font-medium text-gray-900">{field.csvColumn}</span>
+                  <div className="ml-3 flex items-center flex-1">
+                    <span className="font-medium text-gray-900">{field.csvColumn}</span>
+                    {field.include && (
+                      <>
+                        <Plus className="w-4 h-4 mx-2 text-purple-500" />
+                        <span className="text-purple-700 text-sm">新規項目として追加</span>
+                      </>
+                    )}
+                  </div>
                   {field.include && (
-                    <span className="ml-auto text-sm text-purple-600">追加予定</span>
+                    <span className="text-sm text-purple-600">追加予定</span>
                   )}
                 </label>
               ))}
             </div>
-            {includedNewFieldsCount > 0 && (
-              <p className="mt-4 text-sm text-purple-700">
-                {includedNewFieldsCount}件の新規項目が追加されます
-              </p>
-            )}
           </div>
         )}
 
@@ -862,7 +831,7 @@ export default function CsvImportPage() {
                 setCsvFile(null);
                 setCsvData([]);
                 setCsvHeaders([]);
-                setFieldMappings([]);
+                setExistingFieldMappings([]);
                 setNewFields([]);
                 setValidationErrors([]);
                 setUploadResult(null);
@@ -873,7 +842,7 @@ export default function CsvImportPage() {
             </button>
             <button
               onClick={handleShowConfirmation}
-              disabled={isUploading || !selectedStoreId || fieldMappings.length === 0}
+              disabled={isUploading || !selectedStoreId || !hasFieldsToImport}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors inline-flex items-center"
             >
               <Upload className="w-4 h-4 mr-2" />
@@ -906,16 +875,52 @@ export default function CsvImportPage() {
                   </li>
                   <li className="flex justify-between">
                     <span className="text-gray-600">既存項目:</span>
-                    <span className="font-medium">{fieldMappings.length}項目</span>
+                    <span className="font-medium text-green-700">{includedExistingCount}項目</span>
                   </li>
                   {includedNewFieldsCount > 0 && (
-                    <li className="flex justify-between text-purple-700">
-                      <span>新規追加項目:</span>
-                      <span className="font-medium">{includedNewFieldsCount}項目</span>
+                    <li className="flex justify-between">
+                      <span className="text-gray-600">新規追加項目:</span>
+                      <span className="font-medium text-purple-700">{includedNewFieldsCount}項目</span>
                     </li>
                   )}
                 </ul>
               </div>
+
+              {/* Existing Fields to Import */}
+              {includedExistingCount > 0 && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h3 className="font-medium text-green-900 mb-2 flex items-center">
+                    <Database className="w-4 h-4 mr-2" />
+                    インポートする既存項目
+                  </h3>
+                  <ul className="space-y-1">
+                    {existingFieldMappings.filter(m => m.include).map(mapping => (
+                      <li key={mapping.csvColumn} className="text-sm text-green-800 flex items-center">
+                        <Check className="w-3 h-3 mr-2" />
+                        {mapping.csvColumn} → {mapping.fieldLabel}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* New Fields */}
+              {includedNewFieldsCount > 0 && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <h3 className="font-medium text-purple-900 mb-2 flex items-center">
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    追加される新規項目
+                  </h3>
+                  <ul className="space-y-1">
+                    {newFields.filter(f => f.include).map(field => (
+                      <li key={field.csvColumn} className="text-sm text-purple-800 flex items-center">
+                        <Plus className="w-3 h-3 mr-2" />
+                        {field.csvColumn}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Overwrite Option */}
               <div className="border border-gray-200 rounded-lg p-4">
@@ -963,21 +968,6 @@ export default function CsvImportPage() {
                   </label>
                 </div>
               </div>
-
-              {/* New Fields */}
-              {includedNewFieldsCount > 0 && (
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <h3 className="font-medium text-purple-900 mb-2">追加される新規項目</h3>
-                  <ul className="space-y-1">
-                    {newFields.filter(f => f.include).map(field => (
-                      <li key={field.csvColumn} className="text-sm text-purple-800 flex items-center">
-                        <Plus className="w-3 h-3 mr-2" />
-                        {field.csvColumn}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
 
               {/* Warning */}
               {overwriteExisting && (
