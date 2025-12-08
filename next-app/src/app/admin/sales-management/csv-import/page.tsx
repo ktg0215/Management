@@ -161,7 +161,12 @@ export default function CsvImportPage() {
 
   // Auto-map CSV columns to field keys
   const autoMapFields = useCallback((headers: string[]) => {
-    if (!fieldConfigs || fieldConfigs.length === 0) return;
+    if (!fieldConfigs || fieldConfigs.length === 0) {
+      console.log('autoMapFields: fieldConfigs not loaded yet', { fieldConfigsLength: fieldConfigs?.length });
+      return;
+    }
+
+    console.log('autoMapFields: processing', { headers, fieldConfigsLength: fieldConfigs.length });
 
     const mappings: ExistingFieldMapping[] = [];
     const detectedNewFields: NewFieldConfig[] = [];
@@ -202,9 +207,18 @@ export default function CsvImportPage() {
       }
     });
 
+    console.log('autoMapFields: results', { mappings: mappings.length, newFields: detectedNewFields.length });
     setExistingFieldMappings(mappings);
     setNewFields(detectedNewFields);
   }, [fieldConfigs]);
+
+  // Re-run auto mapping when fieldConfigs become available (after CSV is already loaded)
+  React.useEffect(() => {
+    if (csvHeaders.length > 0 && fieldConfigs && fieldConfigs.length > 0) {
+      console.log('Re-running autoMapFields because fieldConfigs loaded');
+      autoMapFields(csvHeaders);
+    }
+  }, [fieldConfigs, csvHeaders, autoMapFields]);
 
   // Validate CSV data
   const validateCsvData = useCallback((): CsvValidationError[] => {
