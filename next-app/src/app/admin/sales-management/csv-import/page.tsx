@@ -2,15 +2,13 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, Download, FileText, AlertCircle, CheckCircle, X, ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { Upload, Download, AlertCircle, CheckCircle, ArrowLeft, ArrowRight, Check, Info, Plus, RefreshCw } from 'lucide-react';
 import Papa from 'papaparse';
 import Encoding from 'encoding-japanese';
 import { useAuthStore } from '@/stores/authStore';
 import { useStoreStore } from '@/stores/storeStore';
 import { useBusinessTypeFields } from '@/hooks/useBusinessTypeFields';
-import { SalesFieldConfig } from '@/types/sales-field-config';
-import { downloadCsv, parseCsvDate, formatDateForCsv } from '@/utils/csvUtils';
-import apiClient from '@/lib/api';
+import { parseCsvDate, formatDateForCsv } from '@/utils/csvUtils';
 
 interface CsvRow {
   [key: string]: string | number;
@@ -28,6 +26,14 @@ interface FieldMapping {
   fieldLabel: string;
 }
 
+interface NewFieldConfig {
+  csvColumn: string;
+  fieldKey: string;
+  fieldLabel: string;
+  fieldType: string;
+  include: boolean; // Whether to include this new field
+}
+
 export default function CsvImportPage() {
   const router = useRouter();
   const { user, hasPermission } = useAuthStore();
@@ -37,11 +43,15 @@ export default function CsvImportPage() {
   const [csvData, setCsvData] = useState<CsvRow[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
-  const [newFields, setNewFields] = useState<Array<{csvColumn: string, fieldKey: string, fieldLabel: string, fieldType: string}>>([]);
+  const [newFields, setNewFields] = useState<NewFieldConfig[]>([]);
   const [validationErrors, setValidationErrors] = useState<CsvValidationError[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<{success: boolean, message: string} | null>(null);
   const [previewRows, setPreviewRows] = useState(10);
+
+  // Confirmation modal state
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [overwriteExisting, setOverwriteExisting] = useState(true);
 
   // Get businessTypeId from selected store
   const selectedStore = stores.find(store => String(store.id) === selectedStoreId);
@@ -134,9 +144,9 @@ export default function CsvImportPage() {
           setCsvData(data);
 
           // 自動マッピング
-          autoMapFields(headers, data);
+          autoMapFields(headers);
         },
-        error: (error: any) => {
+        error: (error: Error) => {
           console.error('CSV読み込みエラー:', error);
           alert('CSVファイルの読み込みに失敗しました。');
         }
@@ -149,11 +159,11 @@ export default function CsvImportPage() {
   }, []);
 
   // Auto-map CSV columns to field keys
-  const autoMapFields = useCallback((headers: string[], data: CsvRow[]) => {
+  const autoMapFields = useCallback((headers: string[]) => {
     if (!fieldConfigs || fieldConfigs.length === 0) return;
 
     const mappings: FieldMapping[] = [];
-    const detectedNewFields: Array<{csvColumn: string, fieldKey: string, fieldLabel: string, fieldType: string}> = [];
+    const detectedNewFields: NewFieldConfig[] = [];
 
     headers.forEach(header => {
       if (!header || header.trim() === '') return;
@@ -164,8 +174,8 @@ export default function CsvImportPage() {
       }
 
       // 既存のフィールドとマッチング
-      const matchedField = fieldConfigs.find(field => 
-        field.label === header || 
+      const matchedField = fieldConfigs.find(field =>
+        field.label === header ||
         field.key === header.toLowerCase().replace(/\s+/g, '') ||
         header.includes(field.label) ||
         field.label.includes(header)
@@ -184,7 +194,8 @@ export default function CsvImportPage() {
           csvColumn: header,
           fieldKey: fieldKey,
           fieldLabel: header,
-          fieldType: 'number' // デフォルトは数値
+          fieldType: 'number', // デフォルトは数値
+          include: false // デフォルトは追加しない
         });
       }
     });
@@ -196,7 +207,7 @@ export default function CsvImportPage() {
   // Validate CSV data
   const validateCsvData = useCallback((): CsvValidationError[] => {
     const errors: CsvValidationError[] = [];
-    const dateColumnIndex = csvHeaders.findIndex(h => 
+    const dateColumnIndex = csvHeaders.findIndex(h =>
       h.toLowerCase().includes('日付') || h.toLowerCase().includes('date')
     );
 
@@ -257,9 +268,9 @@ export default function CsvImportPage() {
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-      const apiBase = process.env.NODE_ENV === 'production' 
-        ? '/bb/api' 
-        : process.env.NEXT_PUBLIC_API_URL 
+      const apiBase = process.env.NODE_ENV === 'production'
+        ? '/bb/api'
+        : process.env.NEXT_PUBLIC_API_URL
           ? `${process.env.NEXT_PUBLIC_API_URL}/api`
           : 'http://localhost:3001/api';
 
@@ -284,11 +295,25 @@ export default function CsvImportPage() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'テンプレートのダウンロードに失敗しました。';
       console.error('テンプレートダウンロードエラー:', error);
-      alert(error.message || 'テンプレートのダウンロードに失敗しました。');
+      alert(errorMessage);
     }
   }, [selectedStoreId, businessTypeId]);
+
+  // Show confirmation modal before upload
+  const handleShowConfirmation = useCallback(() => {
+    // Validate first
+    const errors = validateCsvData();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      alert(`CSVデータにエラーがあります（${errors.length}件）。詳細を確認してください。`);
+      return;
+    }
+    setValidationErrors([]);
+    setShowConfirmModal(true);
+  }, [validateCsvData]);
 
   // Handle CSV upload
   const handleUpload = useCallback(async () => {
@@ -302,24 +327,17 @@ export default function CsvImportPage() {
       return;
     }
 
-    // Validate
-    const errors = validateCsvData();
-    if (errors.length > 0) {
-      setValidationErrors(errors);
-      alert(`CSVデータにエラーがあります（${errors.length}件）。詳細を確認してください。`);
-      return;
-    }
-
     setIsUploading(true);
     setUploadResult(null);
+    setShowConfirmModal(false);
 
     try {
       // Convert CSV data to the format expected by the API
-      const dateColumnIndex = csvHeaders.findIndex(h => 
+      const dateColumnIndex = csvHeaders.findIndex(h =>
         h.toLowerCase().includes('日付') || h.toLowerCase().includes('date')
       );
 
-      const processedData: Record<string, Record<string, any>> = {};
+      const processedData: Record<string, Record<string, unknown>> = {};
 
       csvData.forEach(row => {
         const dateValue = row[csvHeaders[dateColumnIndex]];
@@ -327,7 +345,7 @@ export default function CsvImportPage() {
         if (!date) return;
 
         const dayOfMonth = date.getDate();
-        const dayData: Record<string, any> = {
+        const dayData: Record<string, unknown> = {
           date: formatDateForCsv(date),
           dayOfWeek: ['日', '月', '火', '水', '木', '金', '土'][date.getDay()]
         };
@@ -345,14 +363,27 @@ export default function CsvImportPage() {
           }
         });
 
+        // Include selected new fields
+        newFields.filter(f => f.include).forEach(field => {
+          const value = row[field.csvColumn];
+          if (value !== undefined && value !== null && value !== '') {
+            const numValue = Number(value);
+            if (!isNaN(numValue)) {
+              dayData[field.fieldKey] = numValue;
+            } else {
+              dayData[field.fieldKey] = String(value);
+            }
+          }
+        });
+
         processedData[String(dayOfMonth)] = dayData;
       });
 
       // Prepare request
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-      const apiBase = process.env.NODE_ENV === 'production' 
-        ? '/bb/api' 
-        : process.env.NEXT_PUBLIC_API_URL 
+      const apiBase = process.env.NODE_ENV === 'production'
+        ? '/bb/api'
+        : process.env.NEXT_PUBLIC_API_URL
           ? `${process.env.NEXT_PUBLIC_API_URL}/api`
           : 'http://localhost:3001/api';
 
@@ -369,8 +400,8 @@ export default function CsvImportPage() {
             acc[m.csvColumn] = m.fieldKey;
             return acc;
           }, {} as Record<string, string>),
-          newFields: newFields,
-          overwriteExisting: true
+          newFields: newFields.filter(f => f.include),
+          overwriteExisting
         }),
       });
 
@@ -391,24 +422,31 @@ export default function CsvImportPage() {
           message: result.error || 'データのインポートに失敗しました。'
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'データのアップロードに失敗しました。';
       console.error('アップロードエラー:', error);
       setUploadResult({
         success: false,
-        message: error.message || 'データのアップロードに失敗しました。'
+        message: errorMessage
       });
     } finally {
       setIsUploading(false);
     }
-  }, [selectedStoreId, csvData, csvHeaders, fieldMappings, newFields, validateCsvData, router]);
+  }, [selectedStoreId, csvData, csvHeaders, fieldMappings, newFields, overwriteExisting, router]);
 
   // Update field mapping
   const updateFieldMapping = useCallback((csvColumn: string, fieldKey: string) => {
+    if (!fieldKey) {
+      // Remove mapping if empty selected
+      setFieldMappings(prev => prev.filter(m => m.csvColumn !== csvColumn));
+      return;
+    }
+
     setFieldMappings(prev => {
       const existing = prev.find(m => m.csvColumn === csvColumn);
       if (existing) {
-        return prev.map(m => 
-          m.csvColumn === csvColumn 
+        return prev.map(m =>
+          m.csvColumn === csvColumn
             ? { ...m, fieldKey, fieldLabel: fieldConfigs.find(f => f.key === fieldKey)?.label || csvColumn }
             : m
         );
@@ -423,6 +461,15 @@ export default function CsvImportPage() {
     });
   }, [fieldConfigs]);
 
+  // Toggle new field inclusion
+  const toggleNewField = useCallback((csvColumn: string) => {
+    setNewFields(prev => prev.map(f =>
+      f.csvColumn === csvColumn
+        ? { ...f, include: !f.include }
+        : f
+    ));
+  }, []);
+
   // Available fields for mapping
   const availableFields = useMemo(() => {
     return fieldConfigs.filter(f => f.isVisible && !f.isCalculated);
@@ -432,6 +479,11 @@ export default function CsvImportPage() {
   const previewData = useMemo(() => {
     return csvData.slice(0, previewRows);
   }, [csvData, previewRows]);
+
+  // Count of fields to be included
+  const includedNewFieldsCount = useMemo(() => {
+    return newFields.filter(f => f.include).length;
+  }, [newFields]);
 
   if (!user || !hasPermission('admin')) {
     return (
@@ -479,13 +531,8 @@ export default function CsvImportPage() {
             <li>テンプレートにデータを入力します（日付列は必須です）</li>
             <li>「CSVファイルを選択」ボタンから入力済みのCSVファイルを選択します</li>
             <li>項目マッピングを確認・調整します</li>
-            <li>「データをアップロード」ボタンをクリックしてデータを反映します</li>
+            <li>「データをアップロード」ボタンをクリックして確認画面へ進みます</li>
           </ol>
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-            <p className="text-sm text-yellow-800">
-              <strong>注意:</strong> 既存のデータは上書きされます。重要なデータがある場合は事前にバックアップを取ってください。
-            </p>
-          </div>
         </div>
 
         {/* Store Selection */}
@@ -584,10 +631,18 @@ export default function CsvImportPage() {
         {/* Field Mapping */}
         {csvHeaders.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">項目マッピング</h2>
-            <p className="text-sm text-gray-600 mb-4">
-              CSVの列名をシステムの項目に対応付けてください。
-            </p>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">項目マッピング</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  CSVの列をシステムの項目に対応付けます。対応付けされた項目のデータのみインポートされます。
+                </p>
+              </div>
+              <div className="flex items-center text-sm text-gray-500">
+                <Info className="w-4 h-4 mr-1" />
+                <span>{fieldMappings.length}項目が対応付け済み</span>
+              </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -595,13 +650,28 @@ export default function CsvImportPage() {
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 bg-gray-50">CSV列名</th>
                     <th className="py-3 px-2 w-12"></th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 bg-gray-50">システム項目</th>
-                    <th className="py-3 px-4 w-20 text-center text-sm font-medium text-gray-700 bg-gray-50">状態</th>
+                    <th className="py-3 px-4 w-24 text-center text-sm font-medium text-gray-700 bg-gray-50">状態</th>
                   </tr>
                 </thead>
                 <tbody>
                   {csvHeaders.map(header => {
                     if (header.toLowerCase().includes('日付') || header.toLowerCase().includes('date')) {
-                      return null; // Skip date column
+                      return (
+                        <tr key={header} className="border-b border-gray-100 bg-blue-50">
+                          <td className="py-3 px-4">
+                            <span className="font-medium text-gray-900">{header}</span>
+                          </td>
+                          <td className="py-3 px-2 text-center">
+                            <ArrowRight className="w-4 h-4 text-blue-500" />
+                          </td>
+                          <td className="py-3 px-4 text-blue-700">日付（自動処理）</td>
+                          <td className="py-3 px-4 text-center">
+                            <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                              必須
+                            </span>
+                          </td>
+                        </tr>
+                      );
                     }
 
                     const mapping = fieldMappings.find(m => m.csvColumn === header);
@@ -615,7 +685,7 @@ export default function CsvImportPage() {
                             <span className="font-medium text-gray-900">{header}</span>
                             {isNewField && (
                               <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">
-                                新規
+                                新規項目
                               </span>
                             )}
                           </div>
@@ -624,36 +694,40 @@ export default function CsvImportPage() {
                           <ArrowRight className={`w-4 h-4 ${isMapped ? 'text-green-500' : 'text-gray-300'}`} />
                         </td>
                         <td className="py-3 px-4">
-                          <select
-                            value={mapping?.fieldKey || ''}
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                updateFieldMapping(header, e.target.value);
-                              }
-                            }}
-                            className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              isMapped
-                                ? 'border-green-300 bg-green-50'
-                                : 'border-gray-300 bg-white'
-                            }`}
-                          >
-                            <option value="">マッピングしない</option>
-                            {availableFields.map(field => (
-                              <option key={field.key} value={field.key}>
-                                {field.label}
-                              </option>
-                            ))}
-                          </select>
+                          {isNewField ? (
+                            <span className="text-gray-500 italic">（既存の項目に該当なし）</span>
+                          ) : (
+                            <select
+                              value={mapping?.fieldKey || ''}
+                              onChange={(e) => updateFieldMapping(header, e.target.value)}
+                              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                isMapped
+                                  ? 'border-green-300 bg-green-50'
+                                  : 'border-gray-300 bg-white'
+                              }`}
+                            >
+                              <option value="">インポートしない</option>
+                              {availableFields.map(field => (
+                                <option key={field.key} value={field.key}>
+                                  {field.label}
+                                </option>
+                              ))}
+                            </select>
+                          )}
                         </td>
                         <td className="py-3 px-4 text-center">
                           {isMapped ? (
                             <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
                               <Check className="w-3 h-3 mr-1" />
-                              設定済
+                              対応済
+                            </span>
+                          ) : isNewField ? (
+                            <span className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                              新規
                             </span>
                           ) : (
                             <span className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">
-                              未設定
+                              スキップ
                             </span>
                           )}
                         </td>
@@ -663,6 +737,47 @@ export default function CsvImportPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* New Fields Section */}
+        {newFields.length > 0 && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 mb-6">
+            <div className="flex items-center mb-4">
+              <Plus className="w-5 h-5 text-purple-600 mr-2" />
+              <h3 className="text-lg font-semibold text-purple-900">
+                新規項目の検出 ({newFields.length}件)
+              </h3>
+            </div>
+            <p className="text-sm text-purple-800 mb-4">
+              CSVに含まれる以下の項目は、現在のシステムに存在しません。チェックを入れると新規項目として追加されます。
+            </p>
+            <div className="space-y-2">
+              {newFields.map(field => (
+                <label
+                  key={field.csvColumn}
+                  className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
+                    field.include ? 'bg-purple-100 border border-purple-300' : 'bg-white border border-gray-200'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={field.include}
+                    onChange={() => toggleNewField(field.csvColumn)}
+                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  />
+                  <span className="ml-3 font-medium text-gray-900">{field.csvColumn}</span>
+                  {field.include && (
+                    <span className="ml-auto text-sm text-purple-600">追加予定</span>
+                  )}
+                </label>
+              ))}
+            </div>
+            {includedNewFieldsCount > 0 && (
+              <p className="mt-4 text-sm text-purple-700">
+                {includedNewFieldsCount}件の新規項目が追加されます
+              </p>
+            )}
           </div>
         )}
 
@@ -720,8 +835,8 @@ export default function CsvImportPage() {
         {/* Upload Result */}
         {uploadResult && (
           <div className={`rounded-lg p-6 mb-6 ${
-            uploadResult.success 
-              ? 'bg-green-50 border border-green-200' 
+            uploadResult.success
+              ? 'bg-green-50 border border-green-200'
               : 'bg-red-50 border border-red-200'
           }`}>
             <div className="flex items-center">
@@ -757,26 +872,154 @@ export default function CsvImportPage() {
               リセット
             </button>
             <button
-              onClick={handleUpload}
+              onClick={handleShowConfirmation}
               disabled={isUploading || !selectedStoreId || fieldMappings.length === 0}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors inline-flex items-center"
             >
-              {isUploading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  アップロード中...
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  データをアップロード
-                </>
-              )}
+              <Upload className="w-4 h-4 mr-2" />
+              確認してアップロード
             </button>
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">インポート内容の確認</h2>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Summary */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-medium text-gray-900 mb-3">インポート概要</h3>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex justify-between">
+                    <span className="text-gray-600">対象店舗:</span>
+                    <span className="font-medium">{selectedStore?.name}</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-gray-600">データ行数:</span>
+                    <span className="font-medium">{csvData.length}行</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-gray-600">既存項目:</span>
+                    <span className="font-medium">{fieldMappings.length}項目</span>
+                  </li>
+                  {includedNewFieldsCount > 0 && (
+                    <li className="flex justify-between text-purple-700">
+                      <span>新規追加項目:</span>
+                      <span className="font-medium">{includedNewFieldsCount}項目</span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+
+              {/* Overwrite Option */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <h3 className="font-medium text-gray-900 mb-3">既存データの処理</h3>
+                <div className="space-y-3">
+                  <label className={`flex items-start p-3 rounded-lg cursor-pointer border transition-colors ${
+                    overwriteExisting ? 'bg-orange-50 border-orange-300' : 'bg-white border-gray-200'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="overwrite"
+                      checked={overwriteExisting}
+                      onChange={() => setOverwriteExisting(true)}
+                      className="mt-0.5 w-4 h-4 text-orange-600 border-gray-300 focus:ring-orange-500"
+                    />
+                    <div className="ml-3">
+                      <div className="flex items-center">
+                        <RefreshCw className="w-4 h-4 text-orange-600 mr-2" />
+                        <span className="font-medium text-gray-900">上書きする</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">
+                        同じ日付のデータがある場合、CSVの値で上書きします
+                      </p>
+                    </div>
+                  </label>
+                  <label className={`flex items-start p-3 rounded-lg cursor-pointer border transition-colors ${
+                    !overwriteExisting ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="overwrite"
+                      checked={!overwriteExisting}
+                      onChange={() => setOverwriteExisting(false)}
+                      className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <div className="ml-3">
+                      <div className="flex items-center">
+                        <Plus className="w-4 h-4 text-blue-600 mr-2" />
+                        <span className="font-medium text-gray-900">スキップする</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">
+                        同じ日付のデータがある場合、インポートをスキップします
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* New Fields */}
+              {includedNewFieldsCount > 0 && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <h3 className="font-medium text-purple-900 mb-2">追加される新規項目</h3>
+                  <ul className="space-y-1">
+                    {newFields.filter(f => f.include).map(field => (
+                      <li key={field.csvColumn} className="text-sm text-purple-800 flex items-center">
+                        <Plus className="w-3 h-3 mr-2" />
+                        {field.csvColumn}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Warning */}
+              {overwriteExisting && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start">
+                    <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-yellow-800">
+                      <strong>注意:</strong> 上書きモードでは、既存のデータが失われる可能性があります。重要なデータがある場合は事前にバックアップを取ってください。
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleUpload}
+                disabled={isUploading}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors inline-flex items-center"
+              >
+                {isUploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    処理中...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    インポート実行
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
